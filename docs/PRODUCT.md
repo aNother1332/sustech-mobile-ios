@@ -21,9 +21,9 @@
 
 - SwiftUI + Foundation / WebKit，独立 CampusCore Swift Package，无第三方 iOS 依赖。
 - 最低 iOS / iPadOS 17；Xcode 26+；Swift 6 语言模式。
-- 工作名“南科 · 日常”，临时 bundle ID `cn.sustech.community.daily`。
+- 应用名称“SUSTechMobile”，临时 bundle ID `cn.sustech.community.daily`。
 - 第一批不读密码：由学校网页处理登录，应用复用本机 WebKit cookie。
-- 后续方案讨论：用户希望将账号密码输入改为原生界面，原因是 CAS 网页显示不全。原生 CAS 协议和凭据处理方式正在分析，尚未实现；此项不改变已安装版本的行为。
+- 后续方案讨论：用户要求将账号密码输入改为原生界面，原因是 CAS 网页显示不全。0.2.0 已实现原生 CAS 与网页备用，真实接口仍需设备验收。
 - 网页会话由系统保存，原生数据暂在内存；重启后手动同步验证会话有效性。
 - 真实模式默认空数据；演示模式可选，切换后清空显示数据，防止混淆。
 - 使用原生动态字体、系统色和自适应导航；iPad 与 iPhone 均需要实机验收。

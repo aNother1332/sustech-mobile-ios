@@ -1,4 +1,4 @@
-# 南科 · 日常 — iPhone / iPad
+# SUSTechMobile — iPhone / iPad
 
 南方科技大学校园事务聚合应用的 iOS 开发起点。目标是在原生 iOS 上逐步对齐
 `dumixthestpd/sustech-mobile`，并加入学习待办、课件、日历、排课等能力。
@@ -86,7 +86,7 @@ xcodebuild -project SUSTech.xcodeproj -scheme SUSTech \
 arm64 真机构建、平台检查、IPA 打包和产物上传。没有 push / PR 自动触发，
 单次最多 20 分钟，产物保留 7 天。
 
-成功后下载 `SUSTech-iPhone-iPad-数字` 产物，解压并找到 `SUSTech-unsigned.ipa`。
+成功后下载 `SUSTech-iPhone-iPad-数字` 产物，解压并找到 `SUSTechMobile-unsigned.ipa`。
 这是供 AltStore 等本地工具重新签名的真机包，不可直接点开安装。
 工作流不需要 Apple 开发者账号、证书、校园账号或 GitHub Secrets。
 

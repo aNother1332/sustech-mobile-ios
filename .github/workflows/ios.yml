@@ -39,7 +39,7 @@ jobs:
         run: >-
           python3 scripts/package_ipa.py
           --app DerivedData-device/Build/Products/Release-iphoneos/SUSTech.app
-          --output dist/SUSTech-unsigned.ipa
+          --output dist/SUSTechMobile-unsigned.ipa
           --commit "$GITHUB_SHA"
       - name: Include Windows installation guide
         run: |
@@ -56,7 +56,7 @@ jobs:
         run: |
           {
             echo '## iPhone / iPad test package'
-            echo 'Download the artifact below, unzip it and select SUSTech-unsigned.ipa in the Windows sideloading tool.'
+            echo 'Download the artifact below, unzip it and select SUSTechMobile-unsigned.ipa in the Windows sideloading tool.'
             echo 'This is an unsigned arm64 device build. A Windows sideloading tool must re-sign it with your own Apple account.'
             echo 'No Apple credentials, signing certificates or school accounts were used by this workflow.'
             echo 'The simulator build is checked separately and is not included in the IPA.'

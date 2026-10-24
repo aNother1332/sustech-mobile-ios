@@ -155,6 +155,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "A45E824A1C9C0C8D484A8351";
 		};
+		"B16B6325BA8F1CFBCC279108" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "folder.assetcatalog";
+			"path" = "App/Assets.xcassets";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"AEF66C58CD2FE136C52B7AE5" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "B16B6325BA8F1CFBCC279108";
+		};
 		"A8792157CB4F27FB949C035F" = {
 			"isa" = "PBXFileReference";
 			"explicitFileType" = "wrapper.application";
@@ -188,6 +198,7 @@
 				"CB2049113C5162B79192C188",
 				"545234BA1B00B7FA3B07BEB4",
 				"A45E824A1C9C0C8D484A8351",
+				"B16B6325BA8F1CFBCC279108",
 				"0A3E27B8CA818264D75C8D81",
 			);
 			"sourceTree" = "<group>";
@@ -231,6 +242,7 @@
 			"files" = (
 				"41B849452884CFF4F4BF1354",
 				"84464AE0513848BDCE7F925F",
+				"AEF66C58CD2FE136C52B7AE5",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -270,7 +282,8 @@
 				"SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD" = "NO";
 				"CODE_SIGN_STYLE" = "Automatic";
 				"MARKETING_VERSION" = "0.2.0";
-				"CURRENT_PROJECT_VERSION" = "2";
+				"CURRENT_PROJECT_VERSION" = "3";
+				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
 				"SWIFT_STRICT_CONCURRENCY" = "complete";
 				"SWIFT_APPROACHABLE_CONCURRENCY" = "YES";
 				"SWIFT_DEFAULT_ACTOR_ISOLATION" = "MainActor";
@@ -306,7 +319,8 @@
 				"SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD" = "NO";
 				"CODE_SIGN_STYLE" = "Automatic";
 				"MARKETING_VERSION" = "0.2.0";
-				"CURRENT_PROJECT_VERSION" = "2";
+				"CURRENT_PROJECT_VERSION" = "3";
+				"ASSETCATALOG_COMPILER_APPICON_NAME" = "AppIcon";
 				"SWIFT_STRICT_CONCURRENCY" = "complete";
 				"SWIFT_APPROACHABLE_CONCURRENCY" = "YES";
 				"SWIFT_DEFAULT_ACTOR_ISOLATION" = "MainActor";

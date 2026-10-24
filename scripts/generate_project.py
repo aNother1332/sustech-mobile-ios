@@ -54,6 +54,13 @@ def generate() -> None:
         references.append(reference)
         phase.append(add(relative + ":build", "PBXBuildFile", fileRef=reference))
 
+    for path in sorted((ROOT / "App").rglob("*.xcassets")):
+        relative = path.relative_to(ROOT).as_posix()
+        reference = add(relative, "PBXFileReference", lastKnownFileType="folder.assetcatalog",
+                        path=relative, sourceTree="SOURCE_ROOT")
+        references.append(reference)
+        resources.append(add(relative + ":build", "PBXBuildFile", fileRef=reference))
+
     app = add("product", "PBXFileReference", explicitFileType="wrapper.application",
               path="SUSTech.app", sourceTree="BUILT_PRODUCTS_DIR", includeInIndex="0")
     products = add("products", "PBXGroup", children=[app], name="Products", sourceTree="<group>")
@@ -77,7 +84,8 @@ def generate() -> None:
         "TARGETED_DEVICE_FAMILY": "1,2", "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
         "SUPPORTS_MACCATALYST": "NO", "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD": "NO",
         "SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD": "NO", "CODE_SIGN_STYLE": "Automatic",
-        "MARKETING_VERSION": "0.2.0", "CURRENT_PROJECT_VERSION": "2",
+        "MARKETING_VERSION": "0.2.0", "CURRENT_PROJECT_VERSION": "3",
+        "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
         "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
         "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor", "ENABLE_PREVIEWS": "YES",
     }

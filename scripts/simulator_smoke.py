@@ -34,6 +34,8 @@ def main():
                 run("io", uid, "screenshot", OUT / f"{family}-{scene}.png")
                 # Terminate must succeed: a process that already crashed fails here.
                 run("terminate", uid, BUNDLE)
+            time.sleep(2)
+            run("io", uid, "screenshot", OUT / f"{family}-home.png")
         finally:
             run("shutdown", uid)
     print("PASS: iPhone/iPad demo and native-login launch/capture completed.", flush=True)

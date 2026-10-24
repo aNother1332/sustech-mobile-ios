@@ -9,6 +9,7 @@ import argparse
 import json
 import plistlib
 import subprocess
+import struct
 import sys
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -26,6 +27,16 @@ def verify_project() -> None:
             raise RuntimeError(f"Generated file was stale: {path.relative_to(ROOT)}; review and rerun checks.")
     info = plistlib.loads((ROOT / "Config/Info.plist").read_bytes())
     assert "NSAppTransportSecurity" not in info, "Do not silently disable HTTPS requirements"
+    assert info["CFBundleDisplayName"] == "SUSTechMobile"
+    assert info["CFBundleName"] == "SUSTechMobile"
+    icons = ROOT / "App/Assets.xcassets/AppIcon.appiconset"
+    catalog = json.loads((icons / "Contents.json").read_text(encoding="utf-8"))
+    for entry in catalog["images"]:
+        png = (icons / entry["filename"]).read_bytes()
+        assert png[:8] == b"\x89PNG\r\n\x1a\n"
+        size = int(float(entry["size"].split("x")[0]) * int(entry["scale"].rstrip("x")))
+        assert struct.unpack(">II", png[16:24]) == (size, size)
+        assert png[25] == 2, "App icons must be opaque RGB, without alpha"
     privacy = plistlib.loads((ROOT / "App/Resources/PrivacyInfo.xcprivacy").read_bytes())
     assert privacy["NSPrivacyTracking"] is False
     scheme = ET.parse(generated[1]).getroot()
@@ -68,7 +79,10 @@ def verify_syntax() -> None:
             for reference in value.get(key, []):
                 assert reference in objects, f"Dangling {key}: {reference}"
         if value["isa"] == "PBXFileReference" and value.get("sourceTree") == "SOURCE_ROOT":
-            assert (ROOT / value["path"]).is_file(), value["path"]
+            if value.get("lastKnownFileType") == "folder.assetcatalog":
+                assert (ROOT / value["path"]).is_dir(), value["path"]
+            else:
+                assert (ROOT / value["path"]).is_file(), value["path"]
     print(f"PASS: {len(paths)} Swift syntax trees and Xcode project object references")
 
 

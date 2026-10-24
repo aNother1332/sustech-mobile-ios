@@ -29,7 +29,7 @@ struct RootView: View {
                 )) { page in
                     Label(page.rawValue, systemImage: page.symbol).tag(page)
                 }
-                .navigationTitle("南科 · 日常")
+                .navigationTitle("SUSTechMobile")
                 .safeAreaInset(edge: .bottom) {
                     Text("非官方校园工具 · 早期开发版")
                         .font(.caption).foregroundStyle(.secondary).padding()

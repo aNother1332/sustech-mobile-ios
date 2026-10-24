@@ -9,7 +9,7 @@
 2. 点击 **Run workflow**，选择 main 分支并运行。
 3. 等待整次运行绿色成功，进入该次运行下方 **Artifacts**。
 4. 下载 `SUSTech-iPhone-iPad-数字`，解压下载的 ZIP。
-5. 找到 **SUSTech-unsigned.ipa**；不要将外层 ZIP 改名成 IPA。
+5. 找到 **SUSTechMobile-unsigned.ipa**；不要将外层 ZIP 改名成 IPA。
 
 同目录还有 SHA-256 校验文件与构建元数据。IPA 是 iPhoneOS arm64 真机程序，
 没有 Apple 签名；当前不能直接从 Files 点开安装，也不是 TestFlight 包。
@@ -18,8 +18,8 @@
 校验下载内容（PowerShell，在解压目录中）：
 
 ```powershell
-Get-FileHash -Algorithm SHA256 -LiteralPath .\SUSTech-unsigned.ipa
-Get-Content -LiteralPath .\SUSTech-unsigned.sha256
+Get-FileHash -Algorithm SHA256 -LiteralPath .\SUSTechMobile-unsigned.ipa
+Get-Content -LiteralPath .\SUSTechMobile-unsigned.sha256
 ```
 
 ## 2. 本机已验证的 iLoader 安装路线
@@ -29,7 +29,7 @@ Get-Content -LiteralPath .\SUSTech-unsigned.sha256
 1. 打开 `D:\Altstore\iLoader-Patched\iLoader-local23782.exe`。
 2. 如会话过期，由本人在工具中登录 Apple 账号；不要将密码、验证码放入聊天或 GitHub。
 3. USB 连接并解锁设备，信任电脑，在设备列表选择 iPhone 或 iPad。
-4. 点击“导入 IPA / Import IPA”，直接选择电脑上的新版本 `SUSTech-unsigned.ipa`，等待重新签名和安装。
+4. 点击“导入 IPA / Import IPA”，直接选择电脑上的新版本 `SUSTechMobile-unsigned.ipa`，等待重新签名和安装。
 5. 用原先的同一 Apple 账号覆盖安装同一应用；iPad 需要另行安装。不要为升级先卸载原应用。
 6. 按设备提示信任开发者并启用开发者模式。免费签名有效期与设备限制仍适用，iLoader 不等于自动续签服务。
 
@@ -58,10 +58,10 @@ Get-Content -LiteralPath .\SUSTech-unsigned.sha256
 
 ## 3. 安装本项目 IPA
 
-1. 将 `SUSTech-unsigned.ipa` 通过自己选择的文件传输方式放进 iPhone 的 Files 中。
+1. 将 `SUSTechMobile-unsigned.ipa` 通过自己选择的文件传输方式放进 iPhone 的 Files 中。
 2. 保持 Windows AltServer 运行，设备通过 USB 或其支持的同一网络方式可达。
 3. 在 AltStore 的 **My Apps** 页面点击 **+**，选择 IPA。
-4. 等待本地重新签名与安装，之后打开“南科·日常”。
+4. 等待本地重新签名与安装，之后打开“SUSTechMobile”。
 5. iPad 需要分别安装；同一个 IPA 支持 iPhone / iPad，但不绕过账号和设备限制。
 
 本项目当前没有需要付费权限的 App Groups、APNs 等 entitlement。

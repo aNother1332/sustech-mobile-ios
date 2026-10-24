@@ -9,7 +9,7 @@ struct AccountView: View {
     var body: some View {
         List {
             Section {
-                Label("南科 · 日常", systemImage: "leaf").font(.title2.bold()).foregroundStyle(Color.campusGreen)
+                Label("SUSTechMobile", systemImage: "leaf").font(.title2.bold()).foregroundStyle(Color.campusGreen)
                 Text("iPhone 与 iPad · 非官方校园工具\n0.2.0 试用版 · 学校接口需真机核对。")
                     .font(.callout).foregroundStyle(.secondary)
             }
