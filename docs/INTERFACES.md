@@ -8,7 +8,16 @@
 
 这是上游源码的行为参考，不是本项目对学校接口的实时验证记录。
 
-## 当前原生读取
+## 0.2.0 新增实现
+
+原生 CAS：execution 表单、HTTPS 受限跳转、教务 `/cas` 与 BB SSO service 分项验证；验证码/滑块挑战使用官方网页。
+TIS：全学期 `/xszykb/queryxszykbzong`、节次 `/component/queryKbjg`、分页成绩 `/cjgl/grcjcx/grcjcx`。
+BB：按课程读取 gradebook columns、本人 attempts、user grades、announcements、contents/children、attachments 和同源下载。
+缓存：课表、成绩、BB 内容与下载文件在本机受保护保存；密码不保存，学校 cookie 由 WebKit 保存。
+
+详细路径、实现边界、测试和真机验收见 [0.2.0 说明](RELEASE_0_2.md)。以下保留 0.1.0 初始接口与设计记录，涉及“仅内存”等批次表述为历史状态。
+
+## 0.1.0 初始原生读取
 
 | 服务 | 方法 / 路径 | 契约 |
 | --- | --- | --- |

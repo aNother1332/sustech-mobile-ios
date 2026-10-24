@@ -42,7 +42,9 @@ jobs:
           --output dist/SUSTech-unsigned.ipa
           --commit "$GITHUB_SHA"
       - name: Include Windows installation guide
-        run: cp docs/WINDOWS_SIDELOAD.md dist/INSTALL-WINDOWS.md
+        run: |
+          cp docs/WINDOWS_SIDELOAD.md dist/INSTALL-WINDOWS.md
+          cp docs/RELEASE_0_2.md dist/RELEASE_0_2.md
       - name: Upload downloadable device package
         uses: actions/upload-artifact@v4
         with:
@@ -54,8 +56,8 @@ jobs:
         run: |
           {
             echo '## iPhone / iPad test package'
-            echo 'Download the artifact below, unzip it and select SUSTech-unsigned.ipa in AltStore Classic.'
-            echo 'This is an unsigned arm64 device build. Windows AltServer / AltStore must re-sign it with your own Apple account.'
+            echo 'Download the artifact below, unzip it and select SUSTech-unsigned.ipa in the Windows sideloading tool.'
+            echo 'This is an unsigned arm64 device build. A Windows sideloading tool must re-sign it with your own Apple account.'
             echo 'No Apple credentials, signing certificates or school accounts were used by this workflow.'
             echo 'The simulator build is checked separately and is not included in the IPA.'
           } >> "$GITHUB_STEP_SUMMARY"

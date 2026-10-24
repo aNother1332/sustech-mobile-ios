@@ -79,7 +79,9 @@ public enum TISParser {
                 credits: credits, display: scalar(row["xscj"]) ?? "", score: scalar(row["zzcj"]) ?? "",
                 reportedPoints: points, category: scalar(row["kcxz"]) ?? "")
         }
-        return (records, scalar(content["total"] ?? root["total"]).flatMap(Int.init))
+        let total = scalar(content["total"] ?? root["total"]).flatMap(Int.init)
+        if let total, total < 0 { throw CampusError.invalidResponse("成绩总数") }
+        return (records, total)
     }
 
     public static func exams(_ data: Data) throws -> [CampusExam] {
@@ -173,10 +175,15 @@ public struct TISClient: Sendable {
             let payload: [String: Any] = ["xn": NSNull(), "xq": NSNull(), "kcmc": NSNull(), "cxbj": "-1", "pylx": "1", "current": page, "pageSize": 100]
             let data = try await http.data(path: "/cjgl/grcjcx/grcjcx", json: JSONSerialization.data(withJSONObject: payload))
             let result = try TISParser.grades(data, offset: records.count)
-            if !result.records.isEmpty, !seen.insert(data).inserted { throw CampusError.invalidResponse("成绩分页重复") }
+            let fingerprint = try JSONSerialization.data(withJSONObject: result.records.map {
+                [$0.code, $0.name, $0.term, String($0.credits), $0.display, $0.score, $0.reportedPoints.map { String($0) } ?? ""]
+            })
+            if !result.records.isEmpty, !seen.insert(fingerprint).inserted { throw CampusError.invalidResponse("成绩分页重复") }
             records.append(contentsOf: result.records)
-            if result.records.count < 100 || result.total.map({ records.count >= $0 }) == true {
-                if let total = result.total, total > records.count { throw CampusError.invalidResponse("成绩分页不完整") }
+            if let total = result.total {
+                if records.count >= total { return AcademicSnapshot(records: records) }
+                if result.records.isEmpty { throw CampusError.invalidResponse("成绩分页不完整") }
+            } else if result.records.count < 100 {
                 return AcademicSnapshot(records: records)
             }
         }

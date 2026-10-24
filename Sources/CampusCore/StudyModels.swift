@@ -82,7 +82,26 @@ public struct BBCourseDetail: Codable, Sendable {
     public let announcements: [BBAnnouncement]
     public let warnings: [String]
     public let updated: Date
-    public init(tasks: [LearningDeadline], announcements: [BBAnnouncement], warnings: [String], updated: Date = .now) {
+    public let tasksRead: Bool
+    public let announcementsRead: Bool
+    public let tasksUpdated: Date?
+    public let announcementsUpdated: Date?
+    public init(tasks: [LearningDeadline], announcements: [BBAnnouncement], warnings: [String], updated: Date = .now,
+                tasksRead: Bool = true, announcementsRead: Bool = true, tasksUpdated: Date? = nil, announcementsUpdated: Date? = nil) {
         self.tasks = tasks; self.announcements = announcements; self.warnings = warnings; self.updated = updated
+        self.tasksRead = tasksRead; self.announcementsRead = announcementsRead
+        self.tasksUpdated = tasksUpdated ?? (tasksRead ? updated : nil)
+        self.announcementsUpdated = announcementsUpdated ?? (announcementsRead ? updated : nil)
+    }
+
+    public func retainingUnreadSections(from previous: BBCourseDetail?) -> BBCourseDetail {
+        guard let previous else { return self }
+        let retained = !tasksRead || !announcementsRead
+        return BBCourseDetail(tasks: tasksRead ? tasks : previous.tasks,
+            announcements: announcementsRead ? announcements : previous.announcements,
+            warnings: warnings + (retained ? ["读取失败的部分保留旧缓存，请核对该部分的数据时间。"] : []), updated: updated,
+            tasksRead: tasksRead, announcementsRead: announcementsRead,
+            tasksUpdated: tasksRead ? tasksUpdated : previous.tasksUpdated,
+            announcementsUpdated: announcementsRead ? announcementsUpdated : previous.announcementsUpdated)
     }
 }

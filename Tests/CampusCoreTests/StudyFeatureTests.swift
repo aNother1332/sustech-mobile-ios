@@ -63,3 +63,17 @@ func casRedirectsCannotLeakCredentialsOrTickets(_ raw: String) throws {
     #expect(HTMLText.plain("<p>Hello &amp; world</p><script>steal()</script>").contains("Hello & world"))
     #expect(!HTMLText.plain("<script>steal()</script>").contains("steal"))
 }
+
+@Test func failedSectionKeepsItsOriginalDataTimestamp() {
+    let oldDate = Date(timeIntervalSince1970: 1_000)
+    let oldTask = LearningDeadline(id: "old", course: "示例", title: "旧任务", due: nil, rawDue: "")
+    let old = BBCourseDetail(tasks: [oldTask], announcements: [], warnings: [], updated: oldDate)
+    let failed = BBCourseDetail(tasks: [], announcements: [BBAnnouncement(id: "new", title: "新公告", body: "", created: "")],
+        warnings: ["任务读取失败"], updated: Date(timeIntervalSince1970: 2_000), tasksRead: false)
+    let merged = failed.retainingUnreadSections(from: old)
+    #expect(merged.tasks.map(\.id) == ["old"])
+    #expect(merged.announcements.map(\.id) == ["new"])
+    #expect(merged.tasksUpdated == oldDate)
+    let again = failed.retainingUnreadSections(from: merged)
+    #expect(again.tasksUpdated == oldDate)
+}

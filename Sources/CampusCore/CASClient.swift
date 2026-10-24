@@ -106,6 +106,7 @@ public struct CASClient: Sendable {
             ])
             submitted = true
             if result.statusCode == 429 { throw CampusError.rateLimited }
+            if [401, 403].contains(result.statusCode) { throw CASFailure.rejected }
             guard (300..<400).contains(result.statusCode),
                   let location = result.value(forHTTPHeaderField: "Location") else {
                 if result.statusCode == 200 {

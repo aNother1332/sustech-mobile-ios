@@ -47,6 +47,8 @@ extension BlackboardClient {
         var tasks: [LearningDeadline] = []
         var announcements: [BBAnnouncement] = []
         var warnings: [String] = []
+        var tasksRead = false
+        var announcementsRead = false
         var cells: [[String: Any]]?
         do {
             let rows = try await records(path: root + "/gradebook/users/\(user)?limit=100")
@@ -103,6 +105,7 @@ extension BlackboardClient {
                     due: BBStudyParser.date(due), rawDue: due, submission: state, courseID: course.id,
                     contentID: contentID.isEmpty ? nil : contentID, details: body, statusNote: note))
             }
+            tasksRead = true
         } catch is CancellationError { throw CancellationError() }
         catch { warnings.append("任务列表：\(error.localizedDescription)") }
         do {
@@ -112,10 +115,11 @@ extension BlackboardClient {
                 return BBAnnouncement(id: id, title: HTMLText.plain(BBStudyParser.text(row, "title")),
                     body: HTMLText.plain(BBStudyParser.text(row, "body")), created: BBStudyParser.text(row, "created"))
             }.sorted { $0.created > $1.created }
+            announcementsRead = true
         } catch is CancellationError { throw CancellationError() }
         catch { warnings.append("公告：\(error.localizedDescription)") }
         return BBCourseDetail(tasks: tasks.sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) },
-            announcements: announcements, warnings: warnings)
+            announcements: announcements, warnings: warnings, tasksRead: tasksRead, announcementsRead: announcementsRead)
     }
 
     public func contents(courseID: String, parentID: String? = nil) async throws -> [BBContent] {

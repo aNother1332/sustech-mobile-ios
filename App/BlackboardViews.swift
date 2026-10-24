@@ -24,6 +24,7 @@ struct BBCourseView: View {
                             .font(.caption).foregroundStyle(.secondary)
                         ForEach(Array(detail.warnings.enumerated()), id: \.offset) { _, warning in Text(warning).font(.caption).foregroundStyle(.orange) }
                         if tab == 0 {
+                            if let date = detail.tasksUpdated { Text("任务数据：\(date.formatted())").font(.caption).foregroundStyle(.secondary) }
                             Toggle("只看未提交与草稿", isOn: $onlyPending)
                             Text("未知状态不归入未提交；没有截止日期的任务也会保留。").font(.caption).foregroundStyle(.secondary)
                             let tasks = detail.tasks.filter { !onlyPending || [.pending, .draft].contains($0.submission) }
@@ -32,6 +33,7 @@ struct BBCourseView: View {
                                 NavigationLink { BBTaskView(task: task) } label: { CampusCard { DeadlineRow(deadline: task) } }.buttonStyle(.plain)
                             }
                         } else {
+                            if let date = detail.announcementsUpdated { Text("公告数据：\(date.formatted())").font(.caption).foregroundStyle(.secondary) }
                             if detail.announcements.isEmpty { Text("本次未读取到公告，请同时检查读取提示。").foregroundStyle(.secondary) }
                             ForEach(detail.announcements) { item in
                                 CampusCard {

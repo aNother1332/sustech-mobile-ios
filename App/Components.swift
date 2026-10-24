@@ -86,6 +86,7 @@ struct MeetingRow: View {
 }
 
 struct DeadlineRow: View {
+    @Environment(CampusStore.self) private var store
     let deadline: LearningDeadline
 
     var body: some View {
@@ -99,6 +100,9 @@ struct DeadlineRow: View {
             }
             Label(deadline.submission.label, systemImage: deadline.submission == .submitted ? "checkmark.circle" : "questionmark.circle")
                 .font(.caption).foregroundStyle(.secondary)
+            if let date = store.courseDetails[deadline.courseID]?.tasksUpdated {
+                Text("状态读取于 \(date.formatted(date: .abbreviated, time: .shortened))").font(.caption2).foregroundStyle(.secondary)
+            }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 5)
     }
 }

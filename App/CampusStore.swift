@@ -129,7 +129,7 @@ final class CampusStore {
                     challengeService = service == .teaching ? .teaching : .blackboard
                 }
                 // A rejection must not submit the same password again to another service.
-                if let error = error as? CASFailure, error == .rejected { break }
+                if let error = error as? CASFailure, [.rejected, .challenge, .missingForm].contains(error) { break }
                 if error as? CampusError == .rateLimited { break }
             }
         }
@@ -227,13 +227,14 @@ final class CampusStore {
             let detail = try await client.courseDetail(course)
             try Task.checkCancellation()
             guard version == generation else { return }
-            courseDetails[course.id] = detail
+            courseDetails[course.id] = detail.retainingUnreadSections(from: courseDetails[course.id])
             persist()
         } catch {
             guard version == generation else { return }
             let old = courseDetails[course.id]
             courseDetails[course.id] = BBCourseDetail(tasks: old?.tasks ?? [], announcements: old?.announcements ?? [],
-                warnings: [safeError(error), "如有数据，为最近一次缓存。"], updated: old?.updated ?? .now)
+                warnings: [safeError(error), "如有数据，为最近一次缓存。"], tasksRead: false, announcementsRead: false,
+                tasksUpdated: old?.tasksUpdated, announcementsUpdated: old?.announcementsUpdated)
         }
     }
     func contents(course: String, parent: String?) async throws -> [BBContent] {

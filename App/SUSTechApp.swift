@@ -16,7 +16,7 @@ struct SUSTechApp: App {
                     if ProcessInfo.processInfo.arguments.contains("--smoke-login") { showLogin = true }
                     #endif
                 }
-                .sheet(isPresented: $showLogin) { NativeLoginView() }
+                .sheet(isPresented: $showLogin) { NativeLoginView().environment(store) }
         }
     }
 }
