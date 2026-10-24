@@ -76,20 +76,18 @@ private struct BrowserWebView: UIViewRepresentable {
         private let state: BrowserState
         init(state: BrowserState) { self.state = state }
 
-        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            guard let url = navigationAction.request.url else { decisionHandler(.cancel); return }
-            if url.absoluteString == "about:blank" { decisionHandler(.allow); return }
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+            guard let url = navigationAction.request.url else { return .cancel }
+            if url.absoluteString == "about:blank" { return .allow }
             let host = url.host?.lowercased() ?? ""
             let official = host == "sustech.edu.cn" || host.hasSuffix(".sustech.edu.cn")
             guard url.scheme == "https", official else {
-                decisionHandler(.cancel)
                 state.failure = "此链接离开学校 HTTPS 网站。请使用右侧系统浏览器入口继续；第三方支付跳转尚待真机验证。"
-                return
+                return .cancel
             }
             state.failure = nil
             state.host = host
-            decisionHandler(.allow)
+            return .allow
         }
 
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
