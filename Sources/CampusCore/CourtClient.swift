@@ -12,6 +12,7 @@ public struct CourtSlot: Identifiable, Sendable {
 /// Protocol port of the user's local court project. No scheduler, polling,
 /// generated slots, automated challenge solver, or retrying booking loop.
 public actor CourtClient {
+    private static let headers = ["User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.49"]
     private let http: ServiceHTTP
     private var credentials: CourtCredentials?
     public init(credentials: CourtCredentials? = nil, http: ServiceHTTP = ServiceHTTP(origin: URL(string: "https://reservation.sustech.edu.cn")!)) {
@@ -24,7 +25,8 @@ public actor CourtClient {
             guard let credentials else { throw CampusError.signInRequired }
             params["userid"] = credentials.userID; params["token"] = credentials.token
         }
-        let value = try await http.json("/api/blade-app/qywx/" + endpoint, query: params, payload: payload, method: method)
+        let value = try await http.json("/api/blade-app/qywx/" + endpoint, query: params,
+            form: endpoint == "getOrderDetailByParam" ? [:] : nil, payload: payload, method: method, headers: Self.headers)
         guard value["code"].text == "200" else {
             if value["msg"].text.contains("鉴权") { throw CampusError.signInRequired }
             throw ServiceFailure("场馆服务未接受请求，请检查授权、时段和学校规则。")
@@ -93,7 +95,7 @@ public actor CourtClient {
         }
     }
     public func captcha() async throws -> WireValue {
-        let value = try await http.json("/api/blade-base/captcha/generate/d", payload: .object([:]))
+        let value = try await http.json("/api/blade-base/captcha/generate/d", payload: .object([:]), headers: Self.headers)
         guard value["captcha"]["type"].text.uppercased() == "SLIDER", !value["id"].text.isEmpty else { throw ServiceFailure("验证码类型暂不支持，请在学校页面完成预约。") }
         return value
     }
@@ -104,7 +106,7 @@ public actor CourtClient {
             "bgImageWidth": cap["backgroundImageWidth"], "bgImageHeight": cap["backgroundImageHeight"],
             "templateImageWidth": cap["templateImageWidth"], "templateImageHeight": cap["templateImageHeight"],
             "startTime": .number(start.timeIntervalSince1970 * 1000), "stopTime": .number(stop.timeIntervalSince1970 * 1000), "trackList": .array(track)])])
-        let value = try await http.json("/api/blade-base/captcha/check/d", payload: body)
+        let value = try await http.json("/api/blade-base/captcha/check/d", payload: body, headers: Self.headers)
         guard value["code"].text == "200", !value["data"].text.isEmpty else { throw ServiceFailure("滑块验证未通过，请重新获取验证码后手动验证。") }
         return value["data"].text
     }
@@ -115,6 +117,7 @@ public actor CourtClient {
         guard fresh.contains(where: { $0.id == slot.id && $0.available }) else { throw ServiceFailure("该时段已变化，请刷新重新选择。") }
         let user = try await user()
         let detail = try await call("getGroundDetailByParam", query: ["groundId": ground.id])
+        guard !user["id"].text.isEmpty, !detail["gymId"].text.isEmpty, !detail["name"].text.isEmpty else { throw CampusError.invalidResponse("场馆预约身份或场地详情") }
         let blacklist = try await call("isGymBlackByCustomerId")
         guard blacklist != .bool(true), blacklist.text != "1" else { throw ServiceFailure("账号当前不可预约，请联系学校场馆管理人员。") }
         func stamp(_ time: String) throws -> String {
@@ -136,9 +139,9 @@ public actor CourtClient {
         guard duration <= 2 * 3600 else { throw ServiceFailure("目标日期的预约总时长将超过 2 小时，请调整选择。") }
         let now = CampusClock.format(.now, "HH:mm:00"), orderDate = slot.day + " " + now
         let payload: WireValue = .object([
-            "id": .string(captchaToken), "customerId": user["id"], "customerName": user["name"], "customerTel": .string(phone),
+            "id": .string(captchaToken), "customerId": user["id"], "customerName": user["name"].text.isEmpty ? user["customerName"] : user["name"], "customerTel": .string(phone),
             "userNum": .number(Double(people)), "customerEmail": .string(""), "gymId": detail["gymId"], "gymName": detail["gymName"],
-            "groundId": .string(ground.id), "groundName": detail["name"], "groundType": .string(detail["groundType"].text),
+            "groundId": .string(ground.id), "groundName": detail["name"], "groundType": .string(detail["groundType"].text.isEmpty ? "0" : detail["groundType"].text),
             "messagePushType": .string("0"), "isIllegal": .string("0"), "orderDate": .string(orderDate),
             "startTime": .string(begin), "endTime": .string(end), "tmpOrderDate": .string(orderDate), "tmpStartTime": .string(begin), "tmpEndTime": .string(end),
             "gymType": .number(2), "isOverOneDay": .string("0"), "title": .string("")])

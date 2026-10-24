@@ -108,7 +108,7 @@ private struct ICBookingForm: View {
             let http = await store.serviceHTTP(origin: SchoolService.rooms.portalURL); let api = ICClient(http: http)
             try await api.book(room: room, begin: requestedBegin, end: requestedEnd, title: requestedTitle, members: requestedMembers)
             let orders = try await api.mine()
-            message = orders.contains { $0.title.contains(room.title) || $0.raw["resvDevInfoList"].rows.contains { $0["devId"].text == room.id } } ? "学校已接受请求，我的预约中可见该房间，请核对具体时段。" : "学校已接受请求，但未能在我的预约中确认，请打开学校页面核对，勿重复提交。"
+            message = orders.contains { ICClient.matches($0, room: room.id, begin: requestedBegin, end: requestedEnd) } ? "已在我的预约中确认对应房间和时段。" : "学校已接受请求，但未能在我的预约中确认，请打开学校页面核对，勿重复提交。"
         } catch { message = "本次结果：\(error.localizedDescription) 若请求已发出，请先查看我的预约再重试。" }
     }
 }

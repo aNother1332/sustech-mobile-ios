@@ -9,6 +9,22 @@ public enum CampusClock {
         let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "Asia/Shanghai"); f.dateFormat = pattern
         return f.date(from: text)
     }
+    public static func serverDate(_ value: WireValue) -> Date? {
+        if let number = Double(value.text), number > 100_000_000 {
+            return Date(timeIntervalSince1970: number > 100_000_000_000 ? number / 1000 : number)
+        }
+        if value.text.contains("T") {
+            let iso = ISO8601DateFormatter()
+            if let result = iso.date(from: value.text) { return result }
+            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let result = iso.date(from: value.text) { return result }
+        }
+        let text = value.text.replacingOccurrences(of: "T", with: " ")
+        for pattern in ["yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm"] {
+            if let result = date(String(text.prefix(pattern == "yyyy-MM-dd HH:mm:ss" ? 19 : 16)), pattern) { return result }
+        }
+        return nil
+    }
 }
 public struct ReservationItem: Identifiable, Sendable {
     public let id: String; public let title: String; public let detail: String; public let raw: WireValue
@@ -40,9 +56,17 @@ public struct ICClient: Sendable {
         let rows = try await call("/reserve/resvInfo", query: ["beginDate": CampusClock.format(.now), "endDate": CampusClock.format(.now.addingTimeInterval(60 * 86400)), "page": "1", "pageNum": "100"])
         guard case .array = rows else { throw CampusError.invalidResponse("IC 我的预约") }
         return rows.rows.map { row in
-            ReservationItem(id: row["uuid"].text, title: row["resvDevInfoList"].rows.first?["devName"].text ?? row["testName"].text,
-                detail: "\(row["resvBeginTime"].text) → \(row["resvEndTime"].text) · 状态 \(row["resvStatus"].text)", raw: row)
+            let begin = CampusClock.serverDate(row["resvBeginTime"]).map { CampusClock.format($0, "yyyy-MM-dd HH:mm") } ?? row["resvBeginTime"].text
+            let end = CampusClock.serverDate(row["resvEndTime"]).map { CampusClock.format($0, "yyyy-MM-dd HH:mm") } ?? row["resvEndTime"].text
+            return ReservationItem(id: row["uuid"].text, title: row["resvDevInfoList"].rows.first?["devName"].text ?? row["testName"].text,
+                detail: "\(begin) → \(end) · 状态 \(row["resvStatus"].text)", raw: row)
         }
+    }
+    public static func matches(_ item: ReservationItem, room: String, begin: Date, end: Date) -> Bool {
+        guard item.raw["resvDevInfoList"].rows.contains(where: { $0["devId"].text == room }),
+              let a = CampusClock.serverDate(item.raw["resvBeginTime"]), let b = CampusClock.serverDate(item.raw["resvEndTime"]) else { return false }
+        return CampusClock.format(a, "yyyy-MM-dd HH:mm") == CampusClock.format(begin, "yyyy-MM-dd HH:mm")
+            && CampusClock.format(b, "yyyy-MM-dd HH:mm") == CampusClock.format(end, "yyyy-MM-dd HH:mm")
     }
     public func book(room: ReservationItem, begin: Date, end: Date, title: String, members: [String]) async throws {
         guard end > begin, begin > .now else { throw ServiceFailure("请选择有效的未来预约时段。") }

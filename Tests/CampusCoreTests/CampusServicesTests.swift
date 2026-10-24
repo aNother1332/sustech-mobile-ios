@@ -196,3 +196,14 @@ private final class BusinessProtocol: URLProtocol, @unchecked Sendable {
     let entries = await BusinessProtocol.log.all()
     #expect(entries.filter { $0.path.hasSuffix("saveOrder") }.count == 1)
 }
+
+@Test func icReadbackMatchesExactRoomAndWindowAcrossTimestampFormats() throws {
+    let begin = try #require(CampusClock.date("2026-10-25 08:00:00", "yyyy-MM-dd HH:mm:ss"))
+    let end = begin.addingTimeInterval(3600)
+    let raw: WireValue = .object(["resvBeginTime": .number(begin.timeIntervalSince1970 * 1000),
+        "resvEndTime": .string("2026-10-25T01:00:00Z"), "resvDevInfoList": .array([.object(["devId": .string("room")])])])
+    let item = ReservationItem(id: "reservation", title: "示例房间", detail: "", raw: raw)
+    #expect(ICClient.matches(item, room: "room", begin: begin, end: end))
+    #expect(!ICClient.matches(item, room: "room", begin: begin.addingTimeInterval(86400), end: end.addingTimeInterval(86400)))
+    #expect(!ICClient.matches(item, room: "other-room", begin: begin, end: end))
+}

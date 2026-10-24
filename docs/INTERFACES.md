@@ -8,6 +8,22 @@
 
 这是上游源码的行为参考，不是本项目对学校接口的实时验证记录。
 
+## 0.3.0 当前新增实现
+
+| 模块 | 协议与来源 | 当前边界 |
+| --- | --- | --- |
+| 会话 | 已有 CAS Cookie → GET 服务票据交换；WebKit 与原生共享 Cookie | Keychain 保存，不保存密码；学校有效期与独立 OAuth 不可统一承诺 |
+| 校园卡 | Android EcardApi：`/epay/h5/accountinfo`、`/epay/h5/bill` 的 HTML | 余额、已返回账单、确认支出曲线；没有充值和未经证实的历史分页接口 |
+| 空教室 | CLI remaining-classroom / survival classroom：`/component/queryDiDian`、`/cdkb/querycdkbList` | RoleCode 请求头，教学周、借用与节次范围；不保留借用人姓名电话 |
+| 校车 | CRA 公共 `/stops`、`/arrivals/{stop}` | 本轮开发时只读探测确认站点数组和到站响应结构；没有学校私人数据验证 |
+| 打印 | Android PMS：`/api/client/CloudPrint/Upload`、`/api/client/PrintJob/Get`、`/api/client/PrintJob/Del` | PDF multipart，字段和单双面编码按上游映射；未知回执先查队列 |
+| IC | Android RoomApi：动态 auth/address、房间、我的预约、reserve、delete | 不混用设备外借表单；成员用准确学号解析；写入单次并回读 |
+| CLE | survival ehall.cle 的 EMAP 查询、完整保存模型与取消模型 | 学校页面完成 eHall 初始化后读取本人身份和会话；不读取密码 |
+| 体育 | 用户本地 sustech-court-grabber 的 API 协议 | 企业微信令牌独立；全场馆分页；不带错误的 type=2；本人验证码、单次手动预约 |
+| BB | 原有课程 ID / tasks 的本机显示偏好 | 折叠课程不进入首页截止日期，保留目录和恢复入口，不修改学校记录 |
+
+学校浏览器仅在 eHall 官方主机读取 `window.userId` / `window.userName` 以识别本人 CLE 预约；不读取密码。详细操作与设备验收见 [0.3.0 说明](RELEASE_0_3.md)。以下 0.2/0.1 内容为历史记录。
+
 ## 0.2.0 新增实现
 
 原生 CAS：execution 表单、HTTPS 受限跳转、教务 `/cas` 与 BB SSO service 分项验证；验证码/滑块挑战使用官方网页。
@@ -39,7 +55,7 @@ BB 截止日期不是完整 assessment 任务接口。当前原生界面明确�
 全学期课表的 ZC bitmap 上游注释和实现存在偏移表述差异，本批次使用单周端点避开未经验证的解释。
 暂不硬编码课程时刻，也不从设备日期推算教学周或补课日。
 
-## 会话与传输
+## 会话与传输（0.1.0 历史设计）
 
 - WKWebView 由用户交互登录，应用不读取 DOM、密码或注入自动登录脚本。
 - 学校 HTTPS 顶层导航可在应用内进行；其他导航明确拦截，官方入口可交系统浏览器。
