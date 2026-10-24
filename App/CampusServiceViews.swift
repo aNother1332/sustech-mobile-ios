@@ -27,6 +27,7 @@ struct CardView: View {
     var body: some View {
         List {
             Section {
+                ModeNotice()
                 if let account {
                     Text(account.balance).font(.largeTitle.bold()).foregroundStyle(Color.campusGreen)
                     Text("校园卡余额").font(.caption)
@@ -60,7 +61,14 @@ struct CardView: View {
             }
             Section { Button("打开学校校园卡页面") { portal = true } }
         }.navigationTitle("校园卡").sheet(isPresented: $portal) { SchoolBrowser(service: .card) }
-        .task { if store.mode == .live { await refresh() } }
+        .task {
+            if store.mode == .live { await refresh() }
+            else {
+                account = try? CardParser.account(DemoData.cardAccountHTML)
+                bills = (try? CardParser.bills(DemoData.cardBillsHTML)) ?? []
+                message = "演示模式：余额与流水均为虚构样例，包含一笔不计入支出的退款。"
+            }
+        }
     }
     private func refresh() async {
         guard !busy else { return }; busy = true; defer { busy = false }

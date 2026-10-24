@@ -2,6 +2,13 @@ import CampusCore
 import Foundation
 
 enum DemoData {
+    static let cardAccountHTML = "<div class=\"weui-cell__bd\"><p>账户余额</p></div><div class=\"weui-cell__ft\">36.50 元（示例）</div><div class=\"weui-cell__bd\"><p>姓名</p></div><div class=\"weui-cell__ft\">示例同学</div>"
+    static var cardBillsHTML: String {
+        [(2, "食堂消费", "-12.30元"), (1, "商店消费", "-5.00元"), (0, "食堂消费", "-8.50元"), (0, "退款", "+2.00元")].map { days, kind, amount in
+            let date = CampusClock.format(.now.addingTimeInterval(-Double(days) * 86400))
+            return "<div class=\"weui-media-box weui-media-box_text\"><h4><div>\(kind)</div><div>\(amount)</div></h4><div style=\"color:#999;flex:1\">\(date) 12:00</div><span class=\"label label-success\">成功</span></div>"
+        }.joined()
+    }
     static let teaching = TeachingSnapshot(
         semester: Semester(year: "2026-2027", term: "1", name: "示例学期"), week: 8,
         meetings: [
