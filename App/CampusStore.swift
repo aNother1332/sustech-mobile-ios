@@ -140,8 +140,9 @@ final class CampusStore {
 
     /// Opening an authenticated school page may switch identities. Start a new
     /// cache namespace before the user can log in there; do not merge old data.
-    func prepareSchoolBrowser(_ service: SchoolService) async {
-        guard [.teaching, .blackboard].contains(service), !authenticating, !clearing else { return }
+    func prepareSchoolBrowser(_ service: SchoolService) async -> Bool {
+        guard [.teaching, .blackboard].contains(service) else { return true }
+        guard !authenticating, !clearing else { return false }
         clearing = true
         defer { clearing = false }
         generation += 1
@@ -149,8 +150,12 @@ final class CampusStore {
         resetDisplayedData()
         owner = nil
         do { try repository.erase(); owner = "web-" + UUID().uuidString }
-        catch { cacheMessage = "旧缓存未能清除，网页登录期间不保存新的离线数据。" }
+        catch {
+            cacheMessage = "旧缓存未能清除，已停止打开新的登录页面。请解锁设备后重试。"
+            return false
+        }
         await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
+        return true
     }
 
     func refreshTeaching() async {
@@ -222,10 +227,13 @@ final class CampusStore {
         defer { if version == generation { courseLoading.remove(course.id) } }
         let cookies = await websiteDataStore.httpCookieStore.allCookies()
         guard version == generation else { return }
-        let client = BlackboardClient(http: CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies))
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let client = BlackboardClient(http: http)
         do {
             let detail = try await client.courseDetail(course)
             try Task.checkCancellation()
+            guard version == generation else { return }
+            await retainCookies(http.cookies(), version: version)
             guard version == generation else { return }
             courseDetails[course.id] = detail.retainingUnreadSections(from: courseDetails[course.id])
             persist()
@@ -242,9 +250,12 @@ final class CampusStore {
         let version = generation
         let cookies = await websiteDataStore.httpCookieStore.allCookies()
         guard version == generation else { throw CancellationError() }
-        let client = BlackboardClient(http: CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies))
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let client = BlackboardClient(http: http)
         let result = try await client.contents(courseID: course, parentID: parent)
         try Task.checkCancellation()
+        guard version == generation else { throw CancellationError() }
+        await retainCookies(http.cookies(), version: version)
         guard version == generation else { throw CancellationError() }
         contentCache[contentKey(course, parent)] = result
         persist()
@@ -255,9 +266,11 @@ final class CampusStore {
         guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
         let cookies = await websiteDataStore.httpCookieStore.allCookies()
         guard version == generation else { throw CancellationError() }
-        let result = try await BlackboardClient(http: CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies))
-            .attachments(courseID: course, contentID: content)
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let result = try await BlackboardClient(http: http).attachments(courseID: course, contentID: content)
         try Task.checkCancellation()
+        guard version == generation else { throw CancellationError() }
+        await retainCookies(http.cookies(), version: version)
         guard version == generation else { throw CancellationError() }
         return result
     }
@@ -277,6 +290,8 @@ final class CampusStore {
         let temporary = try await http.download(path: attachment.path)
         defer { try? FileManager.default.removeItem(at: temporary) }
         try Task.checkCancellation()
+        guard version == generation else { throw CancellationError() }
+        await retainCookies(http.cookies(), version: version)
         guard version == generation else { throw CancellationError() }
         try repository.prepare()
         let id = UUID()

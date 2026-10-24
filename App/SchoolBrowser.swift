@@ -8,6 +8,7 @@ struct SchoolBrowser: View {
     @Environment(\.dismiss) private var dismiss
     @State private var browserState = BrowserState()
     @State private var ready = false
+    @State private var preparing = true
 
     var body: some View {
         NavigationStack {
@@ -19,7 +20,8 @@ struct SchoolBrowser: View {
                 }
                 if ready {
                     BrowserWebView(url: service.portalURL, dataStore: store.websiteDataStore, state: browserState)
-                } else { ProgressView("正在准备学校页面…").frame(maxWidth: .infinity, maxHeight: .infinity) }
+                } else if preparing { ProgressView("正在准备学校页面…").frame(maxWidth: .infinity, maxHeight: .infinity) }
+                else { ContentUnavailableView("暂时无法打开登录页面", systemImage: "lock", description: Text("请解锁设备，关闭页面后重新打开。")) }
             }
             .navigationTitle(service.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -44,7 +46,11 @@ struct SchoolBrowser: View {
                 }
                     .frame(maxWidth: .infinity).padding().background(.regularMaterial)
             }
-            .task { await store.prepareSchoolBrowser(service); ready = true }
+            .task {
+                ready = await store.prepareSchoolBrowser(service)
+                preparing = false
+                if !ready { browserState.failure = store.cacheMessage ?? "其他会话操作尚未结束，请稍后重试。" }
+            }
         }
         .interactiveDismissDisabled(store.clearing)
     }
