@@ -94,7 +94,7 @@ struct CourtReservationView: View {
         catch { message = error.localizedDescription }
     }
     private func cancel(_ order: ReservationItem) async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         let version = store.sessionRevision
         do { try await client.cancel(order); orders = try await client.orders(); try await save(version)
             message = orders.first { $0.id == order.id }?.raw["status"].text == "6" ? "已回读确认取消。" : "取消请求已返回，请核对订单状态。"
@@ -182,7 +182,7 @@ private struct CourtBookingView: View {
         do { challenge = try await client.captcha(); captchaToken = ""; message = nil } catch { message = error.localizedDescription }
     }
     private func submit() async {
-        guard !busy, let selected else { return }; busy = true; defer { busy = false; captchaToken = ""; challenge = nil }
+        guard !busy, let selected, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite(); captchaToken = ""; challenge = nil }
         let version = store.sessionRevision
         do { try await client.book(ground: ground, slot: selected, captchaToken: captchaToken, phone: phone, people: people)
             let orders = try await client.orders()

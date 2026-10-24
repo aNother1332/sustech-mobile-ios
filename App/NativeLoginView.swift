@@ -7,7 +7,7 @@ struct NativeLoginButton: View {
     var body: some View {
         Button("登录学校账号", systemImage: "person.badge.key") { presented = true }
             .buttonStyle(.borderedProminent)
-            .disabled(store.mode == .demo || store.authenticating || store.clearing)
+            .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
             .sheet(isPresented: $presented) { NativeLoginView() }
     }
 }
@@ -34,7 +34,7 @@ struct NativeLoginView: View {
                         loginTask = Task { await store.signIn(username: account, password: secret) }
                     } label: {
                         if store.authenticating { ProgressView("正在连接学校…") } else { Text("登录并连接教务 / Blackboard") }
-                    }.disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || store.authenticating || store.clearing)
+                    }.disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || store.authenticating || store.clearing || store.writing)
                 }
                 Section {
                     Text("账号密码由本机通过 HTTPS 直接发送给学校 CAS。本版不保存密码，也不会自动反复登录。登录时会清除旧账号的缓存和会话。")
@@ -47,7 +47,7 @@ struct NativeLoginView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                     Button("教务完整网页登录") { portal = .teaching }
                     Button("Blackboard 完整网页登录") { portal = .blackboard }
-                }.disabled(store.authenticating || store.clearing)
+                }.disabled(store.authenticating || store.clearing || store.writing)
             }
             .navigationTitle("学校账号")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() }.disabled(store.authenticating) } }

@@ -28,6 +28,12 @@ final class CampusStore {
     private(set) var downloading: Set<String> = []
     private(set) var clearing = false
     private(set) var authenticating = false
+    private(set) var writing = false
+    func beginWrite() -> Bool {
+        guard !writing, !clearing, !authenticating, mode == .live else { return false }
+        writing = true; return true
+    }
+    func endWrite() { writing = false }
     private(set) var authenticationMessage: String?
     private(set) var challengeService: SchoolService?
     private(set) var cacheMessage: String?
@@ -44,6 +50,10 @@ final class CampusStore {
     var activeCourses: [BlackboardCourse] { (blackboard?.courses ?? []).filter { !hiddenCourses.contains($0.id) } }
     func setCourseHidden(_ id: String, hidden: Bool) {
         if hidden { hiddenCourses.insert(id) } else { hiddenCourses.remove(id) }
+        if let owner, mode == .live {
+            do { try CoursePreferences().save(hiddenCourses, owner: owner) }
+            catch { cacheMessage = "课程显示偏好未能保存，请解锁设备后重试。" }
+        }
         persist()
     }
 
@@ -67,7 +77,7 @@ final class CampusStore {
         teaching = archive.teaching; academic = archive.grades; blackboard = archive.blackboard
         teachingDate = archive.teachingDate; gradesDate = archive.gradesDate; blackboardDate = archive.blackboardDate
         courseDetails = archive.courseDetails; contentCache = archive.contents
-        hiddenCourses = archive.hiddenCourses ?? []
+        hiddenCourses = CoursePreferences().load(owner: archive.owner) ?? archive.hiddenCourses ?? []
         files = archive.files.filter { FileManager.default.fileExists(atPath: repository.fileURL($0).path) }
         if let date = teachingDate, teaching != nil { teachingState = .cached(date) }
         if let date = gradesDate, academic != nil { gradesState = .cached(date) }
@@ -85,7 +95,7 @@ final class CampusStore {
         catch { cacheMessage = "数据已读取，但本机缓存保存失败；请在解锁设备后重试。" }
     }
     func setMode(_ mode: DataMode) {
-        guard !clearing, !authenticating else { return }
+        guard !clearing, !authenticating, !writing else { return }
         generation += 1
         self.mode = mode
         resetDisplayedData()
@@ -94,7 +104,7 @@ final class CampusStore {
     }
 
     func signIn(username: String, password: String) async {
-        guard !authenticating, !clearing, mode == .live else { return }
+        guard !authenticating, !clearing, !writing, mode == .live else { return }
         authenticating = true
         defer { authenticating = false; if Task.isCancelled { authenticationMessage = "登录已取消。" } }
         authenticationMessage = "正在连接学校 CAS…"
@@ -120,6 +130,7 @@ final class CampusStore {
                 await retainCookies(cookies, version: version)
                 guard generation == version else { return }
                 owner = LocalRepository.identity(username)
+                hiddenCourses = CoursePreferences().load(owner: owner!) ?? []
                 if service == .teaching {
                     let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
                     _ = try TISParser.semester(await http.data(path: "/component/querydangqianxnxq", form: [:]))
@@ -150,7 +161,7 @@ final class CampusStore {
 
     /// Browsing a service preserves shared CAS and per-service sessions.
     func prepareSchoolBrowser(_ service: SchoolService) async -> Bool {
-        guard !authenticating, !clearing else { return false }
+        guard !authenticating, !clearing, !writing else { return false }
         await sessions.restore()
         return true
     }
@@ -319,7 +330,7 @@ final class CampusStore {
         } catch { cacheMessage = "文件删除失败，请解锁设备后重试。" }
     }
     func clearLocalSession() async {
-        guard !clearing else { return }
+        guard !clearing, !writing else { return }
         clearing = true; generation += 1
         resetDisplayedData(); owner = nil; mode = .live
         authenticationMessage = nil; challengeService = nil

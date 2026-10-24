@@ -75,7 +75,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         // Probe the actual service instead of treating cookie presence as proof.
         if let probe = try? await http.json("/ic-web/auth/userInfo"), probe["code"].text == "0", probe["data"]["accNo"].int != nil { return }
         let reply = try await http.json("/ic-web/auth/address", query: [
-            "finalAddress": "https://booking.lib.sustech.edu.cn/", "errPageUrl": "https://booking.lib.sustech.edu.cn/",
+            "finalAddress": "https://booking.lib.sustech.edu.cn/ic/home", "errPageUrl": "https://booking.lib.sustech.edu.cn/#/error",
             "manager": "false", "consoleType": "16"])
         guard reply["code"].text == "0", let entry = URL(string: reply["data"].text),
               SessionConnector.allowed(entry), entry.path.contains("authcenter/toLoginPage") else { throw CASFailure.redirect }

@@ -232,7 +232,7 @@ struct PrintingView: View {
                 Toggle("全部页", isOn: $allPages)
                 if !allPages {
                     Stepper("起始页 \(options.first)", value: $options.first, in: 1...max(pages, 1))
-                    Stepper("结束页 \(options.last)", value: $options.last, in: max(options.first, 1)...max(pages, options.first, 1))
+                    Stepper("结束页 \(options.last)", value: $options.last, in: max(options.first, 1)...max(pages, max(options.first, 1)))
                 }
                 Button("确认打印参数并提交") { confirmUpload = true }.disabled(pdf == nil || busy || store.mode == .demo)
             }
@@ -273,7 +273,7 @@ struct PrintingView: View {
         catch { message = error.localizedDescription }; await store.absorb(http, revision: version)
     }
     private func upload() async {
-        guard !busy, let pdf else { return }; busy = true; defer { busy = false }
+        guard !busy, let pdf, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         var selected = options; if allPages { selected.first = 0; selected.last = 0 }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.printing); let client = PrintingClient(http: http)
         do {
@@ -285,7 +285,7 @@ struct PrintingView: View {
         await store.absorb(http, revision: version)
     }
     private func remove(_ job: PrintJob) async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.printing); let client = PrintingClient(http: http)
         do { try await client.delete(job.id); guard version == store.sessionRevision else { return }; jobs = try await client.jobs(); message = jobs.contains { $0.id == job.id } ? "任务仍在队列，请核对。" : "任务已不在当前队列。" }
         catch { message = "删除结果需核对：\(error.localizedDescription)" }; await store.absorb(http, revision: version)

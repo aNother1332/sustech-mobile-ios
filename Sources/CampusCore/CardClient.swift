@@ -28,7 +28,7 @@ public enum CardParser {
     public static func bills(_ html: String) throws -> [CardBill] {
         if html.contains("execution") || html.contains("cas/login") { throw CampusError.signInRequired }
         let blocks = html.components(separatedBy: "weui-media-box weui-media-box_text").dropFirst()
-        if blocks.isEmpty && !html.contains("暂无") && !html.contains("无记录") && !html.contains("weui") { throw CampusError.invalidResponse("校园卡账单") }
+        if blocks.isEmpty && !html.contains("暂无") && !html.contains("无记录") && !html.contains("没有交易") { throw CampusError.invalidResponse("校园卡账单") }
         return try blocks.enumerated().map { index, block in
             guard let title = HTMLText.captures("(?s)<h4[^>]*>(.*?)</h4>", in: block).first, title.count > 1 else { throw CampusError.invalidResponse("校园卡账单条目") }
             let fields = HTMLText.captures("(?s)<div[^>]*>([^<]*)</div>", in: title[1]).map { HTMLText.plain($0[1]) }

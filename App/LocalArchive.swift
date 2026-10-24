@@ -67,3 +67,20 @@ struct LocalRepository {
         return String(String.UnicodeScalarView(clean)).prefix(120).description
     }
 }
+
+/// Display preferences survive reauthentication and remain scoped to an account.
+struct CoursePreferences {
+    private var root: URL { URL.applicationSupportDirectory.appendingPathComponent("CoursePreferences", isDirectory: true) }
+    private func file(_ owner: String) -> URL { root.appendingPathComponent(LocalRepository.identity(owner) + ".json") }
+    func load(owner: String) -> Set<String>? {
+        guard let data = try? Data(contentsOf: file(owner)) else { return nil }
+        return try? JSONDecoder().decode(Set<String>.self, from: data)
+    }
+    func save(_ ids: Set<String>, owner: String) throws {
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true,
+            attributes: [.protectionKey: FileProtectionType.complete])
+        var directory = root; var values = URLResourceValues(); values.isExcludedFromBackup = true
+        try directory.setResourceValues(values)
+        try JSONEncoder().encode(ids).write(to: file(owner), options: [.atomic, .completeFileProtection])
+    }
+}

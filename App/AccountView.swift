@@ -16,7 +16,7 @@ struct AccountView: View {
             Section("数据模式") {
                 Picker("当前模式", selection: Binding(get: { store.mode }, set: { store.setMode($0) })) {
                     ForEach(DataMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.disabled(store.clearing || store.authenticating)
+                }.disabled(store.clearing || store.authenticating || store.writing)
                 Text("演示数据不会作为学校数据保存。切换模式会清空当前显示的课程与任务，不会代替学校登录。")
                     .font(.caption).foregroundStyle(.secondary)
             }
@@ -32,7 +32,7 @@ struct AccountView: View {
                 Text("原生输入或学校网页均由用户操作，会话由本机保存；原生登录密码不保存；课表、成绩、已同步 BB 内容和下载文件在本机受保护保存，没有聚合服务器或统计 SDK。")
                     .font(.callout).foregroundStyle(.secondary)
                 Button(store.clearing ? "正在清除…" : "清除本机会话、离线数据与下载文件", role: .destructive) { confirmClear = true }
-                    .disabled(store.clearing)
+                    .disabled(store.clearing || store.writing)
             }
             Section("关于与来源") {
                 NavigationLink("上游许可与来源") { NoticesView() }
