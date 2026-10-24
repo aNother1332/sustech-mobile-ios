@@ -37,6 +37,15 @@ def main():
                 ("services", ["--smoke-demo", "--smoke-services"]),
                 ("account", ["--smoke-demo", "--smoke-account"]),
                 ("native-login", ["--smoke-login"]),
+                ("card", ["--smoke-demo", "--smoke-card"]),
+                ("classrooms", ["--smoke-demo", "--smoke-classrooms"]),
+                ("printing", ["--smoke-demo", "--smoke-printing"]),
+                ("reservations", ["--smoke-demo", "--smoke-reservations"]),
+                ("ic", ["--smoke-demo", "--smoke-ic"]),
+                ("cle", ["--smoke-demo", "--smoke-cle"]),
+                ("court", ["--smoke-demo", "--smoke-court"]),
+                ("blackboard-folded", ["--smoke-demo", "--smoke-study", "--smoke-blackboard", "--smoke-folded"]),
+                ("today-folded", ["--smoke-demo", "--smoke-folded"]),
             )
             for scene, arguments in scenes:
                 run("launch", "--terminate-running-process", uid, BUNDLE, *arguments)

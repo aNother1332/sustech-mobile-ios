@@ -24,9 +24,9 @@ enum DemoData {
             BlackboardCourse(id: "demo-cs", name: "程序设计基础")
         ], deadlines: [
             LearningDeadline(id: "demo-ddl-1", course: "线性代数", title: "习题集 04 · 示例任务",
-                             due: .now.addingTimeInterval(86_400), rawDue: "示例时间"),
+                             due: .now.addingTimeInterval(86_400), rawDue: "示例时间", courseID: "demo-math"),
             LearningDeadline(id: "demo-ddl-2", course: "程序设计基础", title: "实验报告 · 示例任务",
-                             due: .now.addingTimeInterval(3 * 86_400), rawDue: "示例时间")
+                             due: .now.addingTimeInterval(3 * 86_400), rawDue: "示例时间", courseID: "demo-cs")
         ])
     }
 }

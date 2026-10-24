@@ -78,3 +78,62 @@ import Testing
     #expect(value["status"].int == 1)
     #expect(try JSONDecoder().decode(WireValue.self, from: JSONEncoder().encode(value)) == value)
 }
+
+@Test func wireValuePreservesNumericSnowflakeIdentifiers() throws {
+    let value = try JSONDecoder().decode(WireValue.self, from: Data(#"{"id":1333325020650307585}"#.utf8))
+    #expect(value["id"].text == "1333325020650307585")
+    #expect(try JSONDecoder().decode(WireValue.self, from: JSONEncoder().encode(value)) == value)
+}
+
+@Test func classroomMultiPeriodEntryBlocksItsLastPeriod() throws {
+    let value = try JSONDecoder().decode(WireValue.self, from: Data(#"[{"KEY":"xq1_jc1","SKSJ":"【本】示例课程[1-16周][1-2节]"}]"#.utf8))
+    #expect(try ClassroomParser.entries(value)[0].overlaps(week: 8, weekday: 1, first: 2, last: 2))
+}
+
+private actor SessionRequestLog {
+    private var methods: [String: [String]] = [:]
+    func record(_ method: String, scenario: String) { methods[scenario, default: []].append(method) }
+    func all(_ scenario: String) -> [String] { methods[scenario] ?? [] }
+}
+private final class SessionProtocol: URLProtocol, @unchecked Sendable {
+    static let log = SessionRequestLog()
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        Task {
+            let scenario = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "scenario" }?.value ?? "reuse"
+            await Self.log.record(request.httpMethod ?? "GET", scenario: scenario)
+            var code = 200; var headers: [String: String] = [:]; var body = "service"
+            if request.url?.host == "cas.sustech.edu.cn" {
+                if scenario == "expired" { body = "<input name='execution' value='fixture'>" }
+                else { code = 302; headers["Location"] = scenario == "escape" ? "https://evil.example/?ticket=fixture" : "https://tis.sustech.edu.cn/cas?scenario=reuse&ticket=fixture" }
+            }
+            let response = HTTPURLResponse(url: request.url!, statusCode: code, httpVersion: "HTTP/1.1", headerFields: headers)!
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: Data(body.utf8)); client?.urlProtocolDidFinishLoading(self)
+        }
+    }
+    override func stopLoading() {}
+}
+
+@Test func sharedCASSessionIsExchangedWithoutResubmittingPassword() async throws {
+    let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [SessionProtocol.self]
+    _ = try await SessionConnector().connect(URL(string: "https://cas.sustech.edu.cn/cas/login?scenario=reuse")!, cookies: [], finalHost: "tis.sustech.edu.cn", configuration: config)
+    #expect(await SessionProtocol.log.all("reuse") == ["GET", "GET"])
+}
+
+@Test func expiredCASStopsWithoutPasswordRetry() async throws {
+    let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [SessionProtocol.self]
+    await #expect(throws: CampusError.signInRequired) {
+        _ = try await SessionConnector().connect(URL(string: "https://cas.sustech.edu.cn/cas/login?scenario=expired")!, cookies: [], finalHost: "tis.sustech.edu.cn", configuration: config)
+    }
+    #expect(await SessionProtocol.log.all("expired") == ["GET"])
+}
+
+@Test func serviceSessionExchangeRejectsExternalTicketRedirect() async throws {
+    let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [SessionProtocol.self]
+    await #expect(throws: CASFailure.redirect) {
+        _ = try await SessionConnector().connect(URL(string: "https://cas.sustech.edu.cn/cas/login?scenario=escape")!, cookies: [], finalHost: "tis.sustech.edu.cn", configuration: config)
+    }
+    #expect(await SessionProtocol.log.all("escape") == ["GET"])
+}

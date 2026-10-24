@@ -60,7 +60,7 @@ final class CampusStore {
     init() { restore() }
 
     var deadlines: [LearningDeadline] {
-        if mode == .demo { return blackboard?.deadlines ?? [] }
+        if mode == .demo { return (blackboard?.deadlines ?? []).filter { !hiddenCourses.contains($0.courseID) } }
         return courseDetails.filter { !hiddenCourses.contains($0.key) }.values.flatMap(\.tasks).sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }
     }
 

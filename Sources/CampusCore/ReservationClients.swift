@@ -29,8 +29,10 @@ public struct ICClient: Sendable {
         for group in groups.rows { for lab in group["labInfos"].rows { for room in lab["roomInfos"].rows {
             let id = room["devId"].text
             guard !id.isEmpty else { continue }
+            let lending = lab["roomInfos"].rows.count == 1 && room["devName"].text == lab["labName"].text
             result[id] = ReservationItem(id: id, title: room["devName"].text,
-                detail: lab["labName"].text + " · 当前已有安排 \(room["resvInfos"].rows.count) 项", raw: room)
+                detail: lab["labName"].text + " · 当前已有安排 \(room["resvInfos"].rows.count) 项" + (lending ? " · 设备外借请使用学校页面" : ""),
+                raw: room.replacing(["nativeBookable": .bool(!lending)]))
         } } }
         return result.values.sorted { $0.title < $1.title }
     }
@@ -44,11 +46,11 @@ public struct ICClient: Sendable {
     }
     public func book(room: ReservationItem, begin: Date, end: Date, title: String, members: [String]) async throws {
         guard end > begin, begin > .now else { throw ServiceFailure("请选择有效的未来预约时段。") }
-        guard room.raw["devId"].int != nil else { throw ServiceFailure("该条目不是可直接预约的研讨间。") }
-        let scope = try await call("/borrow/reserve/timeScope", query: ["beginDate": CampusClock.format(begin)])
+        guard room.raw["devId"].int != nil, room.raw["nativeBookable"] != .bool(false) else { throw ServiceFailure("该条目不是可直接预约的研讨间，请使用学校页面。") }
+        let scope = try await call("/borrow/reserve/timeScope", query: ["beginDate": CampusClock.format(begin, "yyyyMMdd")])
         if case .array(let windows) = scope, windows.isEmpty { throw ServiceFailure("学校未开放该日预约。") }
         let info = try await call("/auth/userInfo")
-        guard let me = info["accNo"].int else { throw CampusError.signInRequired }
+        guard let me = info["accNo"].int, me > 0 else { throw CampusError.signInRequired }
         var accounts: Set<Int> = [me]
         for sid in members {
             let rows = try await call("/account/getMembers", query: ["key": sid, "page": "1", "pageNum": "10"])
@@ -56,10 +58,13 @@ public struct ICClient: Sendable {
                   row["status"].int != 2, row["localstatus"].int != 2 else { throw ServiceFailure("未找到可用的同行成员，请核对输入的学号。") }
             accounts.insert(number)
         }
+        if let minimum = HTMLText.captures("([0-9]+)[-–~至][0-9]+人", in: room.title).first.flatMap({ Int($0[1]) }), minimum >= 3, accounts.count < 3 {
+            throw ServiceFailure("此房间至少需要预约人和两位同行成员，请补全成员学号。")
+        }
         _ = try await call("/reserve", payload: .object([
             "sysKind": .number(1), "appAccNo": .number(Double(me)), "memberKind": .number(accounts.count > 1 ? 2 : 1),
             "resvMember": .array(accounts.sorted().map { .number(Double($0)) }),
-            "resvBeginTime": .string(CampusClock.format(begin, "yyyy-MM-dd HH:mm:ss")), "resvEndTime": .string(CampusClock.format(end, "yyyy-MM-dd HH:mm:ss")),
+            "resvBeginTime": .string(CampusClock.format(begin, "yyyy-MM-dd HH:mm:00")), "resvEndTime": .string(CampusClock.format(end, "yyyy-MM-dd HH:mm:00")),
             "testName": .string(title.isEmpty ? "学习讨论" : title), "resvKind": .number(2), "resvProperty": .number(0),
             "appUrl": .string(""), "resvDev": .array([.number(Double(room.raw["devId"].int!))]), "memo": .string("")]))
     }
@@ -109,7 +114,8 @@ public struct CLEClient: Sendable {
             guard !id.isEmpty, let range = buckets.first(where: { $0["KS"].text == row["DJJK"].text })?["SJD"].text, !range.isEmpty else { return nil }
             let stamp = CampusClock.format(day) + " " + range
             let count = occupied.filter { $0["FWZY_ID"].text == row["WID"].text && $0["SKSJ"].text == stamp }.reduce(0) { $0 + ($1["times"].int ?? 0) }
-            let raw = row.replacing(["SKSJ": .string(stamp), "KCH": row["DJJK"], "PZ_ID": config["WID"], "occupied": .number(Double(count))])
+            let raw = row.replacing(["SKSJ": .string(stamp), "KCH": row["DJJK"], "PZ_ID": config["WID"], "occupied": .number(Double(count)),
+                "capacity": .number(Double(max(1, config["SJDXZRS"].int ?? 1))), "quota": .number(Double(max(1, config["ZDYYCS"].int ?? 3)))])
             return ReservationItem(id: id, title: row["JSXM"].text + " · " + row["FWLX_DISPLAY"].text,
                 detail: stamp + " · " + row["DD"].text + " · 已约 \(count)" + (row["SFXXYY"].text == "1" ? " · 仅线下" : ""), raw: raw)
         }
@@ -125,6 +131,12 @@ public struct CLEClient: Sendable {
     public func book(_ slot: ReservationItem, sid: String, name: String, note: String) async throws {
         guard !sid.isEmpty, !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, note.count <= 500 else { throw ServiceFailure("请先连接 CLE 身份，并填写 1–500 字预约说明。") }
         let row = slot.raw
+        guard let day = CampusClock.date(String(row["SKSJ"].text.prefix(10))) else { throw CampusError.invalidResponse("CLE 预约日期") }
+        let current = try await slots(day: day)
+        guard let fresh = current.first(where: { $0.id == slot.id }),
+              (fresh.raw["occupied"].int ?? 0) < (fresh.raw["capacity"].int ?? 1) else { throw ServiceFailure("该时段已满或发生变化，请刷新后重新选择。") }
+        let own = try await mine(sid: sid)
+        guard !own.contains(where: { $0.raw["SKSJ"].text == row["SKSJ"].text && !["4", "5"].contains($0.raw["YYZT"].text) }) else { throw ServiceFailure("你已有该时段预约，请勿重复提交。") }
         let guards = try await query("T_NKD_YYZX_FWZY_SJSZ_QUERY", params: ["WID": slot.id])
         guard let check = guards.first, check["SFXXYY"].text != "1", row["SFXXYY"].text != "1" else { throw ServiceFailure("该时段不可在线预约，请查看学校页面。") }
         var form = Dictionary(uniqueKeysWithValues: ["WID", "YYZT_DISPLAY", "YYSJ", "WJSCSJ", "BZ", "SCWJ", "LSYY_DISPLAY", "LSYY", "WFYXXTX", "YFYJSXXTX", "SFGLYQX_DISPLAY", "SFGLYQX"].map { ($0, "") })

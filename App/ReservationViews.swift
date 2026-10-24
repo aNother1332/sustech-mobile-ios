@@ -37,8 +37,12 @@ struct ICReservationView: View {
             }
             Section("房间") {
                 ForEach(rooms) { room in
-                    NavigationLink { ICBookingForm(room: room) } label: {
+                    if room.raw["nativeBookable"] == .bool(false) {
                         VStack(alignment: .leading) { Text(room.title); Text(room.detail).font(.caption).foregroundStyle(.secondary) }
+                    } else {
+                        NavigationLink { ICBookingForm(room: room) } label: {
+                            VStack(alignment: .leading) { Text(room.title); Text(room.detail).font(.caption).foregroundStyle(.secondary) }
+                        }
                     }
                 }
             }
@@ -97,11 +101,12 @@ private struct ICBookingForm: View {
     }
     private func submit() async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
+        let requestedBegin = begin, requestedEnd = end, requestedTitle = title
+        let requestedMembers = members.components(separatedBy: CharacterSet(charactersIn: ",， \n")).filter { !$0.isEmpty }
         do {
             try await store.sessions.connectIC()
             let http = await store.serviceHTTP(origin: SchoolService.rooms.portalURL); let api = ICClient(http: http)
-            let members = members.components(separatedBy: CharacterSet(charactersIn: ",， \n")).filter { !$0.isEmpty }
-            try await api.book(room: room, begin: begin, end: end, title: title, members: members)
+            try await api.book(room: room, begin: requestedBegin, end: requestedEnd, title: requestedTitle, members: requestedMembers)
             let orders = try await api.mine()
             message = orders.contains { $0.title.contains(room.title) || $0.raw["resvDevInfoList"].rows.contains { $0["devId"].text == room.id } } ? "学校已接受请求，我的预约中可见该房间，请核对具体时段。" : "学校已接受请求，但未能在我的预约中确认，请打开学校页面核对，勿重复提交。"
         } catch { message = "本次结果：\(error.localizedDescription) 若请求已发出，请先查看我的预约再重试。" }
@@ -162,7 +167,8 @@ struct CLEReservationView: View {
     }
     private func book(_ slot: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
-        do { let api = await client(); try await api.book(slot, sid: store.sessions.cleID, name: store.sessions.cleName, note: note)
+        let requestedNote = note
+        do { let api = await client(); try await api.book(slot, sid: store.sessions.cleID, name: store.sessions.cleName, note: requestedNote)
             orders = try await api.mine(sid: store.sessions.cleID)
             message = orders.contains { $0.raw["SJSZ_WID"].text == slot.id && $0.raw["YYZT"].text == "1" } ? "已在我的预约中确认。" : "请求已返回，但预约尚未回读确认，请先到学校页面核对。"
         } catch { message = "结果需核对：\(error.localizedDescription)" }

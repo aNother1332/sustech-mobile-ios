@@ -44,7 +44,12 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     func connectIfPossible(_ service: CASService) async {
         if let task = connecting[service] { await task.value; return }
         let task = Task { @MainActor in
-            do { try await connect(entry: service.entry) } catch { /* Actual API probe reports service failure. */ }
+            do {
+                var parts = URLComponents(url: CASPolicy.login, resolvingAgainstBaseURL: false)!
+                parts.queryItems = [URLQueryItem(name: "service", value: service.entry.absoluteString)]
+                guard let entry = parts.url else { throw CASFailure.redirect }
+                try await connect(entry: entry, finalHost: service.entry.host)
+            } catch { /* Actual API probe reports service failure. */ }
         }
         connecting[service] = task
         await task.value
@@ -105,10 +110,11 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
 
 private struct SavedCookie: Codable {
     let name: String; let value: String; let domain: String; let path: String
-    let expires: Date?; let secure: Bool
+    let expires: Date?; let secure: Bool; let httpOnly: Bool?
     init(_ cookie: HTTPCookie) {
         name = cookie.name; value = cookie.value; domain = cookie.domain; path = cookie.path
         expires = cookie.expiresDate; secure = cookie.isSecure
+        httpOnly = cookie.isHTTPOnly
     }
     var cookie: HTTPCookie? {
         let host = domain.trimmingCharacters(in: CharacterSet(charactersIn: "."))
@@ -116,6 +122,7 @@ private struct SavedCookie: Codable {
         var props: [HTTPCookiePropertyKey: Any] = [.name: name, .value: value, .domain: domain, .path: path,
             .secure: secure ? "TRUE" : "FALSE"]
         if let expires { props[.expires] = expires }
+        if httpOnly == true { props[HTTPCookiePropertyKey(rawValue: "HttpOnly")] = "TRUE" }
         return HTTPCookie(properties: props)
     }
 }

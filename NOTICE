@@ -15,3 +15,12 @@ Required Notice: Copyright dumixthestpd (https://github.com/dumixthestpd/sustech
 
 This project is not affiliated with or endorsed by Southern University of Science
 and Technology. School service records and policies remain authoritative.
+
+Additional protocol reference for manual sports reservations:
+  User-provided local project sustech-court-grabber, app/api_client.py and
+  the single-reservation payload fields in app/grabber.py.
+  The iOS implementation does not include its scheduled grabbing, automated
+  captcha solver, retry loops, local configuration, credentials or logs.
+
+Public campus bus data provider: SUSTech CRA, https://buseta.sustcra.com
+  No provider website JavaScript is bundled with this application.

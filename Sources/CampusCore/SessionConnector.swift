@@ -4,8 +4,8 @@ import Foundation
 /// only. This never retains or resubmits a password, nor repeats a business write.
 public struct SessionConnector: Sendable {
     public init() {}
-    public func connect(_ entry: URL, cookies: [HTTPCookie], finalHost: String? = nil) async throws -> [HTTPCookie] {
-        let configuration = URLSessionConfiguration.ephemeral
+    public func connect(_ entry: URL, cookies: [HTTPCookie], finalHost: String? = nil,
+                        configuration: URLSessionConfiguration = .ephemeral) async throws -> [HTTPCookie] {
         configuration.timeoutIntervalForRequest = 25
         configuration.urlCache = nil
         for cookie in cookies { configuration.httpCookieStorage?.setCookie(cookie) }

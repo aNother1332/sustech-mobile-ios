@@ -34,8 +34,8 @@ public struct PrintingClient: Sendable {
         }
     }
     public func delete(_ id: String) async throws {
-        guard let number = Double(id) else { throw CampusError.invalidResponse("打印任务 ID") }
-        _ = try Self.unwrap(await http.json("/api/client/PrintJob/Del", payload: .object(["dwJobId": .number(number), "dwOldJobId": .number(number)])))
+        guard let number = Int64(id) else { throw CampusError.invalidResponse("打印任务 ID") }
+        _ = try Self.unwrap(await http.json("/api/client/PrintJob/Del", payload: .object(["dwJobId": .integer(number), "dwOldJobId": .integer(number)])))
     }
     public func upload(pdf: Data, name: String, options: PrintOptions) async throws {
         guard pdf.starts(with: Data("%PDF-".utf8)), pdf.count <= 50 * 1024 * 1024 else { throw ServiceFailure("请选择 50 MB 以内的有效 PDF 文件。") }

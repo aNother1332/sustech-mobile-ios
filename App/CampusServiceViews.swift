@@ -275,13 +275,18 @@ struct PrintingView: View {
     private func upload() async {
         guard !busy, let pdf, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         var selected = options; if allPages { selected.first = 0; selected.last = 0 }
+        let name = filename
         let version = store.sessionRevision; let http = await store.serviceHTTP(.printing); let client = PrintingClient(http: http)
         do {
-            try await client.upload(pdf: pdf, name: filename, options: selected)
+            try await client.upload(pdf: pdf, name: name, options: selected)
             guard version == store.sessionRevision else { return }
             message = "平台已接受上传，正在核对队列。"
             jobs = try await client.jobs(); message = "平台已接受上传；请在队列核对文件后到打印机领取。"
-        } catch { message = "本次未能完整确认结果：\(error.localizedDescription) 请刷新队列核对后再决定是否重新提交。" }
+        } catch {
+            let reason = error.localizedDescription
+            if let value = try? await client.jobs(), version == store.sessionRevision { jobs = value }
+            message = "本次未能完整确认结果：\(reason) 已尝试刷新队列，请核对文件后再决定是否重新提交。"
+        }
         await store.absorb(http, revision: version)
     }
     private func remove(_ job: PrintJob) async {

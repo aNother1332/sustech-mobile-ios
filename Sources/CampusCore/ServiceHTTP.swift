@@ -1,11 +1,12 @@
 import Foundation
 
 public enum WireValue: Codable, Sendable, Equatable {
-    case object([String: WireValue]), array([WireValue]), string(String), number(Double), bool(Bool), null
+    case object([String: WireValue]), array([WireValue]), string(String), integer(Int64), number(Double), bool(Bool), null
     public init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
         if c.decodeNil() { self = .null }
         else if let value = try? c.decode(Bool.self) { self = .bool(value) }
+        else if let value = try? c.decode(Int64.self) { self = .integer(value) }
         else if let value = try? c.decode(Double.self) { self = .number(value) }
         else if let value = try? c.decode(String.self) { self = .string(value) }
         else if let value = try? c.decode([String: WireValue].self) { self = .object(value) }
@@ -18,6 +19,7 @@ public enum WireValue: Codable, Sendable, Equatable {
         case .array(let v): try c.encode(v)
         case .string(let v): try c.encode(v)
         case .number(let v): try c.encode(v)
+        case .integer(let v): try c.encode(v)
         case .bool(let v): try c.encode(v)
         case .null: try c.encodeNil()
         }
@@ -28,6 +30,7 @@ public enum WireValue: Codable, Sendable, Equatable {
     public var text: String {
         switch self {
         case .string(let v): v
+        case .integer(let v): String(v)
         case .number(let v): v.rounded() == v ? String(format: "%.0f", v) : String(v)
         case .bool(let v): v ? "true" : "false"
         default: ""
