@@ -1,0 +1,6 @@
+{"results":[
+  {"id":"_1_1","name":"示例作业","grading":{"due":"2026-10-25T15:59:00.000Z"}},
+  {"id":"_2_1","name":"示例测验","grading":{"due":"2026-10-26T23:59:00+08:00"}},
+  {"id":"_3_1","name":"没有截止时间","grading":{"due":null}},
+  {"id":"_4_1","name":"格式发生变化","grading":{"due":"由教师另行通知"}}
+],"paging":{"nextPage":"/learn/api/public/v1/courses/_1_1/gradebook/columns?offset=4"}}
