@@ -9,6 +9,8 @@ import WebKit
 final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     let websiteDataStore = WKWebsiteDataStore.default()
     private var restored = false
+    private var restoration: Task<Void, Never>?
+    private var restoring = false
     private var clearing = false
     private var revision = 0
     var cleID = ""
@@ -20,9 +22,24 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         websiteDataStore.httpCookieStore.add(self)
     }
     func restore() async {
+        if let task = restoration { await task.value; return }
         guard !restored else { return }
+        restoring = true
+        let task = Task<Void, Never> { @MainActor [weak self] in
+            guard let self, !Task.isCancelled else { return }
+            await self.restoreVault()
+        }
+        restoration = task
+        await task.value
+        restoration = nil; restoring = false
+        await save()
+    }
+    private func restoreVault() async {
         restored = true
         let version = revision
+        if let identity = CredentialVault.load([String: String].self, key: "cle-identity") {
+            cleID = identity["id"] ?? ""; cleName = identity["name"] ?? ""
+        }
         var item: CFTypeRef?
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: vault, kSecReturnData as String: true]
@@ -68,11 +85,17 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     }
     func clear() async {
         clearing = true; revision += 1; restored = true
-        cleID = ""; cleName = ""; CredentialVault.delete("court")
+        cleID = ""; cleName = ""; CredentialVault.delete("court"); CredentialVault.delete("cle-identity")
+        restoration?.cancel(); restoration = nil; restoring = false
         for task in connecting.values { task.cancel() }; connecting = [:]
         SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: vault] as CFDictionary)
         await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
         clearing = false
+    }
+    func setCLEIdentity(id: String, name: String) {
+        guard !clearing, !id.isEmpty else { return }
+        cleID = id; cleName = name
+        try? CredentialVault.save(["id": id, "name": name], key: "cle-identity")
     }
     func connectIC() async throws {
         let existing = await cookies()
@@ -90,7 +113,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         Task { @MainActor [weak self] in await self?.save() }
     }
     private func save() async {
-        guard restored, !clearing else { return }
+        guard restored, !clearing, !restoring else { return }
         let version = revision
         let cookies = await websiteDataStore.httpCookieStore.allCookies()
         guard revision == version, !clearing else { return }

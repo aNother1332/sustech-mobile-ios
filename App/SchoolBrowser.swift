@@ -106,7 +106,7 @@ private struct BrowserWebView: UIViewRepresentable {
             webView.evaluateJavaScript("JSON.stringify({id: String(window.userId || ''), name: String(window.userName || '')})") { [weak sessions] value, _ in
                 guard let text = value as? String, let data = text.data(using: .utf8),
                       let fields = try? JSONDecoder().decode([String: String].self, from: data), let id = fields["id"], !id.isEmpty else { return }
-                sessions?.cleID = id; sessions?.cleName = fields["name"] ?? ""
+                sessions?.setCLEIdentity(id: id, name: fields["name"] ?? "")
             }
         }
 

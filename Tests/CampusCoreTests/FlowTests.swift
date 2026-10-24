@@ -20,8 +20,8 @@ private class FixtureProtocol: URLProtocol, @unchecked Sendable {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
-        Task {
-            let scenario = type(of: self).scenario
+        let scenario = type(of: self).scenario
+        Task { @Sendable [self, scenario] in
             await Self.log.append(request, scenario: scenario)
             let url = request.url!
             var status = 200
