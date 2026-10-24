@@ -85,8 +85,8 @@ import Testing
     #expect(try JSONDecoder().decode(WireValue.self, from: JSONEncoder().encode(value)) == value)
 }
 
-@Test func classroomMultiPeriodEntryBlocksItsLastPeriod() throws {
-    let value = try JSONDecoder().decode(WireValue.self, from: Data(#"[{"KEY":"xq1_jc1","SKSJ":"【本】示例课程[1-16周][1-2节]"}]"#.utf8))
+@Test(arguments: ["[1-2节]", "第1-2节", "[J1-2]"]) func classroomMultiPeriodEntryBlocksItsLastPeriod(_ range: String) throws {
+    let value: WireValue = .array([.object(["KEY": .string("xq1_jc1"), "SKSJ": .string("【本】示例课程[1-16周]" + range)])])
     #expect(try ClassroomParser.entries(value)[0].overlaps(week: 8, weekday: 1, first: 2, last: 2))
 }
 
@@ -136,4 +136,63 @@ private final class SessionProtocol: URLProtocol, @unchecked Sendable {
         _ = try await SessionConnector().connect(URL(string: "https://cas.sustech.edu.cn/cas/login?scenario=escape")!, cookies: [], finalHost: "tis.sustech.edu.cn", configuration: config)
     }
     #expect(await SessionProtocol.log.all("escape") == ["GET"])
+}
+
+private actor BusinessRequestLog {
+    struct Entry: Sendable { let path: String; let queryKeys: Set<String> }
+    private var entries: [Entry] = []
+    func record(_ request: URLRequest) {
+        entries.append(Entry(path: request.url!.path, queryKeys: Set(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.map(\.name) ?? [])))
+    }
+    func all() -> [Entry] { entries }
+}
+private final class BusinessProtocol: URLProtocol, @unchecked Sendable {
+    static let log = BusinessRequestLog()
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        Task { @Sendable [self] in
+            await Self.log.record(request)
+            let path = request.url!.lastPathComponent
+            var code = 200
+            let data: WireValue
+            switch path {
+            case "getAppGroundPageByGymId": data = .object(["records": .array([.object(["id": .string("court"), "name": .string("示例运动场地")])]), "total": .number(1)])
+            case "getOrderTimeConfigList": data = .object(["configList": .array([.object(["date": .string("2099-01-01"), "timeBlockList": .array([.object(["time": .string("8:00"), "endTime": .string("9:00"), "status": .string("1")])])])])])
+            case "getUserInfoByUserid": data = .object(["id": .string("fictional-user"), "name": .string("示例用户")])
+            case "getGroundDetailByParam": data = .object(["gymId": .string("gym"), "gymName": .string("示例场馆"), "name": .string("示例场地"), "groundType": .string("0")])
+            case "isGymBlackByCustomerId": data = .bool(false)
+            case "getOrderPageListByParam": data = .object(["records": .array([]), "total": .number(0)])
+            case "saveOrder": code = 500; data = .null
+            default: data = .null
+            }
+            let value: WireValue = .object(["code": .number(200), "data": data])
+            let response = HTTPURLResponse(url: request.url!, statusCode: code, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "application/json"])!
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: try! JSONEncoder().encode(value)); client?.urlProtocolDidFinishLoading(self)
+        }
+    }
+    override func stopLoading() {}
+}
+
+@Test func sportsInventoryDoesNotFilterOutCourtsWithTypeParameter() async throws {
+    let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [BusinessProtocol.self]
+    let api = CourtClient(credentials: CourtCredentials(userID: "fixture", token: "fictional-token"),
+        http: ServiceHTTP(origin: URL(string: "https://reservation.sustech.edu.cn")!, configuration: config))
+    #expect(try await api.grounds(gym: "gym").count == 1)
+    let entries = await BusinessProtocol.log.all()
+    #expect(entries.filter { $0.path.hasSuffix("getAppGroundPageByGymId") }.allSatisfy { !$0.queryKeys.contains("type") })
+}
+
+@Test func failedManualCourtWriteIsNotAutomaticallyRetried() async throws {
+    let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [BusinessProtocol.self]
+    let api = CourtClient(credentials: CourtCredentials(userID: "fixture", token: "fictional-token"),
+        http: ServiceHTTP(origin: URL(string: "https://reservation.sustech.edu.cn")!, configuration: config))
+    let ground = ReservationItem(id: "court", title: "示例场地", detail: "", raw: .object([:]))
+    let slot = CourtSlot(day: "2099-01-01", start: "8:00", end: "9:00", status: "1")
+    await #expect(throws: CampusError.http(500)) {
+        try await api.book(ground: ground, slot: slot, captchaToken: "fictional-human-verified-token", phone: "00000000000", people: 1)
+    }
+    let entries = await BusinessProtocol.log.all()
+    #expect(entries.filter { $0.path.hasSuffix("saveOrder") }.count == 1)
 }

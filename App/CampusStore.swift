@@ -236,6 +236,7 @@ final class CampusStore {
         let version = generation
         courseLoading.insert(course.id)
         defer { if version == generation { courseLoading.remove(course.id) } }
+        await sessions.connectIfPossible(.blackboard)
         let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
@@ -259,6 +260,7 @@ final class CampusStore {
     func contents(course: String, parent: String?) async throws -> [BBContent] {
         guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
         let version = generation
+        await sessions.connectIfPossible(.blackboard)
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
@@ -275,6 +277,7 @@ final class CampusStore {
     func attachments(course: String, content: String) async throws -> [BBAttachment] {
         let version = generation
         guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
+        await sessions.connectIfPossible(.blackboard)
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
@@ -295,6 +298,7 @@ final class CampusStore {
         let version = generation
         downloading.insert(key)
         defer { if generation == version { downloading.remove(key) } }
+        await sessions.connectIfPossible(.blackboard)
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)

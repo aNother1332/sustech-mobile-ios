@@ -102,11 +102,21 @@ private struct BrowserWebView: UIViewRepresentable {
         init(state: BrowserState, sessions: SchoolSessions) { self.state = state; self.sessions = sessions }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            captureIdentity(webView, attempts: 20, epoch: sessions.epoch)
+        }
+        private func captureIdentity(_ webView: WKWebView, attempts: Int, epoch: Int) {
             guard webView.url?.host == "ehall.sustech.edu.cn" else { return }
-            webView.evaluateJavaScript("JSON.stringify({id: String(window.userId || ''), name: String(window.userName || '')})") { [weak sessions] value, _ in
-                guard let text = value as? String, let data = text.data(using: .utf8),
-                      let fields = try? JSONDecoder().decode([String: String].self, from: data), let id = fields["id"], !id.isEmpty else { return }
-                sessions?.setCLEIdentity(id: id, name: fields["name"] ?? "")
+            guard sessions.epoch == epoch else { return }
+            webView.evaluateJavaScript("JSON.stringify({id: String(window.userId || ''), name: String(window.userName || '')})") { [weak self, weak webView] value, _ in
+                if let text = value as? String, let data = text.data(using: .utf8),
+                   let fields = try? JSONDecoder().decode([String: String].self, from: data), let id = fields["id"], !id.isEmpty {
+                    self?.sessions.setCLEIdentity(id: id, name: fields["name"] ?? "", epoch: epoch)
+                } else if attempts > 0 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self, weak webView] in
+                        guard let webView else { return }
+                        self?.captureIdentity(webView, attempts: attempts - 1, epoch: epoch)
+                    }
+                }
             }
         }
 

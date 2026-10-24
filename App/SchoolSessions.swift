@@ -13,6 +13,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     private var restoring = false
     private var clearing = false
     private var revision = 0
+    var epoch: Int { revision }
     var cleID = ""
     var cleName = ""
     private var connecting: [CASService: Task<Void, Never>] = [:]
@@ -92,8 +93,8 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
         clearing = false
     }
-    func setCLEIdentity(id: String, name: String) {
-        guard !clearing, !id.isEmpty else { return }
+    func setCLEIdentity(id: String, name: String, epoch: Int) {
+        guard !clearing, !id.isEmpty, epoch == revision else { return }
         cleID = id; cleName = name
         try? CredentialVault.save(["id": id, "name": name], key: "cle-identity")
     }

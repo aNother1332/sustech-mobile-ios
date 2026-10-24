@@ -150,7 +150,7 @@ public struct CLEClient: Sendable {
     }
     public func cancel(_ item: ReservationItem) async throws {
         guard item.raw["YYZT"].text == "1", let day = CampusClock.date(String(item.raw["SKSJ"].text.prefix(10))),
-              day.timeIntervalSince(.now) >= 2 * 86400 else { throw ServiceFailure("该记录不符合线上取消条件，请联系语言中心核实。") }
+              day.timeIntervalSince(CampusClock.date(CampusClock.format(.now)) ?? .now) >= 2 * 86400 else { throw ServiceFailure("该记录不符合线上取消条件，请联系语言中心核实。") }
         let body = try JSONEncoder().encode(WireValue.object(["WID": .string(item.id), "YYZT": .number(4), "isAdminCancel": .bool(false)]))
         let value = try await http.json("/dxggyw/sys/yyzxyy/modules/wdyy/T_NKD_YYZX_XSYY_SAVE.do", form: ["T_NKD_YYZX_XSYY_SAVE": String(decoding: body, as: UTF8.self)])
         guard ["0", "200"].contains(value["code"].text) else { throw ServiceFailure("CLE 未确认取消成功，请刷新核对。") }

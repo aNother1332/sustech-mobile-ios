@@ -66,9 +66,9 @@ public enum ClassroomParser {
             }
             // Missing week information is treated conservatively as possibly occupied.
             // Borrower names and phone numbers are intentionally discarded.
-            let range = HTMLText.captures("\\[([0-9]+)-([0-9]+)节\\]", in: text).first
+            let range = HTMLText.captures("(?:第|\\[J?)([0-9]+)(?:-([0-9]+))?(?:节\\]?|\\])", in: text).first
             let first = range.flatMap { Int($0[1]) } ?? period
-            let last = range.flatMap { Int($0[2]) } ?? period
+            let last = range.flatMap { Int($0[2]) } ?? first
             guard first > 0, last >= first, last <= 30 else { throw CampusError.invalidResponse("教室节次范围") }
             return RoomOccupancy(id: "\(index)", weekday: weekday, period: first, lastPeriod: last, weeks: weeks,
                 kind: text.contains("借用") ? "教室借用" : "课程或其他安排")
