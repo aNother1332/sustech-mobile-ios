@@ -33,6 +33,8 @@ jobs:
           -derivedDataPath DerivedData-device ARCHS=arm64
           CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
           CODE_SIGN_IDENTITY='' build
+      - name: Launch iPhone and iPad simulator smoke scenes
+        run: python3 scripts/simulator_smoke.py
       - name: Package IPA for local re-signing
         run: >-
           python3 scripts/package_ipa.py

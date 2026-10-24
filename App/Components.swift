@@ -95,7 +95,7 @@ struct DeadlineRow: View {
             if let due = deadline.due {
                 Text(due.formatted(date: .abbreviated, time: .shortened)).font(.subheadline).foregroundStyle(Color.campusGreen)
             } else {
-                Text("时间待核对：\(deadline.rawDue)").font(.subheadline).foregroundStyle(.orange)
+                Text(deadline.rawDue.isEmpty ? "学校未提供截止日期" : "时间待核对：\(deadline.rawDue)").font(.subheadline).foregroundStyle(.orange)
             }
             Label(deadline.submission.label, systemImage: deadline.submission == .submitted ? "checkmark.circle" : "questionmark.circle")
                 .font(.caption).foregroundStyle(.secondary)

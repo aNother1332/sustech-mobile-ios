@@ -36,6 +36,10 @@ public enum CASPolicy {
     }
 
     public static func execution(in html: String) throws -> String {
+        if html.range(of: "name=[\"']g-recaptcha-response[\"']", options: [.regularExpression, .caseInsensitive]) != nil,
+           html.range(of: "slideVerify|captchaVerification|su-recaptcha", options: [.regularExpression, .caseInsensitive]) != nil {
+            throw CASFailure.challenge
+        }
         // Only an active challenge, not an empty/hidden captcha template.
         for tag in HTMLText.captures("(?i)<input\\b[^>]*>", in: html) {
             let attrs = HTMLText.attributes(tag[0])

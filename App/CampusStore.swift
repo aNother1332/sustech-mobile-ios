@@ -140,13 +140,17 @@ final class CampusStore {
 
     /// Opening an authenticated school page may switch identities. Start a new
     /// cache namespace before the user can log in there; do not merge old data.
-    func prepareSchoolBrowser(_ service: SchoolService) {
-        guard [.teaching, .blackboard].contains(service), !authenticating, !clearing, mode == .live else { return }
+    func prepareSchoolBrowser(_ service: SchoolService) async {
+        guard [.teaching, .blackboard].contains(service), !authenticating, !clearing else { return }
+        clearing = true
+        defer { clearing = false }
         generation += 1
+        mode = .live
         resetDisplayedData()
         owner = nil
         do { try repository.erase(); owner = "web-" + UUID().uuidString }
         catch { cacheMessage = "旧缓存未能清除，网页登录期间不保存新的离线数据。" }
+        await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
     }
 
     func refreshTeaching() async {

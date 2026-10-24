@@ -43,7 +43,7 @@ struct NativeLoginView: View {
                     if store.authenticating { Button("取消登录", role: .cancel) { loginTask?.cancel() } }
                 }
                 Section("学校网页登录备用") {
-                    Text("验证码或其他交互验证需要在学校页面完成。打开教务或 BB 网页会清除当前离线缓存，避免切换账号后数据混用；完成后返回手动同步。")
+                    Text("验证码或其他交互验证需要在学校页面完成。打开教务或 BB 登录网页会清除旧缓存与会话，避免账号混用；完成后返回手动同步。")
                         .font(.footnote).foregroundStyle(.secondary)
                     Button("教务完整网页登录") { portal = .teaching }
                     Button("Blackboard 完整网页登录") { portal = .blackboard }

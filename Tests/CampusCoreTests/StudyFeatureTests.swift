@@ -13,6 +13,12 @@ import Testing
     }
 }
 
+@Test func sliderChallengeIsDetectedEvenWhenResponseFieldIsHidden() {
+    #expect(throws: CASFailure.challenge) {
+        try CASPolicy.execution(in: "<input name='execution' value='safe'><input type='hidden' name='g-recaptcha-response'><div id='slideVerify'></div>")
+    }
+}
+
 @Test(arguments: ["https://cas.sustech.edu.cn.evil.example/login", "http://tis.sustech.edu.cn/cas", "https://bb.sustech.edu.cn/cas", "https://tis.sustech.edu.cn:444/cas", "https://user:secret@tis.sustech.edu.cn/cas"])
 func casRedirectsCannotLeakCredentialsOrTickets(_ raw: String) throws {
     #expect(throws: CASFailure.redirect) { try CASPolicy.redirect(raw, from: CASPolicy.login, service: .teaching) }

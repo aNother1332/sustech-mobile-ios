@@ -7,6 +7,7 @@ struct SchoolBrowser: View {
     @Environment(CampusStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var browserState = BrowserState()
+    @State private var ready = false
 
     var body: some View {
         NavigationStack {
@@ -16,7 +17,9 @@ struct SchoolBrowser: View {
                 if let failure = browserState.failure {
                     Text(failure).font(.callout).foregroundStyle(.orange).padding()
                 }
-                BrowserWebView(url: service.portalURL, dataStore: store.websiteDataStore, state: browserState)
+                if ready {
+                    BrowserWebView(url: service.portalURL, dataStore: store.websiteDataStore, state: browserState)
+                } else { ProgressView("正在准备学校页面…").frame(maxWidth: .infinity, maxHeight: .infinity) }
             }
             .navigationTitle(service.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -36,12 +39,12 @@ struct SchoolBrowser: View {
                         Spacer()
                         Button("放大", systemImage: "plus.magnifyingglass") { browserState.zoom = min(2, browserState.zoom + 0.15) }
                     }
-                    Text("完成学校登录后，返回应用手动同步。系统浏览器与应用会话不同；打开网页前会清除旧缓存。")
+                    Text("完成学校登录后，返回应用手动同步。系统浏览器与应用会话不同；教务/BB 登录网页打开前会清除旧缓存与会话。")
                     .font(.caption).foregroundStyle(.secondary)
                 }
                     .frame(maxWidth: .infinity).padding().background(.regularMaterial)
             }
-            .onAppear { store.prepareSchoolBrowser(service) }
+            .task { await store.prepareSchoolBrowser(service); ready = true }
         }
         .interactiveDismissDisabled(store.clearing)
     }
