@@ -1,4 +1,19 @@
-> **项目学习与致谢：** 本项目学习并参考了 [dumixthestpd/sustech-mobile](https://github.com/dumixthestpd/sustech-mobile) 与 [dumixthestpd/sustech_survival](https://github.com/dumixthestpd/sustech_survival) 的校园服务接口与业务实现，在此基础上以 Swift / SwiftUI 移植到 iPhone 和 iPad。感谢原作者的公开分享；上游许可与署名声明予以保留。
+<h1 align="center">致谢 · 本项目的学习与参考来源</h1>
+
+<p align="center"><strong>SUSTechMobile 的 iOS 移植建立在上游项目公开分享的校园服务研究与实现经验之上。</strong></p>
+
+<h2 align="center"><a href="https://github.com/dumixthestpd/sustech-mobile">sustech-mobile</a> &nbsp; · &nbsp; <a href="https://github.com/dumixthestpd/sustech_survival">sustech_survival</a></h2>
+
+<p align="center">原作者：<a href="https://github.com/dumixthestpd"><strong>dumixthestpd</strong></a><br>感谢原作者公开源码、整理校园接口，并分享校园工具的实现经验。</p>
+
+| 学习与参考项目 | 对本项目的帮助 |
+| --- | --- |
+| **[sustech-mobile](https://github.com/dumixthestpd/sustech-mobile)** | Android 校园事务聚合应用；本项目学习其功能设计、校园服务访问方式与业务流程，并以此作为逐步对齐 iOS 功能的参考。 |
+| **[sustech_survival](https://github.com/dumixthestpd/sustech_survival)** | 校园服务接口与流程资料；帮助本项目理解学校系统的认证方式、接口约定和数据含义。 |
+
+**本项目在学习上述项目的基础上，以 Swift / SwiftUI 编写 iPhone 与 iPad 移植实现。相关协议、字段解释与业务行为具有上游来源，语言重写不消除原项目的许可和署名义务。** 完整参考证据见 [接口来源记录](docs/FEATURE_EVIDENCE.md)，许可与署名见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。也感谢 [wormforce/sustech-cli](https://github.com/wormforce/sustech-cli) 提供的校园接口访问与数据解释参考。
+
+---
 
 <p align="center">
   <img src="App/Assets.xcassets/AppIcon.appiconset/Icon-iphone-60-3x.png" width="100" alt="SUSTechMobile 中央火炬图标">
