@@ -75,6 +75,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "1AC36A7B8DAC55C904558944";
 		};
+		"A2F188FEB37C6530842388D3" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "App/SUSTechApp.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"2592429E32775ECB06B63370" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A2F188FEB37C6530842388D3";
+		};
 		"608078FD14D176E374444115" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -104,16 +114,6 @@
 		"DC2CC9CFAA9FBC530A6C8D61" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "545234BA1B00B7FA3B07BEB4";
-		};
-		"A2F188FEB37C6530842388D3" = {
-			"isa" = "PBXFileReference";
-			"lastKnownFileType" = "sourcecode.swift";
-			"path" = "App/SUSTechApp.swift";
-			"sourceTree" = "SOURCE_ROOT";
-		};
-		"2592429E32775ECB06B63370" = {
-			"isa" = "PBXBuildFile";
-			"fileRef" = "A2F188FEB37C6530842388D3";
 		};
 		"A45E824A1C9C0C8D484A8351" = {
 			"isa" = "PBXFileReference";
@@ -150,10 +150,10 @@
 				"6A8BEBD1CF30924289ABD774",
 				"F9F4F14833AC4F61C58E3A66",
 				"1AC36A7B8DAC55C904558944",
+				"A2F188FEB37C6530842388D3",
 				"608078FD14D176E374444115",
 				"CB2049113C5162B79192C188",
 				"545234BA1B00B7FA3B07BEB4",
-				"A2F188FEB37C6530842388D3",
 				"A45E824A1C9C0C8D484A8351",
 				"0A3E27B8CA818264D75C8D81",
 			);
@@ -181,10 +181,10 @@
 				"A8CB723C90684AE54687DF4D",
 				"B82EBA1DD441978EC81BDA30",
 				"45769E6E5AFC808795854C66",
+				"2592429E32775ECB06B63370",
 				"AAC448F0D678CDE5DDFFD860",
 				"3434F0715A9FA8C326040A53",
 				"DC2CC9CFAA9FBC530A6C8D61",
-				"2592429E32775ECB06B63370",
 				"1107565D3B53DC9725B55D73",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";

@@ -103,4 +103,3 @@ public struct TISClient: Sendable {
         return TeachingSnapshot(semester: semester, week: week, meetings: meetings, exams: exams, warnings: warnings)
     }
 }
-

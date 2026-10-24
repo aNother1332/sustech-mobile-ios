@@ -67,4 +67,3 @@ public enum SchoolService: String, CaseIterable, Identifiable, Sendable {
         return URL(string: address)!
     }
 }
-

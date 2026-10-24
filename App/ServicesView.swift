@@ -45,4 +45,3 @@ struct ServicesView: View {
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
     }
 }
-

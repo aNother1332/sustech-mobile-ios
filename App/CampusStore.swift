@@ -116,4 +116,3 @@ final class CampusStore {
         return host == "sustech.edu.cn" || host.hasSuffix(".sustech.edu.cn")
     }
 }
-

@@ -21,4 +21,3 @@ public enum CampusError: Error, LocalizedError, Equatable, Sendable {
         }
     }
 }
-

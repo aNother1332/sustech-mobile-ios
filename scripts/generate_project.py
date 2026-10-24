@@ -37,7 +37,9 @@ def generate() -> None:
         return identity
 
     sources, resources, references = [], [], []
-    for path in sorted((ROOT / "App").rglob("*")):
+    # Path ordering on Windows is case-insensitive; use a stable string key so
+    # the checked-in project is byte-identical on Windows and macOS.
+    for path in sorted((ROOT / "App").rglob("*"), key=lambda p: p.relative_to(ROOT).as_posix()):
         if not path.is_file():
             continue
         relative = path.relative_to(ROOT).as_posix()
@@ -103,7 +105,7 @@ def generate() -> None:
     output = ROOT / "SUSTech.xcodeproj"
     output.mkdir(exist_ok=True)
     document = {"archiveVersion": "1", "classes": {}, "objectVersion": "56", "objects": objects, "rootObject": project}
-    (output / "project.pbxproj").write_text("// !$*UTF8*$!\n" + serialize(document) + "\n", encoding="utf-8")
+    (output / "project.pbxproj").write_text("// !$*UTF8*$!\n" + serialize(document) + "\n", encoding="utf-8", newline="\n")
 
     scheme = ET.Element("Scheme", LastUpgradeVersion="2600", version="1.3")
     build = ET.SubElement(scheme, "BuildAction", parallelizeBuildables="YES", buildImplicitDependencies="YES")
@@ -121,10 +123,10 @@ def generate() -> None:
     ET.indent(scheme)
     schemes = output / "xcshareddata" / "xcschemes"
     schemes.mkdir(parents=True, exist_ok=True)
-    ET.ElementTree(scheme).write(schemes / "SUSTech.xcscheme", encoding="utf-8", xml_declaration=True)
+    with (schemes / "SUSTech.xcscheme").open("wb") as handle:
+        ET.ElementTree(scheme).write(handle, encoding="utf-8", xml_declaration=True)
     print(f"Generated {output.name}: {len(sources)} Swift files, {len(resources)} resources.")
 
 
 if __name__ == "__main__":
     generate()
-

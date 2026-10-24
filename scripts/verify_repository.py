@@ -80,4 +80,3 @@ if __name__ == "__main__":
     if arguments.syntax:
         verify_syntax()
     print("NOTE: Swift typechecking, tests and iOS builds must run with a Swift/Xcode toolchain.")
-

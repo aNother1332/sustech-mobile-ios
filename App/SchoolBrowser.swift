@@ -109,4 +109,3 @@ private struct BrowserWebView: UIViewRepresentable {
         }
     }
 }
-

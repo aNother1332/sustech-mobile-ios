@@ -110,4 +110,3 @@ struct StudyView: View {
         }
     }
 }
-

@@ -96,4 +96,3 @@ if __name__ == "__main__":
     parser.add_argument("--commit", default="local")
     args = parser.parse_args()
     print(json.dumps(package(args.app, args.output, args.commit), ensure_ascii=False, indent=2))
-

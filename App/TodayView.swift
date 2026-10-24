@@ -94,4 +94,3 @@ struct TodayView: View {
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
     }
 }
-
