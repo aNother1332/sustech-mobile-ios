@@ -1,69 +1,175 @@
-# SUSTechMobile — iPhone / iPad
+> **项目学习与致谢：** 本项目学习并参考了 [dumixthestpd/sustech-mobile](https://github.com/dumixthestpd/sustech-mobile) 与 [dumixthestpd/sustech_survival](https://github.com/dumixthestpd/sustech_survival) 的校园服务接口与业务实现，在此基础上以 Swift / SwiftUI 移植到 iPhone 和 iPad。感谢原作者的公开分享；上游许可与署名声明予以保留。
 
-南方科技大学校园事务聚合应用的 iOS 开发起点。目标是在原生 iOS 上逐步对齐
-`dumixthestpd/sustech-mobile`，并加入学习待办、课件、日历、排课等能力。
-非学校官方产品，按非商业用途开发。名称为工作名。
+<p align="center">
+  <img src="App/Assets.xcassets/AppIcon.appiconset/Icon-iphone-60-3x.png" width="100" alt="SUSTechMobile 中央火炬图标">
+</p>
 
-## 当前交付状态
+# SUSTechMobile · iPhone / iPad
 
-已安装的 0.1.0 用户试用版验证了 Windows 签名安装路线，用户报告 CAS 网页显示不全。
-当前源码为 **0.2.0**，已实现前三批范围，最终云端验证已通过：34 项 Swift 测试、7 项打包测试、iPhone/iPad 模拟器运行截图及 arm64 真机目标编译。应用已改名为 SUSTechMobile，并加入中央火炬图标。最终 IPA 位于 `D:/Altstore/App/SUSTechMobile-0.2.0/SUSTechMobile-unsigned.ipa`；真实学校账号仍需真机验收。
+用 Swift 与 SwiftUI 编写的南方科技大学校园事务聚合应用。把课表、考试、成绩和 Blackboard 学习信息放到 iPhone 与 iPad 上，并集中提供常用校园服务入口。
 
-| 模块 | 0.2.0 源码实现 |
-| --- | --- |
-| 学校账号 | 原生 CAS 表单、受限跳转、教务/BB 分项验证，验证码官方网页备用 |
-| 课表与考试 | 全学期课表、切周、学校节次时刻、当前周回退、考试 |
-| 成绩 | 分页读取、分学期筛选、明确标注的 GPA 记录试算 |
-| BB | 按课程读取任务和本人提交状态、公告、内容树及附件 |
-| 本机离线 | 受保护缓存、最近同步时间、课件下载/预览/分享/删除 |
-| 其他办事 | 保留校园卡、图书馆、打印、预约等官方网页入口 |
+**非学校官方产品，按非商业用途开发。** 仓库名称为 `sustech-mobile-ios`，安装后的软件名称为 **SUSTechMobile**。最低支持 **iOS / iPadOS 17**。
 
-学校账号和实际数据仍需用户在 iPhone/iPad 验收，不能将构建通过解释为全部校园服务已可用。
-详细使用路径、已知边界与验收项目见 [0.2.0 说明](docs/RELEASE_0_2.md)。
-原生密码不保存，不设置聚合服务器，不实现自动重试密码或真实作业提交。
+[界面截图](#界面截图) · [当前功能](#当前功能) · [构建与安装](#构建与安装) · [功能规划](docs/FEATURE_ROADMAP.md) · [接口来源](docs/FEATURE_EVIDENCE.md)
 
-## 目录
+## 当前状态
 
-```text
-App/                       SwiftUI 界面、WebKit 登录、应用状态
-Sources/CampusCore/        独立 Swift 包：数据模型、TIS / BB 读取、错误处理
-Tests/CampusCoreTests/     Swift Testing 与虚构接口样例
-Config/Info.plist          iOS 配置，最低 iOS / iPadOS 17
-SUSTech.xcodeproj/         已生成的 Xcode 工程与共享 scheme
-scripts/                  跨平台工程生成与检查
-docs/                     已确认需求、阶段计划、接口来源、真机验收清单
-.github/workflows/ios.yml  手动触发的云端测试、模拟器检查、真机 IPA 构建
-```
+当前功能版本为 **0.2.0 试用版**。此前交付已通过 34 项 Swift 测试、7 项 IPA 打包测试、iPhone/iPad 模拟器启动和 arm64 真机目标编译。
 
-## Windows 上检查
+**真实校园账号下的 CAS、教务、BB 和课件下载仍待逐项验收。** 截图与编译通过不代表学校接口均已验证可用。0.1.0 已验证过 Windows 签名安装路线；0.2.0 的安装仍可能遇到签名工具或 Apple 开发证书申请问题。
 
-需要 Python 3.10+：
+## 当前功能
 
-```powershell
-python scripts/verify_repository.py
-```
+| 模块 | 已实现的能力 | 使用边界 |
+| --- | --- | --- |
+| 今天 | 汇总课程、考试与已同步课程的学习任务，显示连接状态 | 学校服务模式需先登录和同步；首页不会自动扫描所有 BB 课程历史 |
+| 学校登录 | 原生 CAS 账号密码表单；教务与 BB 分别验证；网页登录备用 | 不保存密码，不自动重试错误密码；验证码等交互交回学校网页 |
+| 课表 | 全学期课表、教学周切换、学校返回的节次时刻、本机缓存 | 全学期接口失败时回退到当前周；不猜测调休、未知周次或上课时间 |
+| 考试 | 课程、日期、时间、地点和座位信息 | 以学校实际返回结果和最新通知为准 |
+| 成绩 | 分页读取、学期筛选、学分与单条成绩展示、GPA 记录试算 | 试算不合并重修或替代课程，不代表学校官方总 GPA |
+| Blackboard | 课程列表；按课程读取任务、本人提交状态、公告与内容目录 | 未确认的状态显示未知；当前不提交作业 |
+| 课件与离线 | 附件下载、Quick Look 预览、系统分享、文件删除；同步时间与缓存提示 | 附件支持范围有限；外部链接和特殊内容需到学校页面核对 |
+| 办事入口 | 教务、BB、校园卡、打印、图书馆、IC 研讨间、场馆预约、语言辅导、国际交流、教师名录 | 目前主要提供官方网页入口；余额、预约、打印等原生流程尚未完成 |
+| iPad | 宽屏侧栏与详情布局 | 真机旋转、分屏和完整辅助功能仍待验收 |
+| 演示模式 | 不登录学校账号即可浏览示例课程、考试、任务与页面结构 | 示例为虚构数据，部分页面会显示尚未同步的空状态 |
 
-可选语法与 Xcode 工程结构解析（通过 uv 的隔离环境安装小型检查依赖）：
+详细变更与使用步骤见 [0.2.0 版本说明](docs/RELEASE_0_2.md)，验证记录见 [构建验收记录](docs/BUILD_VALIDATION.md)。
 
-```powershell
-uv run --with tree-sitter --with tree-sitter-swift --with openstep-parser python scripts/verify_repository.py --syntax
-```
+## 界面截图
 
-这些检查不能替代 Swift 编译和 iOS 运行。修改或增加 App 源文件、资源后：
+以下均为云端 iOS 模拟器中实际运行本项目得到的截图，使用演示数据或空登录表单，**不含真实学生账号、成绩或课程记录**。每组左侧为 iPhone，右侧为 iPad；点击图片可查看原图。截图展示当前界面，包括尚未同步的空状态，不用概念图代替已实现页面。
 
-```powershell
-python scripts/generate_project.py
-```
+### 今天
 
-没有第三方 iOS 包依赖，也没有 XcodeGen 依赖。
+课程与学习任务汇总。
 
-## 在借用或云端 Mac 上构建
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-today.png" width="260" alt="iPhone 今天"></td>
+    <td><img src="docs/screenshots/iPad-today.png" width="520" alt="iPad 今天"></td>
+  </tr>
+</table>
 
-使用 **Xcode 26.0+**。iPhone / iPad 最低系统版本为 **17.0**，可后续按设备调整。
+### 课表
 
-1. 将整个目录复制或检出到 Mac，包括根目录的 `Package.swift`。
-2. 打开 `SUSTech.xcodeproj`，选择 `SUSTech` scheme 和 iPhone / iPad 模拟器。
-3. 先运行核心测试，再构建应用：
+演示课表与课程安排。
+
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-timetable.png" width="260" alt="iPhone 课表"></td>
+    <td><img src="docs/screenshots/iPad-timetable.png" width="520" alt="iPad 课表"></td>
+  </tr>
+</table>
+
+### 考试
+
+示例考试的时间、地点与座位信息。
+
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-exams.png" width="260" alt="iPhone 考试"></td>
+    <td><img src="docs/screenshots/iPad-exams.png" width="520" alt="iPad 考试"></td>
+  </tr>
+</table>
+
+### 成绩
+
+演示模式尚无成绩样例，截图展示同步前空状态；真实成绩需登录后读取。
+
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-grades.png" width="260" alt="iPhone 成绩"></td>
+    <td><img src="docs/screenshots/iPad-grades.png" width="520" alt="iPad 成绩"></td>
+  </tr>
+</table>
+
+### Blackboard
+
+演示课程列表及离线文件入口；具体课程任务、公告与课件需读取后查看。
+
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-blackboard.png" width="260" alt="iPhone Blackboard"></td>
+    <td><img src="docs/screenshots/iPad-blackboard.png" width="520" alt="iPad Blackboard"></td>
+  </tr>
+</table>
+
+### 办事
+
+常用学校服务入口，页面明确标注尚未完成的原生能力。
+
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-services.png" width="260" alt="iPhone 办事"></td>
+    <td><img src="docs/screenshots/iPad-services.png" width="520" alt="iPad 办事"></td>
+  </tr>
+</table>
+
+### 我的
+
+数据模式、登录与连接管理。
+
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-account.png" width="260" alt="iPhone 我的"></td>
+    <td><img src="docs/screenshots/iPad-account.png" width="520" alt="iPad 我的"></td>
+  </tr>
+</table>
+
+### 原生登录
+
+空白 CAS 登录表单；不在截图中输入真实凭据。
+
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-native-login.png" width="260" alt="iPhone 原生登录"></td>
+    <td><img src="docs/screenshots/iPad-native-login.png" width="520" alt="iPad 原生登录"></td>
+  </tr>
+</table>
+
+### 桌面图标
+
+中央火炬图案与 SUSTechMobile 软件名称。
+
+<table>
+  <tr>
+    <th>iPhone</th><th>iPad</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-home.png" width="260" alt="iPhone 桌面图标"></td>
+    <td><img src="docs/screenshots/iPad-home.png" width="520" alt="iPad 桌面图标"></td>
+  </tr>
+</table>
+
+## 构建与安装
+
+需要 Xcode 26.0+ 编译，应用运行最低要求 iOS / iPadOS 17。没有第三方 iOS 包依赖，不需要 XcodeGen。
+
+### 使用 Mac 构建
 
 ```sh
 swift test
@@ -72,46 +178,76 @@ xcodebuild -project SUSTech.xcodeproj -scheme SUSTech \
   -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO build
 ```
 
-模拟器构建不要求 Apple 开发者账号，也不产出可安装到真机的 IPA。
-本工程不包含个人 Team ID、证书、签名文件或自动上传配置。
+真机运行需要使用自己的 Apple 开发签名配置。仓库不包含个人证书、私钥、Team ID 或描述文件。
 
-真机：在 Xcode 的 Signing & Capabilities 里选择本人的 Team，并将 bundle identifier
-改为自己可用的标识，再选连接的设备运行。免费的 Personal Team 有签名和能力限制；
-远程 Mac 构建也不会自动解决 iPhone 安装。TestFlight 需要付费开发者计划。
-云端构建使用自己的私有 GitHub 仓库，不上传账号、证书或签名资料。
+### 使用 Windows 与云端构建
 
-## 没有 Mac：云端构建与 Windows 侧载
+无需拥有本地 Mac：可使用 GitHub Actions 的 macOS runner 编译，再由 Windows 侧载工具在本地签名安装。
 
-已配置 **Build iPhone and iPad IPA** 手动工作流：核心测试、模拟器构建、
-arm64 真机构建、平台检查、IPA 打包和产物上传。没有 push / PR 自动触发，
-单次最多 20 分钟，产物保留 7 天。
+1. Fork 本仓库，在自己的仓库中启用 Actions。
+2. 手动运行 **Build iPhone and iPad IPA** 工作流。
+3. 等待成功，下载 `SUSTech-iPhone-iPad-数字` 构建产物。
+4. 解压后找到 `SUSTechMobile-unsigned.ipa`，核对同目录的 SHA-256 校验文件。
+5. 使用适用的侧载工具，以自己的 Apple 账号在本地重新签名并安装。
 
-成功后下载 `SUSTech-iPhone-iPad-数字` 产物，解压并找到 `SUSTechMobile-unsigned.ipa`。
-这是供 AltStore 等本地工具重新签名的真机包，不可直接点开安装。
-工作流不需要 Apple 开发者账号、证书、校园账号或 GitHub Secrets。
+IPA 是 **arm64 真机未签名包**，不能直接从文件管理器点击安装。GitHub Actions 产物默认保留 7 天，下载通常需要登录 GitHub。工作流手动触发，不使用 Apple 或校园账号凭据。免费 Apple 账号的签名有效期、设备限制与证书限制仍适用；TestFlight 需要另行配置付费开发者计划。
 
-Windows 安装、免费账号签名限制和续签方法见 [侧载教程](docs/WINDOWS_SIDELOAD.md)。
-首次完整云编译与真实设备安装的结果，以实际运行和设备验收记录为准。
+当前不提供 App Store 或 TestFlight 下载。Windows 安装背景及历史排障记录见 [侧载说明](docs/WINDOWS_SIDELOAD.md)；其中本地修补版 iLoader 的路径属于维护者环境，不是公开下载地址或通用安装依赖。
 
-## 第一轮使用路径
+### Windows 上的源码检查
 
-1. 在“我的”切换到演示模式，检查 iPhone / iPad 布局。
-2. 切回学校服务模式。分别打开教务和 BB 的学校页面，由用户本人登录。
-3. 关闭学校页面，手动同步对应服务；看到页面不意味着原生会话已验证。
-4. 核对课表、考试、课程和截止日期，查看所有部分失败提示。
-5. 可清除本应用内的网页会话及内存数据，重新测试登录。
+```powershell
+python scripts/verify_repository.py
+python -m unittest discover -s scripts/tests -v
+```
 
-浏览器入口与内嵌 WebKit 不共享同一套会话。跨站支付、第三方跳转尚未验证；
-当前仅允许学校 HTTPS 顶层导航，其他跳转明确拦截，可改用系统浏览器入口。
+可选 Swift 语法和工程结构检查：
 
-## 继续开发
+```powershell
+uv run --with tree-sitter --with tree-sitter-swift --with openstep-parser python scripts/verify_repository.py --syntax
+```
 
-以 [需求与阶段计划](docs/PRODUCT.md)、[接口来源](docs/INTERFACES.md) 和
-[设备验收清单](docs/DEVICE_TESTING.md) 为准。先验证鉴权与首批只读流程，
-再补齐 Android 功能和已认可的新增功能。真实校园账号只在设备上的学校页面输入。
+这些检查不能替代 Swift 编译或真机测试。新增源文件或资源后运行 `python scripts/generate_project.py`。
 
-## 许可
+## 隐私与会话
 
-项目按非商业方向开发，上游协议与业务实现参考采用 PolyForm Noncommercial 1.0.0。
-保留完整 [LICENSE](LICENSE)、[NOTICE](NOTICE) 及应用内上游声明。
-这里没有复制学校品牌图标、上游截图或教师个人数据。
+- 校园认证由客户端直接连接学校 HTTPS 服务，不设置代收校园密码的聚合服务器。
+- 原生登录密码不保存，提交后清空输入框；网页登录由 WebKit 管理会话。
+- 课表、成绩、课程信息和已下载文件可缓存在本机，界面标明同步状态与时间。
+- 切换账号、退出和清理流程会处理对应缓存与会话，防止混用不同账号的数据。
+- 请勿在 Issue、日志或截图中提交密码、验证码、Cookie、学号和真实成绩。
+
+## 实现与上游来源
+
+本项目是基于上游接口协议、字段含义与业务行为编写的 **Swift / SwiftUI 移植实现**，并非直接运行 Android 的 Kotlin 界面。CAS 登录、课表周次解析、BB 提交状态与 GPA 参考映射等有具体上游依据。
+
+感谢以下项目：
+
+| 项目 | 参考内容 |
+| --- | --- |
+| [dumixthestpd/sustech-mobile](https://github.com/dumixthestpd/sustech-mobile) | Android 功能范围、校园服务协议及业务流程 |
+| [wormforce/sustech-cli](https://github.com/wormforce/sustech-cli) | 校园接口访问方式与数据解释 |
+| [dumixthestpd/sustech_survival](https://github.com/dumixthestpd/sustech_survival) | 校园服务接口说明与流程研究 |
+
+具体源码版本和协议证据见 [FEATURE_EVIDENCE.md](docs/FEATURE_EVIDENCE.md)。语言重写不消除上游许可与署名义务；完整条款与声明见 [LICENSE](LICENSE)、[NOTICE](NOTICE)。
+
+图标从学校官方标识的矢量文件提取中央火炬，去除外围文字与圆环，采用深青背景。校徽及相关标识权利归南方科技大学；来源与生成方式见 [图标来源](Design/Branding/README.md)。本项目不代表学校官方。
+
+## 开发路线与反馈
+
+后续目标是逐步对齐 Android 版本，并在确认接口与实际需求后扩展原生打印、图书馆、校园卡和预约等功能，以及日历、提醒等学习辅助能力。**规划不等于已实现承诺。** 参见 [功能路线图](docs/FEATURE_ROADMAP.md) 与 [设备验收清单](docs/DEVICE_TESTING.md)。
+
+欢迎通过 [Issues](https://github.com/aNother1332/sustech-mobile-ios/issues) 报告问题。请附系统版本、应用版本、操作步骤及脱敏后的错误信息。
+
+```text
+App/                       SwiftUI 界面、WebKit 会话与应用状态
+Sources/CampusCore/        独立 Swift 包：CAS、TIS、BB、模型与解析
+Tests/CampusCoreTests/     Swift Testing 与虚构接口样例
+Config/Info.plist          应用配置
+scripts/                   工程生成、检查、截图与 IPA 打包
+Design/Branding/            图标来源及生成资源
+docs/                      截图、功能规划、协议证据与验收记录
+.github/workflows/ios.yml   手动云端构建工作流
+```
+
+维护流程见 [版本交付与本地清理](docs/RELEASE_WORKFLOW.md)。部分文档保留早期开发、个人安装路径与历史构建记录，请以 README 的当前状态为准。

@@ -2,7 +2,7 @@
 
 - 应用名称：SUSTechMobile；中央火炬图标，深青背景，无外围文字和圆环。
 - 源码提交：`5e762f911b87300ea5dd0f5fe54bb771b7074871`。
-- 成功构建：https://github.com/aNother1332/sustech-apple/actions/runs/40110677869
+- 成功构建：https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40110677869
 - 34 项 Swift 测试通过；7 项 IPA 打包测试通过。
 - iPhone/iPad 模拟器和 arm64 真机目标编译通过。
 - iPhone/iPad 模拟器实际启动、演示首页、原生登录页与桌面截图完成并人工查看；名称、图标和空表单显示正常。
@@ -19,13 +19,13 @@
 
 # 云构建验收记录
 
-日期：2026-10-24。仓库为私有，查看运行或下载产物需要登录有权限的 GitHub 账号。
+日期：2026-10-24。仓库现已公开；以下保留历史构建验收记录，下载 Actions 产物通常需要登录 GitHub。
 
-- 仓库：[aNother1332/sustech-apple](https://github.com/aNother1332/sustech-apple)
-- 成功运行：[40096253259](https://github.com/aNother1332/sustech-apple/actions/runs/40096253259)
+- 仓库：[aNother1332/sustech-mobile-ios](https://github.com/aNother1332/sustech-mobile-ios)
+- 成功运行：[40096253259](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40096253259)
 - 代码提交：`0fc4d4f`（异步 WebKit 导航代理修复）
 - 环境：GitHub macOS runner，Xcode 26.0.1。
-- 下载：[SUSTech-iPhone-iPad-3](https://github.com/aNother1332/sustech-apple/actions/runs/40096253259/artifacts/12561142003)
+- 下载：[SUSTech-iPhone-iPad-3](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40096253259/artifacts/12561142003)
 - 云端产物保留 7 天，本地下载副本不受该保留期影响。
 
 ## 通过的检查
