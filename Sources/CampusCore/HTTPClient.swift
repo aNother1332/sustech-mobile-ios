@@ -4,7 +4,7 @@ import FoundationNetworking
 #endif
 
 // Stateless delegate: no redirect can carry school credentials to a new origin.
-private final class RedirectBlocker: NSObject, URLSessionTaskDelegate {
+final class RedirectBlocker: NSObject, URLSessionTaskDelegate {
     func urlSession(_ session: URLSession, task: URLSessionTask,
                     willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest,
@@ -17,9 +17,8 @@ public struct CampusHTTPClient: Sendable {
     private let session: URLSession
     public let origin: URL
 
-    public init(origin: URL, cookies: [HTTPCookie] = []) {
+    public init(origin: URL, cookies: [HTTPCookie] = [], configuration: URLSessionConfiguration = .ephemeral) {
         self.origin = origin
-        let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 25
         configuration.timeoutIntervalForResource = 60
         configuration.urlCache = nil
@@ -32,6 +31,49 @@ public struct CampusHTTPClient: Sendable {
 
     public func cookies() -> [HTTPCookie] {
         session.configuration.httpCookieStorage?.cookies ?? []
+    }
+
+    /// Download to a temporary file, checking redirects one at a time. The caller
+    /// owns deletion/moving. HTML login responses never become offline documents.
+    public func download(path: String) async throws -> URL {
+        var next = try Self.resolve(path: path, origin: origin)
+        var visited = Set<URL>()
+        for _ in 0..<6 {
+            guard visited.insert(next).inserted else { throw CampusError.invalidResponse("文件下载跳转") }
+            var request = URLRequest(url: next)
+            request.setValue(CASPolicy.userAgent, forHTTPHeaderField: "User-Agent")
+            request.setValue(origin.absoluteString, forHTTPHeaderField: "Referer")
+            let (temporary, response) = try await session.download(for: request)
+            guard let response = response as? HTTPURLResponse else {
+                try? FileManager.default.removeItem(at: temporary)
+                throw CampusError.invalidResponse("文件下载")
+            }
+            do {
+                if (300..<400).contains(response.statusCode) {
+                    guard let location = response.value(forHTTPHeaderField: "Location"),
+                          let target = URL(string: location, relativeTo: next)?.absoluteURL,
+                          target.scheme == origin.scheme, target.host == origin.host,
+                          target.port == origin.port, target.user == nil, target.password == nil else { throw CampusError.unsafeURL }
+                    try? FileManager.default.removeItem(at: temporary)
+                    next = target
+                    continue
+                }
+                let file = try FileHandle(forReadingFrom: temporary)
+                let prefix = try file.read(upToCount: 512) ?? Data()
+                try file.close()
+                try Self.validate(status: response.statusCode, data: prefix)
+                let size = (try FileManager.default.attributesOfItem(atPath: temporary.path)[.size] as? NSNumber)?.int64Value ?? 0
+                guard size > 0, size <= 200 * 1024 * 1024 else { throw CampusError.invalidResponse("文件大小（单文件上限 200 MB）") }
+                let type = response.mimeType?.lowercased() ?? ""
+                guard !type.contains("html"), !type.contains("json") else { throw CampusError.unexpectedHTML }
+                try Task.checkCancellation()
+                return temporary
+            } catch {
+                try? FileManager.default.removeItem(at: temporary)
+                throw error
+            }
+        }
+        throw CampusError.invalidResponse("文件下载跳转")
     }
 
     public func data(path: String, form: [String: String]? = nil, json: Data? = nil) async throws -> Data {

@@ -39,8 +39,13 @@ struct ConnectionNotice: View {
         case .loading:
             ProgressView("正在读取学校服务…")
         case .failed(let message):
-            Label(message + " 如仍显示数据，则为本次运行中上次成功读取的结果。", systemImage: "exclamationmark.triangle")
+            Label(message + " 如仍显示数据，则为最近一次成功同步的缓存，请留意更新时间。", systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.orange)
+        case .cached(let date):
+            VStack(alignment: .leading, spacing: 4) {
+                Label("本机缓存 · 尚未验证当前会话", systemImage: "externaldrive").foregroundStyle(.secondary)
+                Text("最近同步：\(date.formatted(date: .abbreviated, time: .shortened))").foregroundStyle(.secondary)
+            }
         case .loaded(let date, let warnings):
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -57,6 +62,7 @@ struct ConnectionNotice: View {
 }
 
 struct MeetingRow: View {
+    @Environment(CampusStore.self) private var store
     let meeting: CourseMeeting
 
     var body: some View {
@@ -68,6 +74,12 @@ struct MeetingRow: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(meeting.name).font(.headline)
                 if !meeting.details.isEmpty { Text(meeting.details).font(.caption).foregroundStyle(.secondary) }
+                if let snapshot = store.teaching {
+                    if let start = snapshot.periods.first(where: { $0.period == meeting.firstPeriod })?.start,
+                       let end = snapshot.periods.first(where: { $0.period == meeting.lastPeriod })?.end {
+                        Text("\(start)–\(end)").font(.caption).foregroundStyle(Color.campusGreen)
+                    }
+                }
             }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 5)
     }
@@ -85,7 +97,7 @@ struct DeadlineRow: View {
             } else {
                 Text("时间待核对：\(deadline.rawDue)").font(.subheadline).foregroundStyle(.orange)
             }
-            Label("提交状态尚未核验", systemImage: "questionmark.circle")
+            Label(deadline.submission.label, systemImage: deadline.submission == .submitted ? "checkmark.circle" : "questionmark.circle")
                 .font(.caption).foregroundStyle(.secondary)
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 5)
     }
@@ -97,11 +109,24 @@ struct PortalActions: View {
 
     var body: some View {
         HStack {
-            Button("打开学校页面", action: open).buttonStyle(.borderedProminent)
+            if [.teaching, .blackboard].contains(service) { NativeLoginButton() }
+            Button("学校网页", action: open).buttonStyle(.bordered)
             Spacer()
             Link(destination: service.portalURL) {
                 Label("浏览器", systemImage: "safari")
             }.accessibilityLabel("在系统浏览器打开\(service.title)，登录状态可能不同")
+        }
+    }
+}
+
+extension LearningDeadline.Submission {
+    var label: String {
+        switch self {
+        case .unknown: "状态待核对"
+        case .submitted: "已提交 / 待评分或已完成"
+        case .pending: "未提交"
+        case .draft: "草稿 / 尚未最终提交"
+        case .exempt: "免交 / 豁免"
         }
     }
 }

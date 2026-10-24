@@ -8,11 +8,11 @@ struct TodayView: View {
     private var todayMeetings: [CourseMeeting] {
         let day = Calendar(identifier: .gregorian).component(.weekday, from: .now)
         let mondayBased = (day + 5) % 7 + 1
-        return store.teaching?.meetings.filter { $0.weekday == mondayBased } ?? []
+        return store.teaching?.meetings.filter { $0.weekday == mondayBased && (store.teaching?.fullSemester != true || $0.weeks?.contains(store.teaching?.week ?? -1) == true) } ?? []
     }
 
     private var upcoming: [LearningDeadline] {
-        Array((store.blackboard?.deadlines ?? []).filter { deadline in
+        Array(store.deadlines.filter { deadline in
             guard let due = deadline.due else { return true }
             return due >= .now
         }.prefix(3))
@@ -35,9 +35,9 @@ struct TodayView: View {
                 if store.mode == .live, store.teaching == nil, store.blackboard == nil {
                     CampusCard {
                         Label("从连接学校服务开始", systemImage: "link").font(.headline)
-                        Text("分别打开教务和 Blackboard 完成学校登录，再手动同步。也可以先体验示例界面。")
+                        Text("先登录学校账号并同步；网页登录可用于验证码等情况。也可以先体验示例界面。")
                             .font(.callout).foregroundStyle(.secondary)
-                        Button("打开教务登录") { portal = .teaching }.buttonStyle(.borderedProminent)
+                        NativeLoginButton()
                         Button("体验演示模式") { store.setMode(.demo) }.buttonStyle(.bordered)
                     }
                 }
@@ -67,7 +67,7 @@ struct TodayView: View {
 
                 CampusCard {
                     Label("近期截止日期", systemImage: "clock").font(.headline)
-                    Text("截止日期不代表尚未提交，请在课程页面核对状态。")
+                    Text("汇总已同步课程的任务；请进入 Blackboard 逐课程刷新，未知状态请到学校页面核对。")
                         .font(.caption).foregroundStyle(.secondary)
                     if upcoming.isEmpty {
                         Text(store.blackboard == nil ? "连接 Blackboard 后查看。" : "本次读取未发现近期截止日期；不代表没有其他任务。")

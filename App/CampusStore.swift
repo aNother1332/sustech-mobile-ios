@@ -3,49 +3,150 @@ import Foundation
 import Observation
 import WebKit
 
-enum DataMode: String, CaseIterable {
-    case live = "学校服务"
-    case demo = "演示模式"
-}
-
+enum DataMode: String, CaseIterable { case live = "学校服务", demo = "演示模式" }
 enum ConnectionState {
-    case idle
-    case loading
+    case idle, loading
     case loaded(Date, warnings: [String])
+    case cached(Date)
     case failed(String)
-
-    var isLoading: Bool {
-        if case .loading = self { true } else { false }
-    }
+    var isLoading: Bool { if case .loading = self { true } else { false } }
 }
 
-@MainActor
-@Observable
+@MainActor @Observable
 final class CampusStore {
     private(set) var mode = DataMode.live
     private(set) var teaching: TeachingSnapshot?
+    private(set) var academic: AcademicSnapshot?
     private(set) var blackboard: BlackboardSnapshot?
     private(set) var teachingState = ConnectionState.idle
+    private(set) var gradesState = ConnectionState.idle
     private(set) var blackboardState = ConnectionState.idle
+    private(set) var courseDetails: [String: BBCourseDetail] = [:]
+    private(set) var contentCache: [String: [BBContent]] = [:]
+    private(set) var files: [OfflineFile] = []
+    private(set) var courseLoading: Set<String> = []
+    private(set) var downloading: Set<String> = []
     private(set) var clearing = false
+    private(set) var authenticating = false
+    private(set) var authenticationMessage: String?
+    private(set) var challengeService: SchoolService?
+    private(set) var cacheMessage: String?
     private var generation = 0
-
-    // App-local WebKit storage owns the login session. No password scraping,
-    // cookie logging, shared server, or JS login injection is used.
+    private var owner: String?
+    private var teachingDate: Date?
+    private var gradesDate: Date?
+    private var blackboardDate: Date?
+    private let repository = LocalRepository()
     let websiteDataStore = WKWebsiteDataStore.default()
 
+    init() { restore() }
+
+    var deadlines: [LearningDeadline] {
+        if mode == .demo { return blackboard?.deadlines ?? [] }
+        return courseDetails.values.flatMap(\.tasks).sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }
+    }
+
+    private func resetDisplayedData() {
+        teaching = nil; academic = nil; blackboard = nil
+        courseDetails = [:]; contentCache = [:]; files = []
+        teachingDate = nil; gradesDate = nil; blackboardDate = nil
+        teachingState = .idle; gradesState = .idle; blackboardState = .idle
+        courseLoading = []; downloading = []
+    }
+    private func restore() {
+        guard let archive = repository.load() else { return }
+        owner = archive.owner
+        teaching = archive.teaching; academic = archive.grades; blackboard = archive.blackboard
+        teachingDate = archive.teachingDate; gradesDate = archive.gradesDate; blackboardDate = archive.blackboardDate
+        courseDetails = archive.courseDetails; contentCache = archive.contents
+        files = archive.files.filter { FileManager.default.fileExists(atPath: repository.fileURL($0).path) }
+        if let date = teachingDate, teaching != nil { teachingState = .cached(date) }
+        if let date = gradesDate, academic != nil { gradesState = .cached(date) }
+        if let date = blackboardDate, blackboard != nil { blackboardState = .cached(date) }
+    }
+    private func persist() {
+        guard mode == .live, let owner, !clearing else { return }
+        var archive = LocalArchive(owner: owner)
+        archive.teaching = teaching; archive.teachingDate = teachingDate
+        archive.grades = academic; archive.gradesDate = gradesDate
+        archive.blackboard = blackboard; archive.blackboardDate = blackboardDate
+        archive.courseDetails = courseDetails; archive.contents = contentCache; archive.files = files
+        do { try repository.save(archive); cacheMessage = nil }
+        catch { cacheMessage = "数据已读取，但本机缓存保存失败；请在解锁设备后重试。" }
+    }
     func setMode(_ mode: DataMode) {
-        guard !clearing else { return }
+        guard !clearing, !authenticating else { return }
         generation += 1
         self.mode = mode
-        teaching = nil
-        blackboard = nil
-        teachingState = .idle
-        blackboardState = .idle
-        if mode == .demo {
-            teaching = DemoData.teaching
-            blackboard = DemoData.blackboard
+        resetDisplayedData()
+        if mode == .demo { teaching = DemoData.teaching; blackboard = DemoData.blackboard }
+        else { restore() }
+    }
+
+    func signIn(username: String, password: String) async {
+        guard !authenticating, !clearing, mode == .live else { return }
+        authenticating = true
+        defer { authenticating = false; if Task.isCancelled { authenticationMessage = "登录已取消。" } }
+        authenticationMessage = "正在连接学校 CAS…"
+        challengeService = nil
+        generation += 1
+        let version = generation
+        resetDisplayedData()
+        owner = nil
+        do { try repository.erase() } catch {
+            authenticationMessage = "无法清除旧账号缓存，请先解锁设备后重试。"; return
         }
+        await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
+        guard generation == version, !Task.isCancelled else { return }
+        let client = CASClient()
+        var results: [String] = []
+        for service in CASService.allCases {
+            guard generation == version, !Task.isCancelled else { return }
+            let label = service == .teaching ? "教务" : "Blackboard"
+            authenticationMessage = "正在连接\(label)…"
+            do {
+                let cookies = try await client.signIn(service: service, username: username, password: password)
+                guard generation == version, !Task.isCancelled else { return }
+                await retainCookies(cookies, version: version)
+                guard generation == version else { return }
+                owner = LocalRepository.identity(username)
+                if service == .teaching {
+                    let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
+                    _ = try TISParser.semester(await http.data(path: "/component/querydangqianxnxq", form: [:]))
+                    await refreshTeaching()
+                } else {
+                    await refreshBlackboard()
+                }
+                guard generation == version else { return }
+                let state = service == .teaching ? teachingState : blackboardState
+                if case .failed(let error) = state { results.append("\(label)：\(error)") }
+                else { results.append("\(label)已连接") }
+            } catch is CancellationError { return }
+            catch {
+                guard generation == version else { return }
+                results.append("\(label)：\(error.localizedDescription)")
+                if let error = error as? CASFailure, error == .challenge || error == .missingForm {
+                    challengeService = service == .teaching ? .teaching : .blackboard
+                }
+                // A rejection must not submit the same password again to another service.
+                if let error = error as? CASFailure, error == .rejected { break }
+                if error as? CampusError == .rateLimited { break }
+            }
+        }
+        guard generation == version else { return }
+        authenticationMessage = results.joined(separator: "\n")
+        persist()
+    }
+
+    /// Opening an authenticated school page may switch identities. Start a new
+    /// cache namespace before the user can log in there; do not merge old data.
+    func prepareSchoolBrowser(_ service: SchoolService) {
+        guard [.teaching, .blackboard].contains(service), !authenticating, !clearing, mode == .live else { return }
+        generation += 1
+        resetDisplayedData()
+        owner = nil
+        do { try repository.erase(); owner = "web-" + UUID().uuidString }
+        catch { cacheMessage = "旧缓存未能清除，网页登录期间不保存新的离线数据。" }
     }
 
     func refreshTeaching() async {
@@ -53,66 +154,172 @@ final class CampusStore {
         let version = generation
         teachingState = .loading
         let cookies = await websiteDataStore.httpCookieStore.allCookies()
-        guard generation == version else { return }
+        guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
         do {
             let snapshot = try await TISClient(http: http).snapshot()
             try Task.checkCancellation()
-            guard generation == version else { return }
-            await retainCookies(http.cookies())
-            guard generation == version else { return }
-            teaching = snapshot
-            teachingState = .loaded(.now, warnings: snapshot.warnings)
+            guard version == generation else { return }
+            await retainCookies(http.cookies(), version: version)
+            guard version == generation else { return }
+            if owner == nil { owner = "web-" + UUID().uuidString }
+            teaching = snapshot; teachingDate = .now
+            teachingState = .loaded(teachingDate!, warnings: snapshot.warnings)
+            persist()
         } catch {
-            guard generation == version else { return }
-            teachingState = .failed(error is CancellationError ? "同步已取消，可以重新同步。" : error.localizedDescription)
+            guard version == generation else { return }
+            teachingState = .failed(safeError(error))
         }
     }
-
+    func refreshGrades() async {
+        guard mode == .live, !gradesState.isLoading, !clearing else { return }
+        let version = generation
+        gradesState = .loading
+        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        guard version == generation else { return }
+        let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
+        do {
+            let snapshot = try await TISClient(http: http).grades()
+            try Task.checkCancellation()
+            guard version == generation else { return }
+            await retainCookies(http.cookies(), version: version)
+            guard version == generation else { return }
+            if owner == nil { owner = "web-" + UUID().uuidString }
+            academic = snapshot; gradesDate = .now
+            gradesState = .loaded(gradesDate!, warnings: [])
+            persist()
+        } catch { guard version == generation else { return }; gradesState = .failed(safeError(error)) }
+    }
     func refreshBlackboard() async {
         guard mode == .live, !blackboardState.isLoading, !clearing else { return }
         let version = generation
         blackboardState = .loading
         let cookies = await websiteDataStore.httpCookieStore.allCookies()
-        guard generation == version else { return }
+        guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
         do {
             let snapshot = try await BlackboardClient(http: http).snapshot()
             try Task.checkCancellation()
-            guard generation == version else { return }
-            await retainCookies(http.cookies())
-            guard generation == version else { return }
-            blackboard = snapshot
-            blackboardState = .loaded(.now, warnings: snapshot.warnings)
+            guard version == generation else { return }
+            await retainCookies(http.cookies(), version: version)
+            guard version == generation else { return }
+            let ids = Set(snapshot.courses.map(\.id))
+            courseDetails = courseDetails.filter { ids.contains($0.key) }
+            if owner == nil { owner = "web-" + UUID().uuidString }
+            blackboard = snapshot; blackboardDate = .now
+            blackboardState = .loaded(blackboardDate!, warnings: snapshot.warnings)
+            persist()
+        } catch { guard version == generation else { return }; blackboardState = .failed(safeError(error)) }
+    }
+    func refreshCourse(_ course: BlackboardCourse) async {
+        guard mode == .live, !clearing, !authenticating, !courseLoading.contains(course.id) else { return }
+        let version = generation
+        courseLoading.insert(course.id)
+        defer { if version == generation { courseLoading.remove(course.id) } }
+        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        guard version == generation else { return }
+        let client = BlackboardClient(http: CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies))
+        do {
+            let detail = try await client.courseDetail(course)
+            try Task.checkCancellation()
+            guard version == generation else { return }
+            courseDetails[course.id] = detail
+            persist()
         } catch {
-            guard generation == version else { return }
-            blackboardState = .failed(error is CancellationError ? "同步已取消，可以重新同步。" : error.localizedDescription)
+            guard version == generation else { return }
+            let old = courseDetails[course.id]
+            courseDetails[course.id] = BBCourseDetail(tasks: old?.tasks ?? [], announcements: old?.announcements ?? [],
+                warnings: [safeError(error), "如有数据，为最近一次缓存。"], updated: old?.updated ?? .now)
         }
     }
+    func contents(course: String, parent: String?) async throws -> [BBContent] {
+        guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
+        let version = generation
+        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        guard version == generation else { throw CancellationError() }
+        let client = BlackboardClient(http: CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies))
+        let result = try await client.contents(courseID: course, parentID: parent)
+        try Task.checkCancellation()
+        guard version == generation else { throw CancellationError() }
+        contentCache[contentKey(course, parent)] = result
+        persist()
+        return result
+    }
+    func attachments(course: String, content: String) async throws -> [BBAttachment] {
+        let version = generation
+        guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
+        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        guard version == generation else { throw CancellationError() }
+        let result = try await BlackboardClient(http: CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies))
+            .attachments(courseID: course, contentID: content)
+        try Task.checkCancellation()
+        guard version == generation else { throw CancellationError() }
+        return result
+    }
+    func contentKey(_ course: String, _ parent: String?) -> String { course + "|" + (parent ?? "root") }
+    func fileKey(course: String, content: String, attachment: String) -> String { course + "|" + content + "|" + attachment }
+    func fileURL(_ file: OfflineFile) -> URL { repository.fileURL(file) }
 
+    func download(_ attachment: BBAttachment, course: BlackboardCourse, content: String) async throws -> OfflineFile {
+        let key = fileKey(course: course.id, content: content, attachment: attachment.id)
+        guard mode == .live, !clearing, !authenticating, !downloading.contains(key), owner != nil else { throw CancellationError() }
+        let version = generation
+        downloading.insert(key)
+        defer { if generation == version { downloading.remove(key) } }
+        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        guard version == generation else { throw CancellationError() }
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let temporary = try await http.download(path: attachment.path)
+        defer { try? FileManager.default.removeItem(at: temporary) }
+        try Task.checkCancellation()
+        guard version == generation else { throw CancellationError() }
+        try repository.prepare()
+        let id = UUID()
+        let name = LocalRepository.filename(attachment.name)
+        let relative = id.uuidString + "-" + (name.isEmpty ? "课件" : name)
+        let destination = repository.root.appendingPathComponent(relative)
+        try FileManager.default.moveItem(at: temporary, to: destination)
+        do {
+            try FileManager.default.setAttributes([.protectionKey: FileProtectionType.complete], ofItemAtPath: destination.path)
+            let bytes = (try FileManager.default.attributesOfItem(atPath: destination.path)[.size] as? NSNumber)?.int64Value ?? 0
+            let saved = OfflineFile(id: id, key: key, name: name, course: course.name, relativePath: relative, saved: .now, bytes: bytes)
+            let old = files.filter { $0.key == key }
+            files.removeAll { $0.key == key }
+            files.append(saved)
+            for file in old { try? FileManager.default.removeItem(at: repository.fileURL(file)) }
+            persist()
+            return saved
+        } catch { try? FileManager.default.removeItem(at: destination); throw error }
+    }
+    func deleteFile(_ file: OfflineFile) {
+        do {
+            try FileManager.default.removeItem(at: repository.fileURL(file))
+            files.removeAll { $0.id == file.id }
+            persist()
+        } catch { cacheMessage = "文件删除失败，请解锁设备后重试。" }
+    }
     func clearLocalSession() async {
         guard !clearing else { return }
-        clearing = true
-        generation += 1
-        teaching = nil
-        blackboard = nil
-        teachingState = .idle
-        blackboardState = .idle
-        mode = .live
+        clearing = true; generation += 1
+        resetDisplayedData(); owner = nil; mode = .live
+        authenticationMessage = nil; challengeService = nil
+        do { try repository.erase(); cacheMessage = nil }
+        catch { cacheMessage = "部分本机文件未能清除，请解锁设备后再次清除。" }
         await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
         clearing = false
     }
-
-    private func retainCookies(_ cookies: [HTTPCookie]) async {
-        let version = generation
-        for cookie in cookies where Self.isSchoolDomain(cookie.domain) {
+    private func retainCookies(_ cookies: [HTTPCookie], version: Int) async {
+        for cookie in cookies {
+            let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased()
+            guard ["cas.sustech.edu.cn", "tis.sustech.edu.cn", "bb.sustech.edu.cn", "sustech.edu.cn"].contains(host) else { continue }
             guard generation == version, !clearing else { return }
             await websiteDataStore.httpCookieStore.setCookie(cookie)
         }
     }
-
-    private static func isSchoolDomain(_ domain: String) -> Bool {
-        let host = domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased()
-        return host == "sustech.edu.cn" || host.hasSuffix(".sustech.edu.cn")
+    private func safeError(_ error: Error) -> String {
+        if error is CancellationError { return "读取已取消，可以重新同步。" }
+        if let error = error as? CampusError { return error.localizedDescription }
+        if let error = error as? CASFailure { return error.localizedDescription }
+        return "未能读取学校服务，请检查网络、会话或权限后重试。"
     }
 }

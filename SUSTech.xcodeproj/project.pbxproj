@@ -15,6 +15,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "7FE110A1B16F1C76E2B44EAB";
 		};
+		"A094126B570970D6A1C596B3" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "App/BlackboardViews.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"41A9E3C989FF181D931B05B0" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A094126B570970D6A1C596B3";
+		};
 		"39769E771AE02B265697E588" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -44,6 +54,26 @@
 		"B82EBA1DD441978EC81BDA30" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "79830F300586DE6FCB194A96";
+		};
+		"C869C602AA47484F58239020" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "App/LocalArchive.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"8600BF39B6D03E8E1EAD32F4" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C869C602AA47484F58239020";
+		};
+		"06E4220DF5F9ED800EE1568B" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "App/NativeLoginView.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"37FA6E30737BD3F0B65D6F4A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "06E4220DF5F9ED800EE1568B";
 		};
 		"6A8BEBD1CF30924289ABD774" = {
 			"isa" = "PBXFileReference";
@@ -144,9 +174,12 @@
 			"isa" = "PBXGroup";
 			"children" = (
 				"7FE110A1B16F1C76E2B44EAB",
+				"A094126B570970D6A1C596B3",
 				"39769E771AE02B265697E588",
 				"14D72695D7BF62CCE748D8DE",
 				"79830F300586DE6FCB194A96",
+				"C869C602AA47484F58239020",
+				"06E4220DF5F9ED800EE1568B",
 				"6A8BEBD1CF30924289ABD774",
 				"F9F4F14833AC4F61C58E3A66",
 				"1AC36A7B8DAC55C904558944",
@@ -177,9 +210,12 @@
 			"buildActionMask" = "2147483647";
 			"files" = (
 				"DC180785BF66D90D9BE12FAC",
+				"41A9E3C989FF181D931B05B0",
 				"0AE63655232DC0ABEAD00B03",
 				"A8CB723C90684AE54687DF4D",
 				"B82EBA1DD441978EC81BDA30",
+				"8600BF39B6D03E8E1EAD32F4",
+				"37FA6E30737BD3F0B65D6F4A",
 				"45769E6E5AFC808795854C66",
 				"2592429E32775ECB06B63370",
 				"AAC448F0D678CDE5DDFFD860",
@@ -233,8 +269,8 @@
 				"SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD" = "NO";
 				"SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD" = "NO";
 				"CODE_SIGN_STYLE" = "Automatic";
-				"MARKETING_VERSION" = "0.1.0";
-				"CURRENT_PROJECT_VERSION" = "1";
+				"MARKETING_VERSION" = "0.2.0";
+				"CURRENT_PROJECT_VERSION" = "2";
 				"SWIFT_STRICT_CONCURRENCY" = "complete";
 				"SWIFT_APPROACHABLE_CONCURRENCY" = "YES";
 				"SWIFT_DEFAULT_ACTOR_ISOLATION" = "MainActor";
@@ -269,8 +305,8 @@
 				"SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD" = "NO";
 				"SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD" = "NO";
 				"CODE_SIGN_STYLE" = "Automatic";
-				"MARKETING_VERSION" = "0.1.0";
-				"CURRENT_PROJECT_VERSION" = "1";
+				"MARKETING_VERSION" = "0.2.0";
+				"CURRENT_PROJECT_VERSION" = "2";
 				"SWIFT_STRICT_CONCURRENCY" = "complete";
 				"SWIFT_APPROACHABLE_CONCURRENCY" = "YES";
 				"SWIFT_DEFAULT_ACTOR_ISOLATION" = "MainActor";

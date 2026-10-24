@@ -28,10 +28,20 @@ struct SchoolBrowser: View {
                 ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } }
             }
             .safeAreaInset(edge: .bottom) {
-                Text("请在学校页面内登录。关闭页面后，返回应用手动同步；打开页面不代表原生接口已连接。")
+                VStack(spacing: 8) {
+                    HStack {
+                        Button("缩小", systemImage: "minus.magnifyingglass") { browserState.zoom = max(0.3, browserState.zoom - 0.15) }
+                        Spacer()
+                        Text("桌面网页 · 可双指缩放").font(.caption)
+                        Spacer()
+                        Button("放大", systemImage: "plus.magnifyingglass") { browserState.zoom = min(2, browserState.zoom + 0.15) }
+                    }
+                    Text("完成学校登录后，返回应用手动同步。系统浏览器与应用会话不同；打开网页前会清除旧缓存。")
                     .font(.caption).foregroundStyle(.secondary)
+                }
                     .frame(maxWidth: .infinity).padding().background(.regularMaterial)
             }
+            .onAppear { store.prepareSchoolBrowser(service) }
         }
         .interactiveDismissDisabled(store.clearing)
     }
@@ -42,6 +52,7 @@ struct SchoolBrowser: View {
 final class BrowserState {
     var host = "学校官方网站"
     var failure: String?
+    var zoom = 0.75
 }
 
 private struct BrowserWebView: UIViewRepresentable {
@@ -54,16 +65,19 @@ private struct BrowserWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore
+        configuration.defaultWebpagePreferences.preferredContentMode = .desktop
         let view = WKWebView(frame: .zero, configuration: configuration)
         view.navigationDelegate = context.coordinator
         view.uiDelegate = context.coordinator
         view.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15"
         view.allowsBackForwardNavigationGestures = true
+        view.scrollView.isScrollEnabled = true
+        view.pageZoom = state.zoom
         view.load(URLRequest(url: url))
         return view
     }
 
-    func updateUIView(_ view: WKWebView, context: Context) {}
+    func updateUIView(_ view: WKWebView, context: Context) { if view.pageZoom != state.zoom { view.pageZoom = state.zoom } }
 
     static func dismantleUIView(_ view: WKWebView, coordinator: Coordinator) {
         view.stopLoading()

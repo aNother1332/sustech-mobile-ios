@@ -35,7 +35,7 @@ public enum BlackboardParser {
 }
 
 public struct BlackboardClient: Sendable {
-    private let http: CampusHTTPClient
+    let http: CampusHTTPClient
 
     public init(http: CampusHTTPClient) { self.http = http }
 
@@ -51,26 +51,7 @@ public struct BlackboardClient: Sendable {
             guard seen.insert(row.courseId).inserted else { return nil }
             return BlackboardCourse(id: row.courseId, name: row.course?.name ?? row.courseId)
         }
-        var deadlines: [LearningDeadline] = []
-        var warnings: [String] = []
-        // Serial requests deliberately avoid a login/request burst against school services.
-        for course in courses {
-            try Task.checkCancellation()
-            do {
-                let id = try identifier(course.id)
-                let columns: [BlackboardParser.Column] = try await pages(
-                    path: "/learn/api/public/v1/courses/\(id)/gradebook/columns?limit=100"
-                )
-                deadlines.append(contentsOf: columns.compactMap { BlackboardParser.deadline($0, course: course) })
-            } catch is CancellationError { throw CancellationError() }
-            catch { warnings.append("\(course.name)：\(error.localizedDescription)") }
-        }
-        if deadlines.contains(where: { $0.due == nil }) {
-            warnings.append("部分截止时间无法解析，已保留学校返回的原文。")
-        }
-        return BlackboardSnapshot(courses: courses, deadlines: deadlines.sorted {
-            ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture)
-        }, warnings: warnings)
+        return BlackboardSnapshot(courses: courses, deadlines: [], warnings: [])
     }
 
     private func pages<Row: Decodable & Sendable>(path: String) async throws -> [Row] {
@@ -89,7 +70,7 @@ public struct BlackboardClient: Sendable {
         return rows
     }
 
-    private func pagePath(_ value: String) throws -> String {
+    func pagePath(_ value: String) throws -> String {
         if value.hasPrefix("/") {
             _ = try CampusHTTPClient.resolve(path: value, origin: http.origin)
             return value
@@ -102,7 +83,7 @@ public struct BlackboardClient: Sendable {
         return components.percentEncodedPath + (components.percentEncodedQuery.map { "?" + $0 } ?? "")
     }
 
-    private func identifier(_ value: String) throws -> String {
+    func identifier(_ value: String) throws -> String {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_-"))
         guard !value.isEmpty, value.unicodeScalars.allSatisfy({ allowed.contains($0) }) else {
             throw CampusError.invalidResponse("Blackboard 标识符")

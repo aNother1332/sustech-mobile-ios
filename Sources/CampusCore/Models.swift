@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Semester: Equatable, Sendable {
+public struct Semester: Equatable, Codable, Sendable {
     public let year: String
     public let term: String
     public let name: String
@@ -12,26 +12,28 @@ public struct Semester: Equatable, Sendable {
     }
 }
 
-public struct CourseMeeting: Identifiable, Equatable, Sendable {
+public struct CourseMeeting: Identifiable, Equatable, Codable, Sendable {
     public let id: String
     public let name: String
     public let details: String
     public let weekday: Int
     public let firstPeriod: Int
     public let lastPeriod: Int
+    public let weeks: [Int]?
 
     public init(id: String, name: String, details: String, weekday: Int,
-                firstPeriod: Int, lastPeriod: Int) {
+                firstPeriod: Int, lastPeriod: Int, weeks: [Int]? = nil) {
         self.id = id
         self.name = name
         self.details = details
         self.weekday = weekday
         self.firstPeriod = firstPeriod
         self.lastPeriod = lastPeriod
+        self.weeks = weeks
     }
 }
 
-public struct CampusExam: Identifiable, Equatable, Sendable {
+public struct CampusExam: Identifiable, Equatable, Codable, Sendable {
     public let id: String
     public let course: String
     public let date: String
@@ -50,7 +52,7 @@ public struct CampusExam: Identifiable, Equatable, Sendable {
     }
 }
 
-public struct BlackboardCourse: Identifiable, Equatable, Sendable {
+public struct BlackboardCourse: Identifiable, Equatable, Codable, Sendable {
     public let id: String
     public let name: String
 
@@ -60,12 +62,14 @@ public struct BlackboardCourse: Identifiable, Equatable, Sendable {
     }
 }
 
-public struct LearningDeadline: Identifiable, Equatable, Sendable {
-    public enum Submission: String, Sendable {
+public struct LearningDeadline: Identifiable, Equatable, Codable, Sendable {
+    public enum Submission: String, Codable, Sendable {
         // A deadline alone is never evidence that an assignment is pending.
         case unknown
         case submitted
         case pending
+        case draft
+        case exempt
     }
 
     public let id: String
@@ -74,19 +78,31 @@ public struct LearningDeadline: Identifiable, Equatable, Sendable {
     public let due: Date?
     public let rawDue: String
     public let submission: Submission
+    public let courseID: String
+    public let contentID: String?
+    public let details: String
+    public let statusNote: String
 
     public init(id: String, course: String, title: String, due: Date?,
-                rawDue: String, submission: Submission = .unknown) {
+                rawDue: String, submission: Submission = .unknown, courseID: String = "", contentID: String? = nil,
+                details: String = "", statusNote: String = "") {
         self.id = id
         self.course = course
         self.title = title
         self.due = due
         self.rawDue = rawDue
         self.submission = submission
+        self.courseID = courseID
+        self.contentID = contentID
+        self.details = details
+        self.statusNote = statusNote
     }
 }
 
-public struct TeachingSnapshot: Sendable {
+public struct TeachingSnapshot: Codable, Sendable {
+    public let fullSemester: Bool
+    public let periods: [PeriodTime]
+
     public let semester: Semester
     public let week: Int?
     public let meetings: [CourseMeeting]
@@ -94,7 +110,10 @@ public struct TeachingSnapshot: Sendable {
     public let warnings: [String]
 
     public init(semester: Semester, week: Int?, meetings: [CourseMeeting],
-                exams: [CampusExam], warnings: [String] = []) {
+                exams: [CampusExam], warnings: [String] = [],
+                fullSemester: Bool = false, periods: [PeriodTime] = []) {
+        self.fullSemester = fullSemester
+        self.periods = periods
         self.semester = semester
         self.week = week
         self.meetings = meetings
@@ -103,7 +122,7 @@ public struct TeachingSnapshot: Sendable {
     }
 }
 
-public struct BlackboardSnapshot: Sendable {
+public struct BlackboardSnapshot: Codable, Sendable {
     public let courses: [BlackboardCourse]
     public let deadlines: [LearningDeadline]
     public let warnings: [String]
