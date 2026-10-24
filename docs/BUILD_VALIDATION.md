@@ -1,3 +1,22 @@
+# 0.2.0（构建 4）最终验收
+
+- 应用名称：SUSTechMobile；中央火炬图标，深青背景，无外围文字和圆环。
+- 源码提交：`5e762f911b87300ea5dd0f5fe54bb771b7074871`。
+- 成功构建：https://github.com/aNother1332/sustech-apple/actions/runs/40110677869
+- 34 项 Swift 测试通过；7 项 IPA 打包测试通过。
+- iPhone/iPad 模拟器和 arm64 真机目标编译通过。
+- iPhone/iPad 模拟器实际启动、演示首页、原生登录页与桌面截图完成并人工查看；名称、图标和空表单显示正常。
+- 已下载最终 IPA，核对 SHA256、版本/构建号、iPhone/iPad 设备族、应用名称和编译后的 AppIcon/Assets.car。
+- 最终 IPA：`D:/Altstore/App/SUSTechMobile-0.2.0/SUSTechMobile-unsigned.ipa`。
+- SHA256：`35c48a6a7c8a50f9e1572784fd6aad384efd57f06ea020f586c806e15f698e09`。
+- 本包仍需现有 iLoader 在 Windows 本地重新签名安装。0.2.0 尚待用户真机更新，真实 CAS/TIS/BB 及课件下载未通过本人账号验收；不把自动验证结果填写为学校接口已通过。
+
+详细功能、使用路径和边界见 [0.2.0 说明](RELEASE_0_2.md)。
+
+---
+
+以下为初始版本的历史验收记录。
+
 # 云构建验收记录
 
 日期：2026-10-24。仓库为私有，查看运行或下载产物需要登录有权限的 GitHub 账号。

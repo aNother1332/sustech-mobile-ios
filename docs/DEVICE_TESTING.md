@@ -5,14 +5,17 @@
 
 ## 构建和界面
 
-- [x] Xcode 26+ 执行 `swift test`，18 项测试通过。
+- [x] Xcode 26+ 执行 `swift test`，34 项测试通过。
 - [x] iOS Simulator 无签名构建成功。
 - [x] arm64 iPhoneOS 构建与 IPA 打包成功。
-- [x] 用户确认 iPhone 安装完成（Windows iLoader 本地修补构建签名安装）。
+- [x] 用户确认 0.1.0 在 iPhone 安装完成（Windows iLoader 本地修补构建签名安装）。
 - [ ] iPhone 安装后冷启动、标签切换、搜索、演示模式工作。
 - [ ] iPad 竖屏、横屏、分屏/窄窗口导航正常。
 - [ ] 大字体、深色模式、VoiceOver 主要控件可用。
 - [ ] 明确显示演示数据，不会混入真实模式。
+
+- [x] 0.2.0 iPhone/iPad 模拟器启动、原生登录页及桌面名称/图标截图核对。
+- [ ] 0.2.0 用户设备覆盖更新与真实学校接口验收。
 
 ## 登录与会话
 
