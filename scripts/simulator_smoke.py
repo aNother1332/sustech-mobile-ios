@@ -28,8 +28,18 @@ def main():
         run("bootstatus", uid, "-b")
         try:
             run("install", uid, APP)
-            for scene, argument in (("today", "--smoke-demo"), ("native-login", "--smoke-login")):
-                run("launch", "--terminate-running-process", uid, BUNDLE, argument)
+            scenes = (
+                ("today", ["--smoke-demo"]),
+                ("timetable", ["--smoke-demo", "--smoke-study"]),
+                ("exams", ["--smoke-demo", "--smoke-study", "--smoke-exams"]),
+                ("grades", ["--smoke-demo", "--smoke-study", "--smoke-grades"]),
+                ("blackboard", ["--smoke-demo", "--smoke-study", "--smoke-blackboard"]),
+                ("services", ["--smoke-demo", "--smoke-services"]),
+                ("account", ["--smoke-demo", "--smoke-account"]),
+                ("native-login", ["--smoke-login"]),
+            )
+            for scene, arguments in scenes:
+                run("launch", "--terminate-running-process", uid, BUNDLE, *arguments)
                 time.sleep(3)
                 run("io", uid, "screenshot", OUT / f"{family}-{scene}.png")
                 # Terminate must succeed: a process that already crashed fails here.

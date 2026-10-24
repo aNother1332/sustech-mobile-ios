@@ -21,6 +21,16 @@ struct RootView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var selection: CampusPage = .today
 
+    init() {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        let page = arguments.contains("--smoke-services") ? CampusPage.services
+            : arguments.contains("--smoke-account") ? .account
+            : arguments.contains("--smoke-study") ? .study : .today
+        _selection = State(initialValue: page)
+        #endif
+    }
+
     var body: some View {
         if sizeClass == .regular {
             NavigationSplitView {

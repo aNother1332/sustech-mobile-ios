@@ -9,6 +9,16 @@ struct StudyView: View {
     @State private var selectedWeek = 1
     @State private var selectedTerm = "全部学期"
 
+    init() {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        let initial: Section = arguments.contains("--smoke-exams") ? .exams
+            : arguments.contains("--smoke-grades") ? .grades
+            : arguments.contains("--smoke-blackboard") ? .blackboard : .timetable
+        _section = State(initialValue: initial)
+        #endif
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
