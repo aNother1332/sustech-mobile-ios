@@ -14,6 +14,7 @@ struct OfflineFile: Identifiable, Codable {
 
 struct LocalArchive: Codable {
     var version = 2
+    var hiddenCourses: Set<String>?
     var owner: String
     var teaching: TeachingSnapshot?
     var teachingDate: Date?

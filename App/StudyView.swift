@@ -155,7 +155,7 @@ struct StudyView: View {
                 NavigationLink { OfflineDownloadsView() } label: { Label("离线文件 · \(store.files.count)", systemImage: "arrow.down.document") }
             }
             if let snapshot = store.blackboard {
-                ForEach(snapshot.courses) { course in
+                ForEach(store.activeCourses) { course in
                     NavigationLink { BBCourseView(course: course) } label: {
                         CampusCard {
                             HStack { Text(course.name).font(.headline); Spacer(); Image(systemName: "chevron.right") }
@@ -164,6 +164,21 @@ struct StudyView: View {
                             } else { Text("进入课程读取任务、公告和课件").font(.caption).foregroundStyle(.secondary) }
                         }
                     }.buttonStyle(.plain)
+                    Button("移入已折叠课程", systemImage: "archivebox") { store.setCourseHidden(course.id, hidden: true) }
+                        .font(.caption).frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                let folded = snapshot.courses.filter { store.hiddenCourses.contains($0.id) }
+                if !folded.isEmpty {
+                    DisclosureGroup("已折叠课程 · \(folded.count)") {
+                        Text("这些课程不参与首页截止日期汇总。恢复显示后重新纳入。").font(.caption).foregroundStyle(.secondary)
+                        ForEach(folded) { course in
+                            HStack {
+                                NavigationLink(course.name) { BBCourseView(course: course) }
+                                Spacer()
+                                Button("恢复显示") { store.setCourseHidden(course.id, hidden: false) }.font(.caption)
+                            }.padding(.vertical, 8)
+                        }
+                    }
                 }
                 if snapshot.courses.isEmpty { Text("本次学校返回的课程列表为空。").foregroundStyle(.secondary) }
             } else { ContentUnavailableView("课程尚未同步", systemImage: "books.vertical", description: Text("先登录，再读取 Blackboard 课程。")) }

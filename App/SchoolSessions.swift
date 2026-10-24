@@ -1,0 +1,121 @@
+import CampusCore
+import Foundation
+import Security
+import WebKit
+
+/// One on-device cookie store for native clients and embedded school pages.
+/// Session cookies are kept in Keychain; passwords are never retained.
+@MainActor
+final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
+    let websiteDataStore = WKWebsiteDataStore.default()
+    private var restored = false
+    private var clearing = false
+    private var revision = 0
+    var cleID = ""
+    var cleName = ""
+    private var connecting: [CASService: Task<Void, Never>] = [:]
+    private let vault = "cn.sustech.community.daily.sessions.v1"
+    override init() {
+        super.init()
+        websiteDataStore.httpCookieStore.add(self)
+    }
+    func restore() async {
+        guard !restored else { return }
+        restored = true
+        let version = revision
+        var item: CFTypeRef?
+        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: vault, kSecReturnData as String: true]
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data, let rows = try? JSONDecoder().decode([SavedCookie].self, from: data) else { return }
+        let existing = await websiteDataStore.httpCookieStore.allCookies()
+        for row in rows {
+            guard revision == version, !clearing else { return }
+            guard row.expires == nil || row.expires! > .now,
+                  !existing.contains(where: { $0.name == row.name && $0.domain == row.domain && $0.path == row.path }),
+                  let cookie = row.cookie else { continue }
+            await websiteDataStore.httpCookieStore.setCookie(cookie)
+        }
+    }
+    func cookies() async -> [HTTPCookie] {
+        await restore()
+        return await websiteDataStore.httpCookieStore.allCookies()
+    }
+    func connectIfPossible(_ service: CASService) async {
+        if let task = connecting[service] { await task.value; return }
+        let task = Task { @MainActor in
+            do { try await connect(entry: service.entry) } catch { /* Actual API probe reports service failure. */ }
+        }
+        connecting[service] = task
+        await task.value
+        connecting[service] = nil
+    }
+    func connect(entry: URL, finalHost: String? = nil) async throws {
+        let version = revision
+        let current = await cookies()
+        let updated = try await SessionConnector().connect(entry, cookies: current, finalHost: finalHost)
+        guard revision == version, !clearing else { throw CancellationError() }
+        for cookie in updated {
+            guard revision == version, !clearing else { throw CancellationError() }
+            await websiteDataStore.httpCookieStore.setCookie(cookie)
+        }
+        await save()
+    }
+    func clear() async {
+        clearing = true; revision += 1; restored = true
+        cleID = ""; cleName = ""; CredentialVault.delete("court")
+        for task in connecting.values { task.cancel() }; connecting = [:]
+        SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: vault] as CFDictionary)
+        await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
+        clearing = false
+    }
+    func connectIC() async throws {
+        let existing = await cookies()
+        let http = ServiceHTTP(origin: SchoolService.rooms.portalURL, cookies: existing)
+        // Probe the actual service instead of treating cookie presence as proof.
+        if let probe = try? await http.json("/ic-web/auth/userInfo"), probe["code"].text == "0", probe["data"]["accNo"].int != nil { return }
+        let reply = try await http.json("/ic-web/auth/address", query: [
+            "finalAddress": "https://booking.lib.sustech.edu.cn/", "errPageUrl": "https://booking.lib.sustech.edu.cn/",
+            "manager": "false", "consoleType": "16"])
+        guard reply["code"].text == "0", let entry = URL(string: reply["data"].text),
+              SessionConnector.allowed(entry), entry.path.contains("authcenter/toLoginPage") else { throw CASFailure.redirect }
+        try await connect(entry: entry, finalHost: "booking.lib.sustech.edu.cn")
+    }
+    nonisolated func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
+        Task { @MainActor [weak self] in await self?.save() }
+    }
+    private func save() async {
+        guard restored, !clearing else { return }
+        let version = revision
+        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        guard revision == version, !clearing else { return }
+        let rows = cookies.filter { cookie in
+            let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: "."))
+            return host == "sustech.edu.cn" || host.hasSuffix(".sustech.edu.cn")
+        }.map(SavedCookie.init)
+        guard let data = try? JSONEncoder().encode(rows) else { return }
+        let key: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: vault]
+        if SecItemUpdate(key as CFDictionary, [kSecValueData as String: data] as CFDictionary) == errSecItemNotFound {
+            var item = key; item[kSecValueData as String] = data
+            item[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            SecItemAdd(item as CFDictionary, nil)
+        }
+    }
+}
+
+private struct SavedCookie: Codable {
+    let name: String; let value: String; let domain: String; let path: String
+    let expires: Date?; let secure: Bool
+    init(_ cookie: HTTPCookie) {
+        name = cookie.name; value = cookie.value; domain = cookie.domain; path = cookie.path
+        expires = cookie.expiresDate; secure = cookie.isSecure
+    }
+    var cookie: HTTPCookie? {
+        let host = domain.trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        guard host == "sustech.edu.cn" || host.hasSuffix(".sustech.edu.cn") else { return nil }
+        var props: [HTTPCookiePropertyKey: Any] = [.name: name, .value: value, .domain: domain, .path: path,
+            .secure: secure ? "TRUE" : "FALSE"]
+        if let expires { props[.expires] = expires }
+        return HTTPCookie(properties: props)
+    }
+}

@@ -10,7 +10,7 @@ struct AccountView: View {
         List {
             Section {
                 Label("SUSTechMobile", systemImage: "leaf").font(.title2.bold()).foregroundStyle(Color.campusGreen)
-                Text("iPhone 与 iPad · 非官方校园工具\n0.2.0 试用版 · 学校接口需真机核对。")
+                Text("iPhone 与 iPad · 非官方校园工具\n0.3.0 试用版 · 学校接口需真机核对。")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Section("数据模式") {

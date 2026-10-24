@@ -17,11 +17,13 @@ public enum CASFailure: Error, LocalizedError, Equatable, Sendable {
 }
 
 public enum CASService: String, CaseIterable, Sendable {
-    case teaching, blackboard
+    case teaching, blackboard, card, printing
     public var entry: URL {
         switch self {
         case .teaching: URL(string: "https://tis.sustech.edu.cn/cas")!
         case .blackboard: URL(string: "https://bb.sustech.edu.cn/webapps/bb-sso-BBLEARN/index.jsp")!
+        case .card: URL(string: "https://campuscard.sustech.edu.cn/epay/j_spring_cas_security_check")!
+        case .printing: URL(string: "https://pms.sustech.edu.cn/client/new/cprintPc/")!
         }
     }
 }

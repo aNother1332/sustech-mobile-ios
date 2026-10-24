@@ -19,7 +19,7 @@ struct SchoolBrowser: View {
                     Text(failure).font(.callout).foregroundStyle(.orange).padding()
                 }
                 if ready {
-                    BrowserWebView(url: service.portalURL, dataStore: store.websiteDataStore, state: browserState)
+                    BrowserWebView(url: service.portalURL, dataStore: store.websiteDataStore, state: browserState, sessions: store.sessions)
                 } else if preparing { ProgressView("正在准备学校页面…").frame(maxWidth: .infinity, maxHeight: .infinity) }
                 else { ContentUnavailableView("暂时无法打开登录页面", systemImage: "lock", description: Text("请解锁设备，关闭页面后重新打开。")) }
             }
@@ -41,7 +41,7 @@ struct SchoolBrowser: View {
                         Spacer()
                         Button("放大", systemImage: "plus.magnifyingglass") { browserState.zoom = min(2, browserState.zoom + 0.15) }
                     }
-                    Text("完成学校登录后，返回应用手动同步。系统浏览器与应用会话不同；教务/BB 登录网页打开前会清除旧缓存与会话。")
+                    Text("完成学校登录后，返回应用手动同步。应用内页面共享登录态。切换账号请先到“我的”清除并退出；系统浏览器与应用会话不同。")
                     .font(.caption).foregroundStyle(.secondary)
                 }
                     .frame(maxWidth: .infinity).padding().background(.regularMaterial)
@@ -68,8 +68,9 @@ private struct BrowserWebView: UIViewRepresentable {
     let url: URL
     let dataStore: WKWebsiteDataStore
     let state: BrowserState
+    let sessions: SchoolSessions
 
-    func makeCoordinator() -> Coordinator { Coordinator(state: state) }
+    func makeCoordinator() -> Coordinator { Coordinator(state: state, sessions: sessions) }
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
@@ -97,7 +98,17 @@ private struct BrowserWebView: UIViewRepresentable {
     @MainActor
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         private let state: BrowserState
-        init(state: BrowserState) { self.state = state }
+        private let sessions: SchoolSessions
+        init(state: BrowserState, sessions: SchoolSessions) { self.state = state; self.sessions = sessions }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            guard webView.url?.host == "ehall.sustech.edu.cn" else { return }
+            webView.evaluateJavaScript("JSON.stringify({id: String(window.userId || ''), name: String(window.userName || '')})") { [weak sessions] value, _ in
+                guard let text = value as? String, let data = text.data(using: .utf8),
+                      let fields = try? JSONDecoder().decode([String: String].self, from: data), let id = fields["id"], !id.isEmpty else { return }
+                sessions?.cleID = id; sessions?.cleName = fields["name"] ?? ""
+            }
+        }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
             guard let url = navigationAction.request.url else { return .cancel }

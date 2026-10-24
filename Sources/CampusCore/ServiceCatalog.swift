@@ -39,7 +39,7 @@ public enum SchoolService: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .teaching: "课表、考试与学校教务页面"
         case .blackboard: "课程、截止日期与课程页面"
-        case .card: "余额、账单与官方充值入口"
+        case .card: "余额、账单与消费统计"
         case .printing: "官方打印平台 · 可能需要校内网络"
         case .library: "馆藏、借阅与图书馆服务"
         case .rooms: "图书馆空间与研讨间预约"
@@ -60,7 +60,7 @@ public enum SchoolService: String, CaseIterable, Identifiable, Sendable {
         case .library: "https://lib.sustech.edu.cn/"
         case .rooms: "https://booking.lib.sustech.edu.cn/"
         case .booking: "https://booking.sustech.edu.cn/"
-        case .cle: "https://cle.sustech.edu.cn/service.html?lang=zh-cn"
+        case .cle: "https://ehall.sustech.edu.cn/dxggyw/sys/yyzxyy/*default/index.do"
         case .exchange: "https://ws.sustech.edu.cn/"
         case .faculty: "https://www.sustech.edu.cn/zh/faculty/"
         }

@@ -32,23 +32,31 @@ final class CampusStore {
     private(set) var challengeService: SchoolService?
     private(set) var cacheMessage: String?
     private var generation = 0
+    var sessionRevision: Int { generation }
     private var owner: String?
     private var teachingDate: Date?
     private var gradesDate: Date?
     private var blackboardDate: Date?
     private let repository = LocalRepository()
-    let websiteDataStore = WKWebsiteDataStore.default()
+    let sessions = SchoolSessions()
+    var websiteDataStore: WKWebsiteDataStore { sessions.websiteDataStore }
+    private(set) var hiddenCourses: Set<String> = []
+    var activeCourses: [BlackboardCourse] { (blackboard?.courses ?? []).filter { !hiddenCourses.contains($0.id) } }
+    func setCourseHidden(_ id: String, hidden: Bool) {
+        if hidden { hiddenCourses.insert(id) } else { hiddenCourses.remove(id) }
+        persist()
+    }
 
     init() { restore() }
 
     var deadlines: [LearningDeadline] {
         if mode == .demo { return blackboard?.deadlines ?? [] }
-        return courseDetails.values.flatMap(\.tasks).sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }
+        return courseDetails.filter { !hiddenCourses.contains($0.key) }.values.flatMap(\.tasks).sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }
     }
 
     private func resetDisplayedData() {
         teaching = nil; academic = nil; blackboard = nil
-        courseDetails = [:]; contentCache = [:]; files = []
+        courseDetails = [:]; contentCache = [:]; files = []; hiddenCourses = []
         teachingDate = nil; gradesDate = nil; blackboardDate = nil
         teachingState = .idle; gradesState = .idle; blackboardState = .idle
         courseLoading = []; downloading = []
@@ -59,6 +67,7 @@ final class CampusStore {
         teaching = archive.teaching; academic = archive.grades; blackboard = archive.blackboard
         teachingDate = archive.teachingDate; gradesDate = archive.gradesDate; blackboardDate = archive.blackboardDate
         courseDetails = archive.courseDetails; contentCache = archive.contents
+        hiddenCourses = archive.hiddenCourses ?? []
         files = archive.files.filter { FileManager.default.fileExists(atPath: repository.fileURL($0).path) }
         if let date = teachingDate, teaching != nil { teachingState = .cached(date) }
         if let date = gradesDate, academic != nil { gradesState = .cached(date) }
@@ -70,6 +79,7 @@ final class CampusStore {
         archive.teaching = teaching; archive.teachingDate = teachingDate
         archive.grades = academic; archive.gradesDate = gradesDate
         archive.blackboard = blackboard; archive.blackboardDate = blackboardDate
+        archive.hiddenCourses = hiddenCourses
         archive.courseDetails = courseDetails; archive.contents = contentCache; archive.files = files
         do { try repository.save(archive); cacheMessage = nil }
         catch { cacheMessage = "数据已读取，但本机缓存保存失败；请在解锁设备后重试。" }
@@ -96,11 +106,11 @@ final class CampusStore {
         do { try repository.erase() } catch {
             authenticationMessage = "无法清除旧账号缓存，请先解锁设备后重试。"; return
         }
-        await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
+        await sessions.clear()
         guard generation == version, !Task.isCancelled else { return }
         let client = CASClient()
         var results: [String] = []
-        for service in CASService.allCases {
+        for service in [CASService.teaching, .blackboard] {
             guard generation == version, !Task.isCancelled else { return }
             let label = service == .teaching ? "教务" : "Blackboard"
             authenticationMessage = "正在连接\(label)…"
@@ -138,23 +148,10 @@ final class CampusStore {
         persist()
     }
 
-    /// Opening an authenticated school page may switch identities. Start a new
-    /// cache namespace before the user can log in there; do not merge old data.
+    /// Browsing a service preserves shared CAS and per-service sessions.
     func prepareSchoolBrowser(_ service: SchoolService) async -> Bool {
-        guard [.teaching, .blackboard].contains(service) else { return true }
         guard !authenticating, !clearing else { return false }
-        clearing = true
-        defer { clearing = false }
-        generation += 1
-        mode = .live
-        resetDisplayedData()
-        owner = nil
-        do { try repository.erase(); owner = "web-" + UUID().uuidString }
-        catch {
-            cacheMessage = "旧缓存未能清除，已停止打开新的登录页面。请解锁设备后重试。"
-            return false
-        }
-        await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
+        await sessions.restore()
         return true
     }
 
@@ -162,7 +159,8 @@ final class CampusStore {
         guard mode == .live, !teachingState.isLoading, !clearing else { return }
         let version = generation
         teachingState = .loading
-        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        await sessions.connectIfPossible(.teaching)
+        let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
         do {
@@ -184,7 +182,8 @@ final class CampusStore {
         guard mode == .live, !gradesState.isLoading, !clearing else { return }
         let version = generation
         gradesState = .loading
-        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        await sessions.connectIfPossible(.teaching)
+        let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
         do {
@@ -203,7 +202,8 @@ final class CampusStore {
         guard mode == .live, !blackboardState.isLoading, !clearing else { return }
         let version = generation
         blackboardState = .loading
-        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        await sessions.connectIfPossible(.blackboard)
+        let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
         do {
@@ -225,7 +225,7 @@ final class CampusStore {
         let version = generation
         courseLoading.insert(course.id)
         defer { if version == generation { courseLoading.remove(course.id) } }
-        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
         let client = BlackboardClient(http: http)
@@ -248,7 +248,7 @@ final class CampusStore {
     func contents(course: String, parent: String?) async throws -> [BBContent] {
         guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
         let version = generation
-        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
         let client = BlackboardClient(http: http)
@@ -264,7 +264,7 @@ final class CampusStore {
     func attachments(course: String, content: String) async throws -> [BBAttachment] {
         let version = generation
         guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
-        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
         let result = try await BlackboardClient(http: http).attachments(courseID: course, contentID: content)
@@ -284,7 +284,7 @@ final class CampusStore {
         let version = generation
         downloading.insert(key)
         defer { if generation == version { downloading.remove(key) } }
-        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
         let temporary = try await http.download(path: attachment.path)
@@ -325,7 +325,7 @@ final class CampusStore {
         authenticationMessage = nil; challengeService = nil
         do { try repository.erase(); cacheMessage = nil }
         catch { cacheMessage = "部分本机文件未能清除，请解锁设备后再次清除。" }
-        await websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
+        await sessions.clear()
         clearing = false
     }
     private func retainCookies(_ cookies: [HTTPCookie], version: Int) async {
@@ -341,5 +341,29 @@ final class CampusStore {
         if let error = error as? CampusError { return error.localizedDescription }
         if let error = error as? CASFailure { return error.localizedDescription }
         return "未能读取学校服务，请检查网络、会话或权限后重试。"
+    }
+
+    func serviceHTTP(_ service: CASService) async -> ServiceHTTP {
+        await sessions.connectIfPossible(service)
+        let origin: URL
+        switch service {
+        case .teaching: origin = SchoolService.teaching.portalURL
+        case .blackboard: origin = SchoolService.blackboard.portalURL
+        case .card: origin = SchoolService.card.portalURL
+        case .printing: origin = SchoolService.printing.portalURL
+        }
+        return ServiceHTTP(origin: origin, cookies: await sessions.cookies())
+    }
+    func serviceHTTP(origin: URL) async -> ServiceHTTP {
+        ServiceHTTP(origin: origin, cookies: await sessions.cookies())
+    }
+    func absorb(_ http: ServiceHTTP, revision: Int) async {
+        guard generation == revision, !clearing else { return }
+        for cookie in http.cookies() {
+            guard generation == revision, !clearing else { return }
+            let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: "."))
+            guard host == "sustech.edu.cn" || host.hasSuffix(".sustech.edu.cn") else { continue }
+            await websiteDataStore.httpCookieStore.setCookie(cookie)
+        }
     }
 }
