@@ -146,6 +146,12 @@ struct BusMapView: View {
         }
         let rows = value["vehicles"].rows.enumerated().map { index, row in row.replacing(["source_time": .number(Date.now.timeIntervalSince1970 - (index == 1 ? 300 : 10))]) }
         vehicles = (try? BusMapParser.vehicles(.array(rows))) ?? []; fetched = .now; message = "线路与站点为公开数据快照，车辆均为虚构示例。"
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--smoke-bus"), let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let check: [String: Any] = ["at": Date.now.timeIntervalSince1970, "routes": routes.count, "points": routes.flatMap { $0.directions.flatMap(\.points) }.count, "stops": stops.count, "vehicles": vehicles.count]
+            if let data = try? JSONSerialization.data(withJSONObject: check) { try? data.write(to: directory.appendingPathComponent("smoke-bus-map.json"), options: .atomic) }
+        }
+        #endif
     }
 }
 

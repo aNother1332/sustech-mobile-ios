@@ -72,8 +72,14 @@ def main():
                 if selected and scene not in selected:
                     continue
                 print(f"Capture: {family} {scene}", flush=True)
+                launched_at = time.time()
                 run("launch", "--terminate-running-process", uid, BUNDLE, *arguments)
                 time.sleep(3)
+                if "--smoke-bus" in arguments:
+                    container = Path(run("get_app_container", uid, BUNDLE, "data").strip())
+                    check = json.loads((container / "Documents/smoke-bus-map.json").read_text())
+                    assert check["at"] >= launched_at - 1 and all(check[key] > 0 for key in ("routes", "points", "stops", "vehicles")), check
+                    print("Bus map populated: " + json.dumps(check), flush=True)
                 run("io", uid, "screenshot", OUT / f"{family}-{scene}.png")
                 # Terminate must succeed: a process that already crashed fails here.
                 run("terminate", uid, BUNDLE)
