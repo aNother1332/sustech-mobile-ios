@@ -74,7 +74,36 @@
 
 ## 界面截图
 
-以下为云端 iOS 模拟器实际运行所得 **48 张 0.4.0 界面截图**，使用虚构课程、任务、馆藏、评价与排课数据，或未连接状态，**不含真实学生账号、成绩或课程记录**。每组左侧为 iPhone，右侧为 iPad。截图运行 [40167331512](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40167331512)，对应界面提交 `a7f9a04`；之后补充了会话续期、连接状态绑定与提示文字，最终安装包的源码提交另见构建记录，截图不作为真实校园业务验收。
+以下为云端 iOS 模拟器实际运行的 **0.5.0 界面截图**，包含 iPhone/iPad、深色外观及大字号。课程、任务、余额等为虚构示例或未连接状态；教师目录为学校已公开资料快照；不含真实学生账号或认证凭据。完整截图运行 [40172533665](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40172533665)，界面提交 `6f752ef`。最后的校历/小组件过期逻辑、官方项目详情控件与说明修正经[最终构建 40173815553](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40173815553)验证，78 项 Swift 测试与 8 项打包测试通过，重点场景另复查 12 张。每张图的来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。截图不作为真实校园业务验收。
+
+### 学校标识色与深色外观
+
+| 首页 · 深色 | 办事 · 深色 |
+| --- | --- |
+| ![深色首页](docs/screenshots/iPhone-today-dark.png) | ![深色办事](docs/screenshots/iPhone-services-dark.png) |
+
+### 校园码、校历与教师目录
+
+| iPhone | iPad |
+| --- | --- |
+| ![校园码未连接示例](docs/screenshots/iPhone-code.png) | ![校园码未连接示例](docs/screenshots/iPad-code.png) |
+| ![教学日历](docs/screenshots/iPhone-calendar.png) | ![教学日历](docs/screenshots/iPad-calendar.png) |
+| ![公开教师目录](docs/screenshots/iPhone-faculty.png) | ![公开教师目录](docs/screenshots/iPad-faculty.png) |
+
+### 交换项目与小组件设置
+
+| iPhone | iPad |
+| --- | --- |
+| ![交换项目示例界面](docs/screenshots/iPhone-exchange.png) | ![交换项目示例界面](docs/screenshots/iPad-exchange.png) |
+| ![小组件共享设置](docs/screenshots/iPhone-widgets.png) | ![小组件共享设置](docs/screenshots/iPad-widgets.png) |
+
+小组件设置截图不等于桌面组件签名成功，实际扩展安装与 App Groups 仍需真机核对。
+
+### 系统大字号
+
+| iPhone | iPad |
+| --- | --- |
+| ![大字号列表课表](docs/screenshots/iPhone-study-large.png) | ![大字号列表课表](docs/screenshots/iPad-study-large.png) |
 
 ### 图书馆
 

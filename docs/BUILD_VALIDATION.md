@@ -1,3 +1,23 @@
+# 0.5.0（构建 8）验收
+
+- 最终安装包源码：`778d84205ec6781de4d2ad10d2d7f6c91ae97725`。
+- 最终成功构建：[40173815553](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40173815553)。**78 项 Swift 测试、8 项 Python 打包测试通过**；iPhone/iPad 模拟器、arm64 iPhoneOS 主应用、分享扩展和 Widget 扩展编译通过。
+- 完整界面运行 [40172533665](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40172533665)，提交 `6f752ef`，生成 64 张截图；最终源码另复查首页/周课表/交换项目/账户/小组件设置的两类设备截图与桌面，共 12 张。图库保留 64 个不同场景/设备文件，每个文件来源记录于 [SOURCES.json](screenshots/SOURCES.json)。
+- 已人工核对：首页、办事、网格课表、校园卡、打印、教师目录、校历、校园码，以及深色和大字号。最终重点复查交换项目与首页。
+- 版本号 0.5.0/8、iOS 17、设备族 [1,2]、名称 SUSTechMobile、主 Bundle ID `cn.sustech.community.daily` 已验证；IPA ZIP 完整、主程序和扩展为 arm64 Mach-O。普通包无 PlugIns，扩展包含 `CampusPrintShare.appex` 与 `CampusWidgets.appex`，两个扩展的 Bundle ID、构建号均核对。
+- 下载目录：`D:/Altstore/App/SUSTechMobile-0.5.0`。日志：`D:/Altstore/Diagnostics/SUSTechMobile-0.5-final-build.log`。
+
+- `SUSTechMobile-unsigned.ipa`：2,107,185 字节；SHA256 `15fe2f8ee1b9520c472762a5da3e0071ee7fc0c1e5ee87f9858453f11d2a5143`。
+- `SUSTechMobile-with-extensions-unsigned.ipa`：2,193,504 字节；SHA256 `f3e7549d0ab439781906ae96594d88e0c29c247784a92ad852c67520ecdd2523`。
+
+验证边界：测试使用离线夹具，不含真实校园或 Apple 账号。校园码终端识别、WS 会话、真实删除/打印/预约/续借/BB 提交均需本人真机验收。未创建充值订单、付款或消费；完整原生充值下单仍关闭。扩展包含不等于有效签名，App Groups 和 iLoader 兼容性未实测。普通包继续支持主应用直接导入 PDF。
+
+此前旧版本递归清理被自动审批拒绝，本次未重试或绕过；旧版目录仍保留。
+
+实现说明：[0.5 发布说明](RELEASE_0_5.md)、[设计来源](DESIGN_0_5.md)、[检查记录](REVIEW_0_5.md)、[扩展签名](SHARE_SIGNING.md)。
+
+---
+
 # 0.4.0（构建 7）验收
 
 - 最终安装包源码：`e302728fc0242d0e64cc17632718084a138f1ffc`。

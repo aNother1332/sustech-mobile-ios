@@ -27,4 +27,7 @@ Widget/shared-print extensions require matching signing profiles and App Groups;
 omits extensions. WidgetKit refresh is system-budgeted, not continuous real time. No full native
 recharge payment claim is made; limitations from 0.4 remain.
 
-Validation results and screenshot evidence will be recorded after cloud build.
+Validation complete: final build 40173815553 at commit 778d842, 78 Swift tests and 8 Python tests.
+Simulator/device builds include both extensions. Full capture 40172533665 produced 64 screenshots;
+final build recaptured 12 images covering changed screens and home. See BUILD_VALIDATION.md and
+screenshots/SOURCES.json for exact provenance. Real campus/device boundaries above remain.
