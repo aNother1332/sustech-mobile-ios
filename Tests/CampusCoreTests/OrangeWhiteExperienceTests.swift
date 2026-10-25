@@ -30,7 +30,7 @@ import Testing
     #expect(group.times[0].phase(at: now) == .recent)
     #expect(group.times[1].phase(at: now) == .recent)
     #expect(group.times[2].phase(at: now) == .future)
-    #expect(group.times[0].phase(at: now.addingTimeInterval(60)) == .past)
+    #expect(group.times[0].phase(at: now.addingTimeInterval(1)) == .past)
 }
 @Test func selectedVehicleNeverBorrowsAnotherVehiclesPrediction() throws {
     let raw = try JSONDecoder().decode(WireValue.self, from: Data(#"[{"id":"v1","latitude":22.6,"longitude":114,"route_direction_id":"line1_cw","trip_id":"trip-one","current_position":{"next_stop_id":"stop-one"}}]"#.utf8))

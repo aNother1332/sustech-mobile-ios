@@ -7,23 +7,25 @@ import SwiftUI
     private let manager = CLLocationManager()
     private(set) var point: CLLocation?
     private var requested = false
+    private var tracking = false
     var message: String?
     override init() { super.init(); manager.delegate = self; manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters }
-    func request() {
-        requested = true
+    func request(continuous: Bool = false) {
+        requested = true; tracking = continuous
         switch manager.authorizationStatus {
         case .notDetermined: manager.requestWhenInUseAuthorization()
-        case .authorizedAlways, .authorizedWhenInUse: manager.requestLocation()
-        default: message = "未授权定位；仍可按站名查询。"
+        case .authorizedAlways, .authorizedWhenInUse: if tracking { manager.startUpdatingLocation() } else { manager.requestLocation() }
+        default: point = nil; message = "未授权定位；仍可按站名查询。"
         }
     }
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if requested, [.authorizedAlways, .authorizedWhenInUse].contains(manager.authorizationStatus) { manager.requestLocation() }
+        if requested, [.authorizedAlways, .authorizedWhenInUse].contains(manager.authorizationStatus) { if tracking { manager.startUpdatingLocation() } else { manager.requestLocation() } }
     }
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let last = locations.last, last.horizontalAccuracy >= 0 else { return }; point = last; message = "已按距你的位置排序 · 距离为直线估算"
+        guard let last = locations.last, last.horizontalAccuracy >= 0, abs(last.timestamp.timeIntervalSinceNow) < 120 else { return }; point = last; message = "已按距你的位置排序 · 距离为直线估算"
     }
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) { message = "暂时无法定位，可继续按站名查询。" }
+    func stop() { manager.stopUpdatingLocation(); tracking = false; requested = false }
     func distance(_ stop: BusStop) -> Double? {
         guard let point, let lat = stop.latitude, let lon = stop.longitude, (-90...90).contains(lat), (-180...180).contains(lon) else { return nil }
         return point.distance(from: CLLocation(latitude: lat, longitude: lon))

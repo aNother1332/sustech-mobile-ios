@@ -9,11 +9,11 @@ enum DemoData {
             return "<div class=\"weui-media-box weui-media-box_text\"><h4><div>\(kind)</div><div>\(amount)</div></h4><div style=\"color:#999;flex:1\">\(date) 12:00</div><span class=\"label label-success\">成功</span></div>"
         }.joined()
     }
-    static let teaching = TeachingSnapshot(
-        semester: Semester(year: "2026-2027", term: "1", name: "示例学期"), week: 8,
+    static var teaching: TeachingSnapshot { TeachingSnapshot(
+        semester: Semester(year: "2026-2027", term: "1", name: "示例学期"), week: AcademicData.term()?.week(.now),
         meetings: [
             CourseMeeting(id: "demo-1", name: "线性代数", details: "示例教师 · 第一教学楼 203",
-                          weekday: 1, firstPeriod: 1, lastPeriod: 2),
+                          weekday: (AcademicTerm.calendar.component(.weekday, from: Date.now) + 5) % 7 + 1, firstPeriod: 1, lastPeriod: 2),
             CourseMeeting(id: "demo-2", name: "程序设计基础", details: "示例教师 · 第二教学楼 105",
                           weekday: 2, firstPeriod: 3, lastPeriod: 4),
             CourseMeeting(id: "demo-3", name: "大学物理", details: "示例教师 · 第一教学楼 302",
@@ -23,7 +23,7 @@ enum DemoData {
         ],
         exams: [CampusExam(id: "demo-exam", course: "线性代数 · 示例考试", date: "2026-11-06",
                            time: "14:00–16:00", room: "第一教学楼 203", seat: "待公布")]
-    )
+    ) }
 
     static var blackboard: BlackboardSnapshot {
         BlackboardSnapshot(courses: [

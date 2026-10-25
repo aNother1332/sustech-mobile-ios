@@ -8,10 +8,10 @@ struct CampusHub<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                CampusHero(eyebrow: "", title: title, subtitle: "", symbol: symbol)
                 content
             }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
         }.background(Color.campusPaper).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(CampusPalette.header, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar).toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
 
@@ -72,7 +72,7 @@ struct CardView: View {
         do {
             let value = try await CardClient(http: http).account()
             guard version == store.sessionRevision, store.mode == .live else { return }
-            balance = value.balance; message = nil; store.recordSession(.card)
+            balance = value.balance; store.cardBalance = value.balance; message = nil; store.recordSession(.card)
         } catch { if version == store.sessionRevision { message = "余额未读取，进入余额与账单刷新"; store.recordSession(.card, error: error) } }
         await store.absorb(http, revision: version)
     }

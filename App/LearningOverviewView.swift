@@ -9,6 +9,7 @@ struct LearningOverviewView: View {
             guard let term = store.academicTerm else { return [] }
             return snapshot.meetings.filter { meeting in AcademicData.dates(meeting, term: term).contains { AcademicTerm.calendar.isDateInToday($0) } }.sorted { $0.firstPeriod < $1.firstPeriod }
         }
+        guard let term = store.academicTerm, snapshot.week == term.week(.now) else { return [] }
         let weekday = (AcademicTerm.calendar.component(.weekday, from: Date.now) + 5) % 7 + 1
         return snapshot.meetings.filter { $0.weekday == weekday }.sorted { $0.firstPeriod < $1.firstPeriod }
     }

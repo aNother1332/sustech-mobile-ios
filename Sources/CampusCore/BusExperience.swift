@@ -7,8 +7,8 @@ public struct BusDeparture: Identifiable, Sendable {
     public let minute: Int
     public func phase(at date: Date) -> Phase {
         let now = AcademicTerm.calendar.component(.hour, from: date) * 60 + AcademicTerm.calendar.component(.minute, from: date)
-        let elapsed = now - minute
-        return elapsed < 0 ? .future : elapsed <= 20 ? .recent : .past
+        let elapsed = (now - minute) * 60 + AcademicTerm.calendar.component(.second, from: date)
+        return elapsed < 0 ? .future : elapsed <= 1200 ? .recent : .past
     }
 }
 public struct BusScheduleGroup: Identifiable, Sendable {

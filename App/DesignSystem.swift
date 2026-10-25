@@ -117,6 +117,6 @@ private struct CampusConfirmActionStyle: PrimitiveButtonStyle {
     let dismiss: () -> Void
     func makeBody(configuration: Configuration) -> some View {
         Button(role: configuration.role) { configuration.trigger(); dismiss() } label: { configuration.label.frame(maxWidth: .infinity) }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.borderedProminent).tint(configuration.role == .destructive ? .red : .campusOrange)
     }
 }

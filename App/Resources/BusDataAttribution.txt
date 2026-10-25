@@ -6,3 +6,5 @@ commit 48c9773c38619761e82c5c639542dc4737517b85.
 Only routes/stops are from the source; example vehicle records are newly synthesized.
 The native Swift UI is an independent implementation of the public protocol.
 Apple Maps supplies basemap/attribution at runtime; no upstream tiles are bundled.
+
+0.7.0 also includes the public /schedules snapshot (2026-10-25) for offline demonstration, under the same upstream CC BY-SA 4.0 attribution.

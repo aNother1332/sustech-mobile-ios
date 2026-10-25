@@ -15,7 +15,7 @@ struct AccountView: View {
                         VStack(alignment: .leading, spacing: 5) {
                             Text(store.profile?.name.isEmpty == false ? store.profile!.name : "我的").font(.title2.bold())
                             if let id = store.profile?.studentID, !id.isEmpty { Text(id).font(.subheadline).textSelection(.enabled) }
-                            else if let account = store.rememberedUsername { Text(account).font(.subheadline).textSelection(.enabled) }
+                            else if let account = store.loginAccount ?? store.rememberedUsername { Text("账号 " + account).font(.subheadline).textSelection(.enabled) }
                         }
                         Spacer()
                         Button { Task { await store.refreshProfile() } } label: { Image(systemName: "arrow.clockwise") }.accessibilityLabel("刷新个人信息")
@@ -54,13 +54,13 @@ struct AccountView: View {
                     .disabled(store.clearing || store.writing)
             }
             Section("工具与偏好") {
-                NavigationLink("网络与服务诊断") { DiagnosticsView() }
-                NavigationLink("检查软件更新") { AppUpdatesView() }
-                NavigationLink("教学日历与培养层次") { AcademicCalendarView() }
-                NavigationLink("桌面小组件设置") { WidgetSettingsView() }
+                NavigationLink("网络与服务诊断") { DiagnosticsView().toolbar(.visible, for: .navigationBar) }
+                NavigationLink("检查软件更新") { AppUpdatesView().toolbar(.visible, for: .navigationBar) }
+                NavigationLink("教学日历与培养层次") { AcademicCalendarView().toolbar(.visible, for: .navigationBar) }
+                NavigationLink("桌面小组件设置") { WidgetSettingsView().toolbar(.visible, for: .navigationBar) }
             }
             Section("关于与来源") {
-                NavigationLink("上游许可与来源") { NoticesView() }
+                NavigationLink("上游许可与来源") { NoticesView().toolbar(.visible, for: .navigationBar) }
                 Text("本应用不代表南方科技大学。学校页面、规则和记录为准。")
                     .font(.caption).foregroundStyle(.secondary)
             }

@@ -27,7 +27,6 @@ struct CardAccountView: View {
     var body: some View {
         List {
             Section {
-                CampusHero(eyebrow: "CAMPUS CARD", title: "我的校园卡", subtitle: "余额 · 动态码 · 账单", symbol: "creditcard.fill")
                 ModeNotice()
                 SessionBadge(service: .card)
                 if let account {
@@ -81,7 +80,7 @@ struct CardAccountView: View {
         let http = await store.serviceHTTP(.card); let client = CardClient(http: http)
         do {
             let value = try await client.account()
-            guard store.sessionRevision == version else { return }; account = value; store.recordSession(.card)
+            guard store.sessionRevision == version else { return }; account = value; store.cardBalance = value.balance; store.recordSession(.card)
             let records = try await client.bills()
             guard store.sessionRevision == version else { return }; bills = records; synced = .now; message = nil
         } catch { if version == store.sessionRevision { store.recordSession(.card, error: error); message = error.localizedDescription } }
@@ -261,7 +260,6 @@ struct PrintingWorkspaceView: View {
                 Button("确认打印参数并提交") { confirmUpload = true }.disabled(pdf == nil || busy || store.mode == .demo)
             }
             Section {
-                CampusHero(eyebrow: "CAMPUS PRINT", title: "校园打印", subtitle: "选文件 · 设参数 · 查队列", symbol: "printer.fill")
                 NavigationLink("打印站点、扫描与用量") { PrintExtrasView().id(store.sessionRevision) }; NavigationLink("系统分享待打印") { PrintInboxView() } }
             Section("打印队列") {
                 SessionBadge(service: .printing)

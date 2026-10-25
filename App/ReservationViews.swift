@@ -6,7 +6,6 @@ struct ReservationCenterView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                CampusHero(eyebrow: "", title: "预约中心", subtitle: "", symbol: "calendar")
                 CampusSectionTitle(title: "场地空间")
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                     ServiceTile(title: "IC研讨间", detail: "", symbol: "door.left.hand.open", color: .campusOrange) { ICReservationView().id(store.sessionRevision) }
@@ -21,6 +20,7 @@ struct ReservationCenterView: View {
                 CampusFold(title: "学校入口", symbol: "globe") { Link("体育场馆", destination: URL(string: "https://reservation.sustech.edu.cn")!) }
             }.padding(16).frame(maxWidth: 900).frame(maxWidth: .infinity)
         }.background(Color.campusPaper).navigationTitle("预约中心").navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(CampusPalette.header, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar).toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
 

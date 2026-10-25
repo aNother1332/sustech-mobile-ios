@@ -14,6 +14,11 @@ struct ServicesView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 CampusHero(eyebrow: "CAMPUS SERVICES", title: "办事", subtitle: "", symbol: "square.grid.2x2.fill")
+                HStack {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    TextField("搜索校园服务", text: $query).textFieldStyle(.plain)
+                    if !query.isEmpty { Button { query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.accessibilityLabel("清除搜索") }
+                }.padding(12).background(Color.primary.opacity(0.04), in: Capsule())
                 CampusSectionTitle(title: "校园服务")
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                     if matches("校园码 身份码 扫码") { ServiceTile(title: "校园码", detail: "动态码 / 身份核验", symbol: "qrcode", color: .campusOrange) { CampusCodeView().id(store.sessionRevision) } }
@@ -46,7 +51,7 @@ struct ServicesView: View {
                             }
                             Spacer()
                         }.padding().background(Color(uiColor: .systemGroupedBackground))
-                            .navigationTitle(service.title)
+                            .navigationTitle(service.title).toolbar(.visible, for: .navigationBar)
                     } label: {
                         Label {
                             VStack(alignment: .leading, spacing: 5) {
@@ -59,7 +64,6 @@ struct ServicesView: View {
             }
             }.padding(14).frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }.background(Color(uiColor: .systemGroupedBackground))
-        .searchable(text: $query, prompt: "搜索校园服务")
         .refreshable { await store.checkSchoolSessions(force: true) }
         .navigationTitle("办事").navigationBarTitleDisplayMode(.inline)
         .sheet(item: $portal) { SchoolBrowser(service: $0) }

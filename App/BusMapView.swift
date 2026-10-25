@@ -40,22 +40,23 @@ struct BusMapView: View {
     }
     private var ownPoint: BusCoordinate? {
         if store.mode == .demo { return BusCoordinate(latitude: 22.603, longitude: 113.994) }
-        guard let point = location.point else { return nil }
+        guard let point = location.point, abs(point.timestamp.timeIntervalSinceNow) < 120 else { return nil }
         return BusCoordinate(latitude: point.coordinate.latitude, longitude: point.coordinate.longitude)
     }
     private var nearby: [BusStop] {
-        if let manualStop, let stop = stops.first(where: { $0.id == manualStop }) {
-            return [stop] + stops.filter { $0.id != stop.id && $0.name.components(separatedBy: " · ").first == stop.name.components(separatedBy: " · ").first }.prefix(1)
-        }
-        guard ownPoint != nil else { return [] }
+        guard referencePoint != nil else { return [] }
         return ["line1_cw", "line2_ccw"].compactMap { direction in
             let ids = Set(routes.flatMap(\.directions).filter { $0.id == direction }.flatMap(\.stopIDs))
             let candidates = stops.filter { ids.contains($0.id) || $0.directionIDs.contains(direction) }
             return candidates.min { distance($0) < distance($1) }
         }
     }
+    private var referencePoint: BusCoordinate? {
+        if let manualStop, let stop = stops.first(where: { $0.id == manualStop }), let lat = stop.latitude, let lon = stop.longitude { return BusCoordinate(latitude: lat, longitude: lon) }
+        return ownPoint
+    }
     private func distance(_ stop: BusStop) -> Double {
-        guard let ownPoint, let lat = stop.latitude, let lon = stop.longitude else { return .infinity }
+        guard let ownPoint = referencePoint, let lat = stop.latitude, let lon = stop.longitude else { return .infinity }
         return CLLocation(latitude: ownPoint.latitude, longitude: ownPoint.longitude).distance(from: CLLocation(latitude: lat, longitude: lon))
     }
     var body: some View {
@@ -68,17 +69,20 @@ struct BusMapView: View {
                     if let message { Text(message).font(.caption).padding(10).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 12)) }
                     Spacer()
                     if !expanded { detailCard }
-                    HStack { Spacer(); Button { following = true; location.request(); centerOnUser() } label: { Image(systemName: "location.fill").padding(14).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 14)) }.accessibilityLabel("回到我的位置") }
+                    HStack { Spacer(); Button { manualStop = nil; following = true; location.request(continuous: true); centerOnUser() } label: { Image(systemName: "location.fill").padding(14).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 14)) }.accessibilityLabel("回到我的位置") }
                 }.padding(14).padding(.bottom, height + 12)
                 scheduleDrawer(height: height)
                 if showStops { stopChooser }
                 if showSettings { settings }
             }
         }
-        .onAppear { camera = .region(campus); if store.mode == .live { location.request() } }
+        .onAppear { camera = .region(campus); if store.mode == .live { location.request(continuous: true) } }
         .onChange(of: location.point) { _, _ in if following { centerOnUser() } }
         .onChange(of: mainlandMap) { _, _ in centerOnUser() }
+        .onDisappear { location.stop() }
         .task(id: store.mode.rawValue) {
+            routes = []; stops = []; vehicles = []; schedules = []; arrivals = [:]
+            selectedStop = nil; selectedVehicle = nil; manualStop = nil; fetched = nil
             await load(staticData: true)
             if store.mode == .demo { centerOnUser() }
             while !Task.isCancelled {
@@ -88,7 +92,7 @@ struct BusMapView: View {
         }
         .task(id: detailKey) { await refreshArrivals() }
         .onChange(of: location.point) { _, _ in Task { await refreshArrivals() } }
-        .onChange(of: phase) { _, value in if value == .active { Task { await load(staticData: routes.isEmpty) } } }
+        .onChange(of: phase) { _, value in if value == .active { if store.mode == .live { location.request(continuous: true) }; Task { await load(staticData: routes.isEmpty) } } else { location.stop() } }
     }
     private var map: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -146,7 +150,7 @@ struct BusMapView: View {
                             Text(index == 0 ? "↻" : "↺").font(.title3).foregroundStyle(routeColor(index == 0 ? "line1" : "line2"))
                             VStack(alignment: .leading, spacing: 3) { Text(stop.name).font(.caption.weight(.semibold)).foregroundStyle(.primary).lineLimit(2); Text(index == 0 ? "1路 · 内环" : "2路 · 外环").font(.caption2).foregroundStyle(.secondary) }
                             Spacer(minLength: 4)
-                            arrivalValue((arrivals[stop.id] ?? []).filter { $0.directionID == direction }.first)
+                            arrivalValue((arrivals[stop.id] ?? []).filter { $0.directionID == direction }.min { arrivalDate($0) < arrivalDate($1) })
                         }
                     }.buttonStyle(.plain)
                 }
@@ -182,7 +186,12 @@ struct BusMapView: View {
         } else { Text("—").font(.title3).foregroundStyle(.secondary) }
     }
     private func earliest(_ values: [BusArrival]) -> [BusArrival] {
-        let grouped = Dictionary(grouping: values.filter { $0.reason.isEmpty }, by: { $0.routeID + "|" + $0.directionID })
+        let available = values.filter { value in
+            guard value.reason.isEmpty else { return false }
+            if value.source == "real_time" { return (value.minutes ?? -1) >= 0 }
+            return value.source == "planned" && (BusMapParser.date(value.planned) ?? .distantPast) >= .now
+        }
+        let grouped = Dictionary(grouping: available, by: { $0.routeID + "|" + $0.directionID })
         return grouped.keys.sorted().compactMap { grouped[$0]?.min { arrivalDate($0) < arrivalDate($1) } }
     }
     private func arrivalDate(_ value: BusArrival) -> Date {
@@ -248,7 +257,7 @@ struct BusMapView: View {
     private var stopChooser: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack { Text("选择站台").font(.headline); Spacer(); Button("关闭") { showStops = false } }
-            ScrollView { LazyVStack(alignment: .leading) { ForEach(stops) { stop in Button { manualStop = stop.id; showStops = false; Task { await refreshArrivals() } } label: { Text(stop.name).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 10) } } } }
+            ScrollView { LazyVStack(alignment: .leading) { ForEach(stops) { stop in Button { manualStop = stop.id; showStops = false; if let lat = stop.latitude, let lon = stop.longitude, let point = BusCoordinate(latitude: lat, longitude: lon) { camera = .region(MKCoordinateRegion(center: coordinate(point), span: MKCoordinateSpan(latitudeDelta: 0.009, longitudeDelta: 0.010))) }; Task { await refreshArrivals() } } label: { Text(stop.name).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 10) } } } }
         }.padding(20).frame(maxWidth: 480).frame(maxHeight: 460).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 24)).padding(16)
     }
     private var settings: some View {
@@ -308,7 +317,16 @@ struct BusMapView: View {
         }
         let rows = value["vehicles"].rows.enumerated().map { index, row in row.replacing(["source_time": .number(Date.now.timeIntervalSince1970 - (index == 1 ? 300 : 10))]) }
         vehicles = (try? BusMapParser.vehicles(.array(rows))) ?? []; fetched = .now; message = nil
+        for stop in nearby {
+            let value: WireValue = .object(["arrivals": .array([
+                .object(["route_id": .string("line1"), "route_direction_id": .string("line1_cw"), "route_name_zh": .string("1路"), "direction_name_zh": .string("内环"), "source": .string("real_time"), "eta_minutes": .integer(3)]),
+                .object(["route_id": .string("line2"), "route_direction_id": .string("line2_ccw"), "route_name_zh": .string("2路"), "direction_name_zh": .string("外环"), "source": .string("real_time"), "eta_minutes": .integer(8)])])])
+            arrivals[stop.id] = (try? BusClient.parseArrivals(value)) ?? []
+        }
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--smoke-bus-drawer") { expanded = true }
+        if ProcessInfo.processInfo.arguments.contains("--smoke-bus-stop") { selectedStop = nearby.first?.id }
+        if ProcessInfo.processInfo.arguments.contains("--smoke-bus-vehicle") { selectedVehicle = vehicles.first?.id }
         if ProcessInfo.processInfo.arguments.contains("--smoke-bus"), let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             let check: [String: Any] = ["at": Date.now.timeIntervalSince1970, "routes": routes.count, "points": routes.flatMap { $0.directions.flatMap(\.points) }.count, "stops": stops.count, "vehicles": vehicles.count]
             if let data = try? JSONSerialization.data(withJSONObject: check) { try? data.write(to: directory.appendingPathComponent("smoke-bus-map.json"), options: .atomic) }

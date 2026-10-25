@@ -17,6 +17,8 @@ enum ConnectionState {
 @MainActor @Observable
 final class CampusStore {
     private(set) var mode = DataMode.live
+    var loginAccount: String?
+    var cardBalance: String?
     var profile: StudentProfile?
     var profileMessage: String?
     private(set) var teaching: TeachingSnapshot?
@@ -80,7 +82,7 @@ final class CampusStore {
     private func resetDisplayedData() {
         CampusWidgetBridge.clear()
         serviceSessions = [:]; serviceProbeTokens = [:]
-        profile = nil; profileMessage = nil
+        loginAccount = nil; cardBalance = nil; profile = nil; profileMessage = nil
         teaching = nil; academic = nil; blackboard = nil
         courseDetails = [:]; contentCache = [:]; files = []; hiddenCourses = []
         teachingDate = nil; gradesDate = nil; blackboardDate = nil
@@ -89,6 +91,7 @@ final class CampusStore {
     }
     private func restore() {
         guard let archive = repository.load() else { return }
+        loginAccount = archive.loginAccount
         profile = archive.profile
         owner = archive.owner
         teaching = archive.teaching; academic = archive.grades; blackboard = archive.blackboard
@@ -108,6 +111,7 @@ final class CampusStore {
         archive.grades = academic; archive.gradesDate = gradesDate
         archive.blackboard = blackboard; archive.blackboardDate = blackboardDate
         archive.hiddenCourses = hiddenCourses
+        archive.loginAccount = loginAccount
         archive.profile = profile
         archive.courseDetails = courseDetails; archive.contents = contentCache; archive.files = files
         do { try repository.save(archive); cacheMessage = nil }
@@ -160,6 +164,7 @@ final class CampusStore {
             do {
                 let cookies = try await client.signIn(service: service, username: username, password: password)
                 guard generation == version, !Task.isCancelled else { return }
+                loginAccount = username
                 authenticated = true
                 await retainCookies(cookies, version: version)
                 guard generation == version else { return }

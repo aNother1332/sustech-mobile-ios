@@ -28,7 +28,7 @@ struct StudyView: View {
                 CampusHero(eyebrow: "", title: "学习", subtitle: "", symbol: "books.vertical")
                 LearningOverviewView()
                 ModeNotice()
-                HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision) }; Spacer(); NavigationLink("排课") { PlannerView() }; NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision) } }.font(.caption)
+                HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }; Spacer(); NavigationLink("排课") { PlannerView().toolbar(.visible, for: .navigationBar) }; NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) } }.font(.caption)
                 if let message = store.cacheMessage { Text(message).font(.caption).foregroundStyle(.orange) }
                 CampusFold(title: "课表", symbol: "calendar") { teachingContentFor(.timetable) }
                 CampusFold(title: "考试", symbol: "pencil.and.list.clipboard") { teachingContentFor(.exams) }
@@ -57,7 +57,7 @@ struct StudyView: View {
             }
             if section == .timetable {
                 if let snapshot = store.teaching {
-                    HStack { Toggle("网格课表", isOn: $grid); NavigationLink("本学期课程") { EnrolledCoursesView() } }.font(.caption)
+                    HStack { Toggle("网格课表", isOn: $grid); NavigationLink("本学期课程") { EnrolledCoursesView().toolbar(.visible, for: .navigationBar) } }.font(.caption)
                     if snapshot.fullSemester {
                         Stepper("第 \(selectedWeek) 教学周", value: $selectedWeek, in: 1...max(30, snapshot.meetings.flatMap { $0.weeks ?? [] }.max() ?? 30))
                         if snapshot.week != nil { Button("返回当前教学周") { selectedWeek = snapshot.week ?? selectedWeek } }
@@ -159,11 +159,11 @@ struct StudyView: View {
                         .disabled(store.blackboardState.isLoading || store.clearing || store.authenticating)
                     ConnectionNotice(state: store.blackboardState).font(.caption)
                 }
-                NavigationLink { OfflineDownloadsView() } label: { Label("离线文件 · \(store.files.count)", systemImage: "arrow.down.document") }
+                NavigationLink { OfflineDownloadsView().toolbar(.visible, for: .navigationBar) } label: { Label("离线文件 · \(store.files.count)", systemImage: "arrow.down.document") }
             }
             if let snapshot = store.blackboard {
                 ForEach(store.activeCourses) { course in
-                    NavigationLink { BBCourseView(course: course) } label: {
+                    NavigationLink { BBCourseView(course: course).toolbar(.visible, for: .navigationBar) } label: {
                         CampusCard {
                             HStack { Text(course.name).font(.headline); Spacer(); Image(systemName: "chevron.right") }
                             if let detail = store.courseDetails[course.id] {
@@ -179,7 +179,7 @@ struct StudyView: View {
                     DisclosureGroup("已折叠课程 · \(folded.count)") {
                         ForEach(folded) { course in
                             HStack {
-                                NavigationLink(course.name) { BBCourseView(course: course) }
+                                NavigationLink(course.name) { BBCourseView(course: course).toolbar(.visible, for: .navigationBar) }
                                 Spacer()
                                 Button("恢复显示") { store.setCourseHidden(course.id, hidden: false) }.font(.caption)
                             }.padding(.vertical, 8)

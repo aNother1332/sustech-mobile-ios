@@ -36,6 +36,7 @@ struct RootView: View {
         NavigationStack {
             destination(selection)
                 .id(selection)
+                .toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .bottom, spacing: 0) { CampusNavigation(selection: $selection) }
                 .toolbarBackground(Color.campusOrange, for: .navigationBar)
                 .toolbarColorScheme(.light, for: .navigationBar)

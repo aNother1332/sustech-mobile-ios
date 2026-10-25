@@ -2,6 +2,7 @@ import CampusCore
 import SwiftUI
 
 struct TodaySummaryView: View {
+    var weatherOnly = false
     @Environment(CampusStore.self) private var store
     @Environment(\.scenePhase) private var phase
     @State private var weather: CampusWeather?
@@ -32,10 +33,10 @@ struct TodaySummaryView: View {
                 } else { Text(message ?? "读取校园天气…").font(.caption).foregroundStyle(.secondary) }
                 DisclosureGroup("数据来源") { Text("天气：SUSTech CRA；空气质量：Open-Meteo（CC BY 4.0），数值采用 US AQI。").font(.caption).foregroundStyle(.secondary) }.font(.caption)
             }
-            if let next = nextLesson {
+            if !weatherOnly, let next = nextLesson {
                 CampusCard { HStack { Label("下一节课", systemImage: "bell.fill").font(.caption.bold()).foregroundStyle(Color.campusGreen); Spacer(); Text(next.1, format: .dateTime.month().day().hour().minute()).font(.caption) }; Text(next.0.name).font(.headline); Text(next.0.details).font(.caption).foregroundStyle(.secondary) }
             }
-            if let exam = nextExam {
+            if !weatherOnly, let exam = nextExam {
                 CampusCard(accent: .campusOrange) { Label("下一场考试", systemImage: "pencil.and.list.clipboard").font(.caption.bold()); Text(exam.course).font(.subheadline.bold()); Text(exam.date + " · " + exam.time + " · " + exam.room).font(.caption).foregroundStyle(.secondary) }
             }
         }.task { await load() }.onChange(of: phase) { _, value in if value == .active, fetched == nil || Date.now.timeIntervalSince(fetched!) > 900 { Task { await load() } } }
