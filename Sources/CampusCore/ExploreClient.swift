@@ -52,33 +52,50 @@ public struct DegreeClient: Sendable {
     public let http: ServiceHTTP
     public init(http: ServiceHTTP) { self.http = http }
     public static func rows(_ value: WireValue) throws -> [WireValue] {
+        if value["code"] != .null, value["content"] != .null {
+            let code = value["code"].text
+            if ["401", "302"].contains(code) { throw CampusError.signInRequired }
+            guard ["", "0", "200"].contains(code) else { throw ServiceFailure("学校修读进度接口拒绝请求。") }
+            return try rows(value["content"])
+        }
         if case .array = value { return value.rows }
-        for key in ["data", "rows", "list", "aaData"] { if value[key] != .null { return try rows(value[key]) } }
+        for key in ["data", "rows", "list", "content", "aaData"] { if value[key] != .null { return try rows(value[key]) } }
         if case .object = value, !value.fields.isEmpty { return [value] }
         throw CampusError.invalidResponse("修读进度")
     }
     public func progress() async throws -> DegreeResult {
         let base = "/cjgl/cjzhtjcx/cjcx/"
+        _ = try await http.data("/cjgl/grcjcx/cjxqList")
         var type = "1"
-        if let me = try? await http.json("/user/me", payload: .object([:])), me["userType"].text == "2" { type = "2" }
+        if let me = try? await http.json("/user/me") {
+            type = ["pylx", "PYLX", "pylxdm", "PYLXDM"].map { me[$0].text }.first { !$0.isEmpty } ?? (me["pyccm"].text == "2" ? "2" : "1")
+        }
         let contexts = try Self.rows(await http.json(base + "getXss", payload: .object(["pylx": .string(type)])))
         guard let selected = contexts.first(where: { !$0["fah"].text.isEmpty || !$0["FAH"].text.isEmpty }) ?? contexts.first else { throw ServiceFailure("学校未返回本人的培养方案。") }
         var fields: [String: WireValue] = [:]
         for (key, value) in selected.fields { fields[key.lowercased()] = value }
         fields["pylx"] = fields["pylx"] ?? .string(type)
-        let labels: [String: String] = ["YQXDXF": "要求学分", "XF": "完成学分", "MS": "要求门数", "ZYFXMC": "专业方向", "XFLBMC": "类别", "YQWCXF": "要求学分", "YQXF": "要求学分", "YWCXF": "完成学分", "WWCXF": "未完成学分", "BZ": "备注", "KZMC": "模块", "MKMC": "模块", "SFTG": "学校通过标记", "WC_XF": "尚差学分", "WC_MS": "尚差门数", "YWCMS": "已完成门数"]
+        let labels: [String: String] = ["YQXDXF": "要求学分", "XF": "完成学分", "MS": "要求门数", "ZYFXMC": "专业方向", "XFLBMC": "类别", "YQWCXF": "要求学分", "YQXF": "要求学分", "YWCXF": "完成学分", "WWCXF": "未完成学分", "BZ": "备注", "KZMC": "模块", "MKMC": "模块", "SFTG": "学校通过标记", "WC_XF": "尚差学分", "WC_MS": "尚差门数", "YWCMS": "已完成门数", "WWCMS": "未完成门数"]
         var sections: [DegreeSection] = []; var warnings: [String] = []
-        for (path, title) in [("querybyyq", "学校总要求"), ("queryXflbyq", "学分类别"), ("queryMkyq", "模块要求")] {
+        for (path, title) in [("querybyyq", "学校总要求"), ("queryBxkqk", "完成情况"), ("queryXflbyq", "学分类别"), ("queryMkyq", "模块要求")] {
             do {
-                let reply = try await http.json(base + path, payload: .object(fields.merging(["pageSize": .integer(200), "pageNum": .integer(1)]) { _, b in b }))
-                let rows = try Self.rows(reply)
+                var records: [WireValue] = []; var previous: [WireValue]?
+                for page in 1...20 {
+                    let reply = try await http.json(base + path, payload: .object(fields.merging(["pageSize": .integer(200), "pageNum": .integer(Int64(page))]) { _, b in b }))
+                    let batch = try Self.rows(reply)
+                    if let previous, batch == previous, !batch.isEmpty { throw CampusError.invalidResponse("修读进度重复分页") }
+                    records += batch; previous = batch
+                    if path != "queryXflbyq" || batch.count < 200 { break }
+                    if page == 20 { warnings.append(title + "：达到读取上限，请到学校页面核对。") }
+                }
+                let rows = records
                 for (index, row) in rows.enumerated() {
                     let values = row.fields.sorted { $0.key < $1.key }.compactMap { key, value -> (String, String)? in
                         guard let label = labels[key.uppercased()], !value.text.isEmpty else { return nil }; return (label, value.text)
                     }
                     if !values.isEmpty { sections.append(DegreeSection(id: "\(path)-\(index)", title: title, values: values)) }
                 }
-                if rows.count >= 200 { warnings.append(title + "：达到读取上限，请到学校页面核对完整记录。") }
+                
             } catch { warnings.append(title + "：" + error.localizedDescription) }
         }
         guard !sections.isEmpty else { throw ServiceFailure(warnings.first ?? "未取得可解释的学校修读进度。") }

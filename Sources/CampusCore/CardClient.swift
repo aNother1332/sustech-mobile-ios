@@ -19,6 +19,7 @@ public struct CardDay: Identifiable, Sendable {
 }
 public enum CardParser {
     public static func account(_ html: String) throws -> CardAccount {
+        if html.range(of: "(?i)name=[\"']execution[\"']|cas/login|j_spring_cas_security_check", options: .regularExpression) != nil { throw CampusError.signInRequired }
         let pairs = HTMLText.captures("(?s)class=[\"']weui-cell__bd[\"'][^>]*>\\s*<p[^>]*>(.*?)</p>\\s*</div>\\s*<div[^>]*class=[\"']weui-cell__ft[\"'][^>]*>(.*?)</div>", in: html)
         var values: [String: String] = [:]
         for pair in pairs where pair.count >= 3 { values[HTMLText.plain(pair[1])] = HTMLText.plain(pair[2]) }

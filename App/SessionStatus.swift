@@ -19,10 +19,11 @@ extension CampusStore {
         guard old.status != .checking else { return }
         if !force, let checked = old.checked, Date.now.timeIntervalSince(checked) < 120 { return }
         let version = sessionRevision
+        let probe = UUID(); serviceProbeTokens[service] = probe
         serviceSessions[service] = ServiceSessionState(status: .checking)
         await sessions.connectIfPossible(service)
         let cookies = await sessions.cookies()
-        guard version == sessionRevision else { return }
+        guard version == sessionRevision, serviceProbeTokens[service] == probe else { return }
         let http = ServiceHTTP(origin: service.entry, cookies: cookies)
         do {
             switch service {
@@ -33,10 +34,10 @@ extension CampusStore {
             case .card: _ = try await CardClient(http: http).account()
             case .printing: _ = try await PrintingClient(http: http).jobs()
             }
-            guard version == sessionRevision else { return }
+            guard version == sessionRevision, serviceProbeTokens[service] == probe else { return }
             serviceSessions[service] = ServiceSessionState(status: .valid, checked: .now)
         } catch {
-            guard version == sessionRevision else { return }
+            guard version == sessionRevision, serviceProbeTokens[service] == probe else { return }
             let expired = (error as? CampusError) == .signInRequired || (error as? CampusError) == .unexpectedHTML
             serviceSessions[service] = ServiceSessionState(status: expired ? .expired : .unavailable, checked: .now, note: error.localizedDescription)
         }
@@ -47,6 +48,7 @@ extension CampusStore {
         for service in [CASService.teaching, .blackboard] { await checkSession(service, force: force) }
     }
     func recordSession(_ service: CASService, error: Error? = nil) {
+        serviceProbeTokens[service] = nil
         if let error {
             let expired = (error as? CampusError) == .signInRequired || (error as? CampusError) == .unexpectedHTML
             serviceSessions[service] = ServiceSessionState(status: expired ? .expired : .unavailable, checked: .now, note: error.localizedDescription)
@@ -65,6 +67,7 @@ struct SessionBadge: View {
                 Text(value.label)
                 if let checked = value.checked { Text(checked, style: .time).foregroundStyle(.secondary) }
                 Spacer(minLength: 4)
+                if value.status == .expired { NativeLoginButton(service: service) }
                 if value.status == .unavailable { Button("重试") { Task { await store.checkSession(service, force: true) } } }
             }.font(.caption).foregroundStyle(value.valid ? Color.campusGreen : .secondary)
             .task { await store.checkSession(service) }

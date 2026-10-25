@@ -8,7 +8,8 @@ struct NativeLoginButton: View {
     var body: some View {
         let status = store.serviceSessions[service] ?? ServiceSessionState()
         Group {
-            if status.valid { Label("已连接", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Color.campusGreen) }
+            if store.mode == .demo { Text("演示模式").font(.caption).foregroundStyle(.secondary) }
+            else if status.valid { Label("已连接", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Color.campusGreen) }
             else if status.status == .checking || status.status == .unknown {
                 ProgressView("检测登录态").font(.caption)
             } else if status.status == .expired {
@@ -19,7 +20,11 @@ struct NativeLoginButton: View {
         }
         .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
         .task { await store.checkSession(service) }
-        .sheet(isPresented: $presented, onDismiss: { Task { await store.checkSchoolSessions(force: true) } }) { NativeLoginView() }
+        .sheet(isPresented: $presented, onDismiss: { Task { await store.checkSession(service, force: true); await store.checkSchoolSessions(force: true) } }) {
+            if service == .printing { SchoolBrowser(service: .printing) }
+            else if service == .card { SchoolBrowser(service: .card) }
+            else { NativeLoginView() }
+        }
     }
 }
 

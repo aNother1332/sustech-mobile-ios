@@ -36,7 +36,7 @@ struct CardRechargeView: View {
                     UIPasteboard.general.url = schoolURL
                     message = "已复制。请在企业微信或学校支持的微信环境中打开该链接。"
                 }.disabled(store.mode == .demo)
-                Text("使用系统分享菜单发送链接，再在对应客户端打开。学校页面可能要求企业微信授权；App 内的学校登录不能代替该授权。").font(.caption).foregroundStyle(.secondary)
+                DetailNote(text: "使用系统分享菜单发送链接，再在对应客户端打开。学校页面可能要求企业微信授权；App 内的学校登录不能代替该授权。")
             }
             Section { NavigationLink("原生下单接口验证") { NativeRechargeView().id(store.sessionRevision) } }
             Section("到账查询") {
@@ -46,7 +46,7 @@ struct CardRechargeView: View {
                 if let account { LabeledContent("当前余额", value: account.balance) }
                 if let synced { Text("查询于 \(synced.formatted())").font(.caption).foregroundStyle(.secondary) }
                 ServiceMessage(message: message)
-                Text("返回 App、支付页面提示或余额变化均不单独作为本次充值成功凭证。请核对平台订单和校园卡到账记录；未确认结果时先查原订单，避免重复付款。").font(.caption).foregroundStyle(.secondary)
+                DetailNote(text: "返回 App、支付页面提示或余额变化均不单独作为本次充值成功凭证。请核对平台订单和校园卡到账记录；未确认结果时先查原订单，避免重复付款。")
                 ForEach(bills.prefix(10)) { bill in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack { Text(bill.kind); Spacer(); Text(bill.amount).monospacedDigit() }

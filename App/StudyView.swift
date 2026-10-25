@@ -127,8 +127,7 @@ struct StudyView: View {
                     if let points = summary.points { Text(points.formatted(.number.precision(.fractionLength(3)))).font(.largeTitle.bold()) }
                     else { Text("当前记录不足以试算") }
                     Text("计入试算学分：\(summary.includedCredits.formatted()) · 未计入记录：\(summary.excludedCount)").font(.caption)
-                    Text("按每条记录的学校绩点或公开字母等级参考值加权。未合并重修/替代课程，及格制或未知等级不猜测；这不是学校官方总 GPA 或毕业审核结论。")
-                        .font(.caption).foregroundStyle(.secondary)
+                    DetailNote(text: "按每条记录的学校绩点或公开字母等级参考值加权。未合并重修/替代课程，及格制或未知等级不猜测；这不是学校官方总 GPA 或毕业审核结论。")
                 }
                 if records.isEmpty { Text("学校本次返回的成绩列表为空。").foregroundStyle(.secondary) }
                 ForEach(records) { grade in

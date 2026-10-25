@@ -39,6 +39,7 @@ final class CampusStore {
     private(set) var challengeService: SchoolService?
     private(set) var cacheMessage: String?
     var serviceSessions: [CASService: ServiceSessionState] = [:]
+    var serviceProbeTokens: [CASService: UUID] = [:]
     private var generation = 0
     var sessionRevision: Int { generation }
     private var owner: String?
@@ -71,7 +72,7 @@ final class CampusStore {
     }
 
     private func resetDisplayedData() {
-        serviceSessions = [:]
+        serviceSessions = [:]; serviceProbeTokens = [:]
         teaching = nil; academic = nil; blackboard = nil
         courseDetails = [:]; contentCache = [:]; files = []; hiddenCourses = []
         teachingDate = nil; gradesDate = nil; blackboardDate = nil
@@ -123,6 +124,8 @@ final class CampusStore {
         do { try repository.erase() } catch {
             authenticationMessage = "无法清除旧账号缓存，请先解锁设备后重试。"; return
         }
+        let oldReminders = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: oldReminders.filter { $0.identifier.hasPrefix("campus-") }.map(\.identifier))
         await sessions.clear()
         guard generation == version, !Task.isCancelled else { return }
         let client = CASClient()
@@ -245,6 +248,8 @@ final class CampusStore {
     func refreshCourse(_ course: BlackboardCourse) async {
         guard mode == .live, !clearing, !authenticating, !courseLoading.contains(course.id) else { return }
         let version = generation
+        await checkSession(.blackboard)
+        guard version == generation, mode == .live, !clearing, !authenticating else { return }
         courseLoading.insert(course.id)
         defer { if version == generation { courseLoading.remove(course.id) } }
         if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
@@ -258,9 +263,13 @@ final class CampusStore {
             guard version == generation else { return }
             await retainCookies(http.cookies(), version: version)
             guard version == generation else { return }
+            recordSession(.blackboard)
             courseDetails[course.id] = detail.retainingUnreadSections(from: courseDetails[course.id])
             persist()
         } catch {
+            guard version == generation else { return }
+            recordSession(.blackboard, error: error)
+            if (error as? CampusError) == .signInRequired { await checkSession(.blackboard, force: true) }
             guard version == generation else { return }
             let old = courseDetails[course.id]
             courseDetails[course.id] = BBCourseDetail(tasks: old?.tasks ?? [], announcements: old?.announcements ?? [],
@@ -276,7 +285,9 @@ final class CampusStore {
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
         let client = BlackboardClient(http: http)
-        let result = try await client.contents(courseID: course, parentID: parent)
+        let result: [BBContent]
+        do { result = try await client.contents(courseID: course, parentID: parent) }
+        catch { if version == generation { recordSession(.blackboard, error: error); if (error as? CampusError) == .signInRequired { await checkSession(.blackboard, force: true) } }; throw error }
         try Task.checkCancellation()
         guard version == generation else { throw CancellationError() }
         await retainCookies(http.cookies(), version: version)
@@ -292,7 +303,9 @@ final class CampusStore {
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
-        let result = try await BlackboardClient(http: http).attachments(courseID: course, contentID: content)
+        let result: [BBAttachment]
+        do { result = try await BlackboardClient(http: http).attachments(courseID: course, contentID: content) }
+        catch { if version == generation { recordSession(.blackboard, error: error); if (error as? CampusError) == .signInRequired { await checkSession(.blackboard, force: true) } }; throw error }
         try Task.checkCancellation()
         guard version == generation else { throw CancellationError() }
         await retainCookies(http.cookies(), version: version)
@@ -313,7 +326,9 @@ final class CampusStore {
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
-        let temporary = try await http.download(path: attachment.path)
+        let temporary: URL
+        do { temporary = try await http.download(path: attachment.path) }
+        catch { if version == generation { recordSession(.blackboard, error: error); if (error as? CampusError) == .signInRequired { await checkSession(.blackboard, force: true) } }; throw error }
         defer { try? FileManager.default.removeItem(at: temporary) }
         try Task.checkCancellation()
         guard version == generation else { throw CancellationError() }

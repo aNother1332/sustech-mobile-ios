@@ -17,6 +17,7 @@ struct LibraryView: View {
     var body: some View {
         List {
             Section {
+                ModeNotice()
                 NavigationLink { LibraryLoansView().id(store.sessionRevision) } label: { Label("我的借阅与续借", systemImage: "books.vertical") }
                 HStack {
                     Text(occupancy?.total.map { "在馆 \($0) 人" } ?? "人数未读取")
@@ -43,17 +44,24 @@ struct LibraryView: View {
         }.navigationTitle("图书馆")
         .searchable(text: $query, prompt: "书名、作者或 ISBN").onSubmit(of: .search) { Task { await search() } }
         .refreshable { await loadOccupancy(); if searched { await search() } }
-        .task { await loadOccupancy() }
+        .task {
+            if store.mode == .demo {
+                let data = Data(#"{"docs":[{"pnx":{"control":{"recordid":["demo-book-1"]},"display":{"title":["线性代数（虚构示例）"],"creator":["示例作者"],"creationdate":["2026"]}}},{"pnx":{"control":{"recordid":["demo-book-2"]},"display":{"title":["信号与系统（虚构示例）"],"creator":["示例作者"],"creationdate":["2026"]}}}]}"#.utf8)
+                if let value = try? JSONDecoder().decode(WireValue.self, from: data) { books = (try? LibraryClient.books(value)) ?? [] }; searched = true
+                message = "虚构馆藏示例；人数与个人借阅未连接。"
+            } else { await loadOccupancy() }
+        }
     }
     private struct SavedBook: Identifiable, Codable { var id: String; var title: String }
     private func save(_ value: [SavedBook]) { if let data = try? JSONEncoder().encode(value) { saved = String(decoding: data, as: UTF8.self) } }
     private func isSaved(_ book: LibraryBook) -> Bool { ((try? JSONDecoder().decode([SavedBook].self, from: Data(saved.utf8))) ?? []).contains { $0.id == book.id } }
     private func toggle(_ book: LibraryBook) {
+        guard store.mode == .live else { return }
         var all = (try? JSONDecoder().decode([SavedBook].self, from: Data(saved.utf8))) ?? []
         if all.contains(where: { $0.id == book.id }) { all.removeAll { $0.id == book.id } } else { all.append(SavedBook(id: book.id, title: book.title)) }; save(all)
     }
     private func search(append: Bool = false) async {
-        guard !busy, !query.trimmingCharacters(in: .whitespaces).isEmpty else { return }; busy = true; defer { busy = false }
+        guard store.mode == .live, !busy, !query.trimmingCharacters(in: .whitespaces).isEmpty else { return }; busy = true; defer { busy = false }
         let text = query; let next = append ? offset + 20 : 0
         do { let value = try await LibraryClient(http: http).search(text, offset: next)
             guard text == query else { return }; offset = next; more = value.count == 20
@@ -61,6 +69,7 @@ struct LibraryView: View {
         } catch { message = error.localizedDescription }
     }
     private func loadOccupancy() async {
+        guard store.mode == .live else { return }
         do { let data = try await ServiceHTTP(origin: URL(string: "https://lib.sustech.edu.cn")!).data("/main.htm"); occupancy = LibraryClient.occupancy(String(decoding: data, as: UTF8.self)) }
         catch { message = "人数暂不可用：" + error.localizedDescription }
     }
@@ -87,12 +96,13 @@ struct LibraryLoansView: View {
     @State private var busy = false
     @State private var login = false
     @State private var expired = false
+    @State private var verified = false
     @State private var renew: LibraryLoan?
     var body: some View {
         List {
             Section {
                 if busy { ProgressView() }
-                Label(expired ? "图书馆需连接" : (token.isEmpty ? "尚未验证" : "图书馆已连接"), systemImage: expired ? "person.badge.key" : "checkmark.circle")
+                Label(busy ? "检测中" : (expired ? "图书馆需连接" : (verified ? "图书馆已连接" : "连接未验证")), systemImage: expired ? "person.badge.key" : "checkmark.circle")
                 if expired { Button("连接图书馆") { login = true }.disabled(store.mode == .demo) }
                 ServiceMessage(message: message)
             }
@@ -119,10 +129,15 @@ struct LibraryLoansView: View {
     }
     private func client() async -> LibraryClient { LibraryClient(http: await store.serviceHTTP(origin: LibraryClient.origin)) }
     private func load() async {
-        guard !busy, store.mode == .live else { return }; guard !token.isEmpty else { expired = true; return }
+        guard !busy, store.mode == .live else { return }
         busy = true; defer { busy = false }; let version = store.sessionRevision
-        do { let value = try await client().loans(token: token); guard version == store.sessionRevision else { return }; loans = value; expired = false; message = value.count == 50 ? "当前显示前 50 条在借记录。" : nil }
-        catch { guard version == store.sessionRevision else { return }; expired = (error as? CampusError) == .signInRequired; message = error.localizedDescription }
+        do {
+            if token.isEmpty { token = try await store.sessions.connectLibrary() }
+            let value: [LibraryLoan]
+            do { value = try await client().loans(token: token) }
+            catch CampusError.signInRequired { token = try await store.sessions.connectLibrary(); value = try await client().loans(token: token) }
+             guard version == store.sessionRevision else { return }; loans = value; expired = false; verified = true; message = value.count == 50 ? "当前显示前 50 条在借记录。" : nil }
+        catch { guard version == store.sessionRevision else { return }; verified = false; expired = (error as? CampusError) == .signInRequired; if expired { token = ""; CredentialVault.delete("library-token") }; message = error.localizedDescription }
     }
     private func performRenew(_ loan: LibraryLoan) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }

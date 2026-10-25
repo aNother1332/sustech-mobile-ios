@@ -47,7 +47,7 @@ struct BBCourseView: View {
                 }
             }.padding(12).frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }
-        .refreshable { await store.refreshCourse(course) }
+        .refreshable { if tab == 2 { _ = try? await store.contents(course: course.id, parent: nil) } else { await store.refreshCourse(course) } }
         .navigationTitle(course.name).navigationBarTitleDisplayMode(.inline)
         .background(Color(uiColor: .systemGroupedBackground))
         .task { if store.courseDetails[course.id] == nil { await store.refreshCourse(course) } }
@@ -91,7 +91,8 @@ struct BBContentList: View {
                     NavigationLink {
                         if item.hasChildren {
                             ScrollView { BBContentList(course: course, parent: item.id).padding(12) }
-                                .navigationTitle(item.title).navigationBarTitleDisplayMode(.inline)
+                                .refreshable { await load() }
+        .navigationTitle(item.title).navigationBarTitleDisplayMode(.inline)
                         } else { BBContentView(course: course, item: item) }
                     } label: {
                         CampusCard {

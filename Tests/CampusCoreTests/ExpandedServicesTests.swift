@@ -62,3 +62,36 @@ private func uploadForm(course: String = "_1_1", action: String = "/webapps/assi
     #expect(throws: ServiceFailure.self) { try form.multipart(file: Data([1]), filename: "bad\r\nname", boundary: "valid") }
     #expect(throws: ServiceFailure.self) { try form.multipart(file: Data(), filename: "x.pdf", boundary: "valid") }
 }
+
+@Test func candidateSchedulesKeepParityAndRejectUnknownTimes() {
+    let slots = CandidateParser.slots("<p>1-6单周,星期二第3-4节 教学楼101</p>")
+    #expect(slots.count == 1); #expect(slots.first?.weeks == [1,3,5]); #expect(slots.first?.weekday == 2)
+    #expect(CandidateParser.slots("<p>1-6单周,星期二第3-4节 教学楼101</p><p>时间待定</p>").isEmpty)
+}
+@Test func cancelledAndUnknownReservationsNeverBecomeAgendaEvents() throws {
+    #expect(ReservationAgendaPolicy.activeCourt(try wire(#"{"status":"1"}"#)))
+    #expect(!ReservationAgendaPolicy.activeCourt(try wire(#"{"status":"6"}"#)))
+    #expect(ReservationAgendaPolicy.activeIC(try wire(#"{"resvStatus":1027}"#)))
+    #expect(!ReservationAgendaPolicy.activeIC(try wire("{}")))
+    #expect(!ReservationAgendaPolicy.activeIC(try wire(#"{"resvStatus":8}"#)))
+}
+@Test func silentLibraryAuthenticationHasOnlyTwoTrustedOrigins() {
+    #expect(PrimoAuthentication.allowed(URL(string: "https://sustc.primo.exlibrisgroup.com.cn/infra/casRedirect")!))
+    #expect(!PrimoAuthentication.allowed(URL(string: "https://sustc.primo.exlibrisgroup.com.cn.evil.example")!))
+    #expect(!PrimoAuthentication.allowed(URL(string: "https://user:pass@cas.sustech.edu.cn")!))
+}
+
+@Test func cardLoginFormIsAnExpiredSessionRatherThanAnUnknownBalance() {
+    #expect(throws: CampusError.signInRequired) { try CardParser.account("<form action='/cas/login'><input name='execution' value='e'></form>") }
+}
+@Test func disabledNonceCannotAuthorizeASubmission() throws {
+    let target = try BBSubmitTarget(course: "_1_1", column: "_2_1", content: "_3_1")
+    let form = uploadForm().replacingOccurrences(of: "name=\"blackboard.platform.security.NonceUtil.nonce\"", with: "disabled name=\"blackboard.platform.security.NonceUtil.nonce\"")
+    #expect(throws: ServiceFailure.self) { try BBSubmitForm.parse(form, target: target) }
+}
+
+@Test func officialDegreeEnvelopesAreUnwrappedAndFailureCodesDoNotBecomeRecords() throws {
+    let values = try DegreeClient.rows(wire(#"{"code":"200","content":{"rows":[{"FAH":"demo-plan"}]}}"#))
+    #expect(values.first?["FAH"].text == "demo-plan")
+    #expect(throws: ServiceFailure.self) { try DegreeClient.rows(wire(#"{"code":"500","content":[]}"#)) }
+}

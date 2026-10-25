@@ -2,6 +2,7 @@ import CampusCore
 import SwiftUI
 
 struct CourseReviewsView: View {
+    @Environment(CampusStore.self) private var store
     @State private var query = ""
     @State private var courses: [ReviewCourse] = []
     @State private var page = 1
@@ -13,7 +14,7 @@ struct CourseReviewsView: View {
     private var favorites: [ReviewCourse] { (try? JSONDecoder().decode([ReviewCourse].self, from: Data(saved.utf8))) ?? [] }
     var body: some View {
         List {
-            Section { DetailNote(title: "NCES 社区评价", text: "课程与教师评价来自 ncesnext.com，保留原始评价及学期。评分是社区参考，不代表学校教学评价或课程质量结论。")
+            Section { ModeNotice(); DetailNote(title: "NCES 社区评价", text: "课程与教师评价来自 ncesnext.com，保留原始评价及学期。评分是社区参考，不代表学校教学评价或课程质量结论。")
                 ServiceMessage(message: message); if busy { ProgressView() }
             }
             if !favorites.isEmpty { Section("已收藏") { ForEach(favorites) { course in courseRow(course) } } }
@@ -22,6 +23,10 @@ struct CourseReviewsView: View {
             }
         }.navigationTitle("课程评价").searchable(text: $query, prompt: "课程代码、名称或教师")
         .onSubmit(of: .search) { Task { await search() } }.refreshable { await search() }
+        .task { if store.mode == .demo {
+            let data = Data(#"{"courses":{"items":[{"id":10001,"name":"线性代数（虚构示例）","course_code":"DEMO101","teacher_names":"示例教师","review_count":12,"rate_average":4.5},{"id":10002,"name":"信号与系统（虚构示例）","course_code":"DEMO102","teacher_names":"示例教师","review_count":8,"rate_average":4.2}]}}"#.utf8)
+            if let value = try? JSONDecoder().decode(WireValue.self, from: data) { courses = (try? ReviewClient.courses(value)) ?? [] }
+        } }
     }
     private func courseRow(_ course: ReviewCourse) -> some View {
         NavigationLink { ReviewsDetailView(course: course, client: client) } label: {
@@ -30,13 +35,14 @@ struct CourseReviewsView: View {
                 Text(course.code + " · " + course.teachers + " · \(course.count) 条评价").font(.caption).foregroundStyle(.secondary)
             }
         }.swipeActions { Button(favorites.contains { $0.id == course.id } ? "取消收藏" : "收藏") {
+            guard store.mode == .live else { return }
             var value = favorites
             if value.contains(where: { $0.id == course.id }) { value.removeAll { $0.id == course.id } } else { value.append(course) }
             if let data = try? JSONEncoder().encode(value) { saved = String(decoding: data, as: UTF8.self) }
         }.tint(.campusGreen) }
     }
     private func search(append: Bool = false) async {
-        guard !busy, !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }; busy = true; defer { busy = false }
+        guard store.mode == .live, !busy, !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }; busy = true; defer { busy = false }
         let text = query; let next = append ? page + 1 : 1
         do { let result = try await client.search(text, page: next); guard text == query else { return }; page = next; more = result.count == 20
             courses = append ? courses + result.filter { row in !courses.contains { $0.id == row.id } } : result; message = result.isEmpty && !append ? "未找到匹配课程" : nil
@@ -44,6 +50,7 @@ struct CourseReviewsView: View {
     }
 }
 private struct ReviewsDetailView: View {
+    @Environment(CampusStore.self) private var store
     let course: ReviewCourse; let client: ReviewClient
     @State private var items: [CourseReview] = []
     @State private var page = 0
@@ -58,7 +65,7 @@ private struct ReviewsDetailView: View {
         }.navigationTitle("课程评价").task { await load() }.refreshable { page = 0; await load() }
     }
     private func load() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard store.mode == .live, !busy else { return }; busy = true; defer { busy = false }
         do { let result = try await client.reviews(course, page: page + 1); items = page == 0 ? result : items + result.filter { row in !items.contains { $0.id == row.id } }; page += 1; message = result.isEmpty ? "本页没有可公开显示的评价" : nil }
         catch { message = error.localizedDescription }
     }
@@ -70,7 +77,7 @@ struct DegreeProgressView: View {
     @State private var message: String?
     var body: some View {
         List {
-            Section { SessionBadge(); DetailNote(title: "培养方案与口径", text: "读取教务系统的个性化修读进度。类别可能重叠，不能将各行学分直接相加。学校字段缺失时不推算毕业资格，最终以适用培养方案及教学工作部确认为准。")
+            Section { ModeNotice(); SessionBadge(); DetailNote(title: "培养方案与口径", text: "读取教务系统的个性化修读进度。类别可能重叠，不能将各行学分直接相加。学校字段缺失时不推算毕业资格，最终以适用培养方案及教学工作部确认为准。")
                 if busy { ProgressView() }; ServiceMessage(message: message)
                 Button("刷新修读进度") { Task { await load() } }.disabled(busy || store.mode == .demo)
             }
@@ -89,10 +96,10 @@ struct DegreeProgressView: View {
 }
 
 struct PlanEntry: Identifiable, Codable {
-    var id = UUID(); var name: String; var code: String; var credits: Double
+    var id = UUID(); var name: String; var code: String; var credits: Double; var weeks: [Int]? = nil
     var weekday: Int; var first: Int; var last: Int; var firstWeek: Int; var lastWeek: Int; var scenario: String
     func conflicts(_ other: PlanEntry) -> Bool {
-        weekday == other.weekday && first <= other.last && last >= other.first && firstWeek <= other.lastWeek && lastWeek >= other.firstWeek
+        weekday == other.weekday && first <= other.last && last >= other.first && !Set(weeks ?? Array(firstWeek...lastWeek)).isDisjoint(with: Set(other.weeks ?? Array(other.firstWeek...other.lastWeek)))
     }
 }
 struct PlannerView: View {
@@ -107,7 +114,10 @@ struct PlannerView: View {
     @State private var last = 2
     @State private var firstWeek = 1
     @State private var lastWeek = 16
-    private var all: [PlanEntry] { (try? JSONDecoder().decode([PlanEntry].self, from: Data(saved.utf8))) ?? [] }
+    private var all: [PlanEntry] {
+        if store.mode == .demo { return [PlanEntry(name: "示例线性代数", code: "DEMO101", credits: 3, weekday: 1, first: 3, last: 4, firstWeek: 1, lastWeek: 16, scenario: "方案 A"), PlanEntry(name: "示例信号与系统", code: "DEMO102", credits: 3, weekday: 1, first: 4, last: 5, firstWeek: 1, lastWeek: 16, scenario: "方案 A")] }
+        return (try? JSONDecoder().decode([PlanEntry].self, from: Data(saved.utf8))) ?? []
+    }
     private var entries: [PlanEntry] { all.filter { $0.scenario == scenario } }
     private var conflicts: [String] {
         var result: [String] = []
@@ -116,10 +126,16 @@ struct PlannerView: View {
     var body: some View {
         List {
             Section {
+                ModeNotice()
                 Picker("本地方案", selection: $scenario) { ForEach(["方案 A", "方案 B", "方案 C"], id: \.self) { Text($0).tag($0) } }.pickerStyle(.segmented)
                 HStack { Text("\(entries.count) 个时段"); Spacer(); Text("学分合计 \(entries.reduce(0) { $0 + $1.credits }.formatted())") }.font(.subheadline)
                 DetailNote(text: "本地排课方案，不执行选课。每个条目是一个连续周次时段；主课/实验/单双周可分别录入，关联课程学分只填一次。学校教学班、先修条件与可选名额需另行核对。")
                 NavigationLink("查课程评价与收藏") { CourseReviewsView() }
+                NavigationLink("从学校候选教学班导入") { CandidateClassesView { item in
+                    let prior = entries.contains { $0.code == item.code }
+                    let additions = item.slots.enumerated().map { index, slot in PlanEntry(name: item.name + " · " + slot.room, code: item.code, credits: prior || index > 0 ? 0 : item.credits, weeks: slot.weeks, weekday: slot.weekday, first: slot.first, last: slot.last, firstWeek: slot.weeks.min() ?? 1, lastWeek: slot.weeks.max() ?? 1, scenario: scenario) }
+                    save(all + additions)
+                } }
             }
             if !conflicts.isEmpty { Section("时间冲突") { ForEach(Array(conflicts.enumerated()), id: \.offset) { _, value in Label(value, systemImage: "exclamationmark.triangle").foregroundStyle(.orange) } } }
             Section("候选时段") { ForEach(entries) { item in VStack(alignment: .leading, spacing: 3) { Text(item.name + " " + item.code).font(.subheadline.bold()); Text("周\(item.weekday) · \(item.first)–\(item.last)节 · \(item.firstWeek)–\(item.lastWeek)周 · \(item.credits.formatted())学分").font(.caption).foregroundStyle(.secondary) }.swipeActions { Button("删除", role: .destructive) { save(all.filter { $0.id != item.id }) } } } }
@@ -136,5 +152,5 @@ struct PlannerView: View {
             Section("方案对比") { ForEach(["方案 A", "方案 B", "方案 C"], id: \.self) { key in let values = all.filter { $0.scenario == key }; LabeledContent(key, value: "\(values.count) 时段 · \(values.reduce(0) { $0 + $1.credits }.formatted()) 学分") } }
         }.navigationTitle("排课工作台")
     }
-    private func save(_ entries: [PlanEntry]) { if let data = try? JSONEncoder().encode(entries) { saved = String(decoding: data, as: UTF8.self) } }
+    private func save(_ entries: [PlanEntry]) { guard store.mode == .live else { return }; if let data = try? JSONEncoder().encode(entries) { saved = String(decoding: data, as: UTF8.self) } }
 }

@@ -30,6 +30,7 @@ public struct BBSubmitForm: Sendable {
         }
         var fields: [String: String] = [:]; var files = 0
         for tag in HTMLText.captures("(?is)<input\\b[^>]*>", in: body) {
+            guard tag[0].range(of: "(?i)\\sdisabled(?:\\s|=|/?>)", options: .regularExpression) == nil else { continue }
             let attrs = HTMLText.attributes(tag[0]); let type = attrs["type"]?.lowercased() ?? "text"
             if type == "file", attrs["id"] == "newFile_chooseLocalFile" { files += 1 }
             if type == "hidden", let name = attrs["name"] {
@@ -39,6 +40,7 @@ public struct BBSubmitForm: Sendable {
         }
         for area in HTMLText.captures("(?is)<textarea\\b([^>]*)>(.*?)</textarea>", in: body) {
             guard HTMLText.plain(area[2]).isEmpty else { throw ServiceFailure("发现已有草稿，请先到学校页面处理。") }
+            if area[1].range(of: "(?i)\\sdisabled(?:\\s|=|$)", options: .regularExpression) != nil { continue }
             if let name = HTMLText.attributes(area[1])["name"] { guard fields[name] == nil else { throw ServiceFailure("编辑器字段冲突。") }; fields[name] = "" }
         }
         guard files == 1, fields["course_id"] == target.course, fields["content_id"] == target.content,
@@ -63,20 +65,24 @@ public struct BBSubmitForm: Sendable {
 public struct BBSubmitPreview: Codable, Sendable {
     public let user: String; public let attempts: Set<String>; public let target: BBSubmitTarget
 }
+private enum BBHistoryFailure: Error { case initialPageMissing }
+
 public struct BBSubmissionClient: Sendable {
     public let http: ServiceHTTP
     public init(http: ServiceHTTP) { self.http = http }
-    private func all(_ path: String) async throws -> [WireValue] {
+    private func all(_ path: String, initialMissing: Bool = false) async throws -> [WireValue] {
         var result: [WireValue] = []; var next: String? = path; var seen = Set<String>()
         for _ in 0..<100 {
             guard let page = next else { return result }
             guard page.hasPrefix("/learn/api/public/"), !page.contains(".."), seen.insert(page).inserted else { throw CampusError.unsafeURL }
-            let response = try await http.json(page)
+            let response: WireValue
+            do { response = try await http.json(page) }
+            catch CampusError.http(404) { if initialMissing, seen.count == 1 { throw BBHistoryFailure.initialPageMissing }; throw CampusError.http(404) }
             guard case .array = response["results"] else { throw CampusError.invalidResponse("BB 提交记录分页") }
             result += response["results"].rows
             let raw = response["paging"]["nextPage"].text
             if raw.isEmpty { return result }
-            guard let url = URL(string: raw, relativeTo: http.origin)?.absoluteURL, url.host == http.origin.host, url.scheme == "https", url.port == http.origin.port, url.user == nil, url.password == nil else { throw CampusError.unsafeURL }
+            guard let url = URL(string: raw, relativeTo: http.origin)?.absoluteURL, url.host == http.origin.host, url.scheme == "https", url.port == http.origin.port, url.path == URL(string: path, relativeTo: http.origin)?.path, url.user == nil, url.password == nil else { throw CampusError.unsafeURL }
             next = url.path + (url.query.map { "?" + $0 } ?? "")
         }
         throw CampusError.invalidResponse("BB 分页上限")
@@ -84,8 +90,8 @@ public struct BBSubmissionClient: Sendable {
     private func attempts(_ target: BBSubmitTarget, user: String) async throws -> [WireValue] {
         guard user.range(of: "^_[0-9]+_1$", options: .regularExpression) != nil else { throw CampusError.invalidResponse("BB 本人身份") }
         let path = "/learn/api/public/v2/courses/\(target.course)/gradebook/columns/\(target.column)/attempts?userId=\(user)&limit=100"
-        let rows = try await all(path)
-        guard rows.allSatisfy({ !$0["id"].text.isEmpty && ($0["userId"].text.isEmpty || $0["userId"].text == user) }), Set(rows.map { $0["id"].text }).count == rows.count else { throw CampusError.invalidResponse("本人提交历史") }
+        let rows = try await all(path, initialMissing: true)
+        guard rows.allSatisfy({ !$0["id"].text.isEmpty && $0["userId"].text == user }), Set(rows.map { $0["id"].text }).count == rows.count else { throw CampusError.invalidResponse("本人提交历史") }
         return rows
     }
     public func preview(_ target: BBSubmitTarget) async throws -> BBSubmitPreview {
@@ -100,7 +106,7 @@ public struct BBSubmissionClient: Sendable {
         _ = try BBSubmitForm.parse(view, target: target)
         let rows: [WireValue]
         do { rows = try await attempts(target, user: user) }
-        catch CampusError.http(404) {
+        catch BBHistoryFailure.initialPageMissing {
             // Only a proven blank first-upload view permits the initial missing history.
             guard view.range(of: "(?i)<title>\\s*(Upload Assignment:|上传作业[:：])", options: .regularExpression) != nil,
                   !view.contains("aggregateGradeForm"), !view.contains("attempt_id="), !view.contains("attemptId=") else { throw CampusError.invalidResponse("首次提交历史") }
@@ -128,7 +134,7 @@ public struct BBSubmissionClient: Sendable {
         let id = row["id"].text
         guard id.range(of: "^_[0-9]+_1$", options: .regularExpression) != nil else { throw CampusError.invalidResponse("提交回执 ID") }
         let detail = try await http.json("/learn/api/public/v2/courses/\(preview.target.course)/gradebook/columns/\(preview.target.column)/attempts/\(id)")
-        guard detail["id"].text == id, ["NeedsGrading", "Completed"].contains(detail["status"].text) else { throw ServiceFailure("提交状态未确认。") }
+        guard detail["id"].text == id, detail["userId"].text == preview.user, ["NeedsGrading", "Completed"].contains(detail["status"].text) else { throw ServiceFailure("提交状态未确认。") }
         let files = try await all("/learn/api/public/v1/courses/\(preview.target.course)/gradebook/attempts/\(id)/files?limit=100")
         guard files.contains(where: { $0["name"].text == filename }) else { throw ServiceFailure("新提交记录中未找到选定文件。") }
         return id

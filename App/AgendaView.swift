@@ -17,7 +17,7 @@ struct AgendaView: View {
     @State private var monday = Calendar.current.startOfDay(for: .now)
     @State private var personalTitle = ""
     @State private var personalDate = Date.now.addingTimeInterval(3600)
-    @AppStorage("personal-agenda-v1") private var personalData = "[]"
+    @State private var personalData = "[]"
     private struct Personal: Codable { var id: String; var title: String; var start: Date }
     private var personal: [Personal] { (try? JSONDecoder().decode([Personal].self, from: Data(personalData.utf8))) ?? [] }
     private var entries: [AgendaEntry] {
@@ -48,13 +48,14 @@ struct AgendaView: View {
     var body: some View {
         List {
             Section {
+                ModeNotice()
                 Picker("显示范围", selection: $range) { Text("一周").tag(7); Text("一月").tag(30); Text("一学期").tag(180) }.pickerStyle(.segmented)
                 DisclosureGroup("课程日期设置") {
                     Toggle("显示课表课程", isOn: $includeLessons)
                     DatePicker("第一教学周周一", selection: $monday, displayedComponents: .date)
                     Text("请按学校校历确认周一日期；仅有周次与节次不能自动证明上课日期。调休需核对。").font(.caption).foregroundStyle(.secondary)
                 }
-                Button("同步学习与预约日程") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
+                Button("同步学习与预约日程") { Task { await refresh() } }.disabled(busy || store.mode == .demo || store.authenticating || store.clearing)
                 if busy { ProgressView() }
                 if !warnings.isEmpty { DisclosureGroup("部分来源未同步 · \(warnings.count)") { ForEach(warnings, id: \.self) { Text($0).font(.caption).foregroundStyle(.orange) } } }
             }
@@ -72,11 +73,11 @@ struct AgendaView: View {
             Section("个人事项") {
                 TextField("事项名称", text: $personalTitle); DatePicker("时间", selection: $personalDate)
                 Button("添加") { let value = personal + [Personal(id: "personal-" + UUID().uuidString, title: personalTitle, start: personalDate)]; save(value); personalTitle = "" }.disabled(personalTitle.trimmingCharacters(in: .whitespaces).isEmpty)
-                ForEach(personal, id: \.id) { item in HStack { Text(item.title); Spacer(); Text(item.start, style: .date).font(.caption) }.swipeActions { Button("删除", role: .destructive) { save(personal.filter { $0.id != item.id }); UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["campus-" + item.id]) } } }
+                ForEach(personal, id: \.id) { item in HStack { Text(item.title); Spacer(); Text(item.start, style: .date).font(.caption) }.swipeActions { Button("删除", role: .destructive) { save(personal.filter { $0.id != item.id }); UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["campus-" + store.accountScope + "-" + item.id]) } } }
             }
-        }.navigationTitle("我的日程").refreshable { await refresh() }
+        }.navigationTitle("我的日程").task { personalData = UserDefaults.standard.string(forKey: "personal-agenda-" + store.accountScope) ?? "[]" }.refreshable { await refresh() }
     }
-    private func save(_ items: [Personal]) { if let data = try? JSONEncoder().encode(items) { personalData = String(decoding: data, as: UTF8.self) } }
+    private func save(_ items: [Personal]) { if let data = try? JSONEncoder().encode(items) { personalData = String(decoding: data, as: UTF8.self); UserDefaults.standard.set(personalData, forKey: "personal-agenda-" + store.accountScope) } }
     private func reservation(_ value: ReservationItem, source: String, begin: String, end: String) -> AgendaEntry? {
         guard let a = CampusClock.serverDate(value.raw[begin]), let b = CampusClock.serverDate(value.raw[end]), b > a else { return nil }
         return AgendaEntry(id: source + "-" + value.id, title: value.title, source: source + " · 状态请核对预约记录", start: a, end: b)
@@ -87,9 +88,9 @@ struct AgendaView: View {
         for course in store.activeCourses { await store.refreshCourse(course) }
         guard version == store.sessionRevision else { return }
         var collected: [AgendaEntry] = []; var failures: [String] = []
-        do { try await store.sessions.connectIC(); let http = await store.serviceHTTP(origin: SchoolService.rooms.portalURL); let mine = try await ICClient(http: http).mine(); collected += mine.compactMap { reservation($0, source: "IC", begin: "resvBeginTime", end: "resvEndTime") } } catch { failures.append("IC：" + error.localizedDescription) }
+        do { try await store.sessions.connectIC(); let http = await store.serviceHTTP(origin: SchoolService.rooms.portalURL); let mine = try await ICClient(http: http).mine(); collected += mine.filter { ReservationAgendaPolicy.activeIC($0.raw) }.compactMap { reservation($0, source: "IC", begin: "resvBeginTime", end: "resvEndTime") } } catch { failures.append("IC：" + error.localizedDescription) }
         if let credentials = CredentialVault.load(CourtCredentials.self, key: "court") {
-            do { let items = try await CourtClient(credentials: credentials).orders(); collected += items.compactMap { reservation($0, source: "体育", begin: "startTime", end: "endTime") } } catch { failures.append("体育：" + error.localizedDescription) }
+            do { let items = try await CourtClient(credentials: credentials).orders(); collected += items.filter { ReservationAgendaPolicy.activeCourt($0.raw) }.compactMap { reservation($0, source: "体育", begin: "startTime", end: "endTime") } } catch { failures.append("体育：" + error.localizedDescription) }
         }
         if !store.sessions.cleID.isEmpty {
             do {
@@ -126,30 +127,37 @@ struct EventActionView: View {
             Section { Text(title).font(.headline); LabeledContent("开始", value: start.formatted()); LabeledContent("结束", value: end.formatted()) }
             Section {
                 Picker("提前提醒", selection: $minutes) { Text("10 分钟").tag(10); Text("30 分钟").tag(30); Text("1 小时").tag(60); Text("1 天").tag(1440) }
-                Button("设置本地提醒") { Task { await remind() } }.disabled(busy || start <= .now)
-                Button("取消本地提醒") { UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["campus-" + key]); message = "已取消本 App 的该项待发提醒" }
-                Button("添加／更新系统日历") { Task { await export() } }.disabled(busy)
+                Button("设置本地提醒") { Task { await remind() } }.disabled(busy || start <= .now || store.mode == .demo || store.authenticating || store.clearing)
+                Button("取消本地提醒") { UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["campus-" + store.accountScope + "-" + key]); message = "已取消本 App 的该项待发提醒" }
+                Button("添加／更新系统日历") { Task { await export() } }.disabled(busy || store.mode == .demo || store.authenticating || store.clearing)
                 ServiceMessage(message: message)
                 DetailNote(text: "提醒与导出基于本次已同步信息。学校变更后需重新同步和更新。系统日历事件由你管理，App 内折叠课程不会自动删除已导出日历事件。")
             }
         }.navigationTitle("日历与提醒")
     }
     private func remind() async {
+        guard !busy, store.mode == .live, !store.authenticating, !store.clearing else { return }
+        let version = store.sessionRevision; let owner = store.accountScope; let identifier = "campus-" + owner + "-" + key
         busy = true; defer { busy = false }
         do {
             guard try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) else { throw ServiceFailure("请在系统设置中允许通知。") }
+            guard version == store.sessionRevision, owner == store.accountScope, !store.clearing else { throw CancellationError() }
             let date = start.addingTimeInterval(-Double(minutes) * 60); guard date > .now else { throw ServiceFailure("提醒时间已过去，请调整提前量。") }
-            let content = UNMutableNotificationContent(); content.title = title; content.body = start.formatted(); content.sound = .default; content.userInfo = ["courseID": courseID]
+            let content = UNMutableNotificationContent(); content.title = title; content.body = start.formatted(); content.sound = .default; content.userInfo = ["courseID": courseID, "owner": owner]
             let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date)
-            try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "campus-" + key, content: content, trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+            try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: identifier, content: content, trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+            guard version == store.sessionRevision, owner == store.accountScope, !store.clearing else { UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier]); throw CancellationError() }
             message = "已设置；同一事项再次设置会替换原提醒"
         } catch { message = error.localizedDescription }
     }
     private func export() async {
+        guard !busy, store.mode == .live, !store.authenticating, !store.clearing else { return }
+        let version = store.sessionRevision; let owner = store.accountScope
         busy = true; defer { busy = false }
         do {
             guard try await events.requestFullAccessToEvents() else { throw ServiceFailure("请在系统设置中允许日历访问。") }
-            let preference = "calendar-event-" + store.accountScope + "-" + key
+            guard version == store.sessionRevision, owner == store.accountScope, !store.clearing else { throw CancellationError() }
+            let preference = "calendar-event-" + owner + "-" + key
             let existing = UserDefaults.standard.string(forKey: preference).flatMap { events.event(withIdentifier: $0) }
             let event = existing ?? EKEvent(eventStore: events)
             event.title = title; event.startDate = start; event.endDate = max(end, start.addingTimeInterval(60)); event.notes = "由 SUSTechMobile 导出，基于最近同步信息。"

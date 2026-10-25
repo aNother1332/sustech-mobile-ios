@@ -51,7 +51,7 @@ struct CardView: View {
                     }.frame(height: 220).accessibilityLabel("每日消费金额曲线")
                     Text("已确认支出合计 ¥\(curve.reduce(0) { $0 + $1.value }.formatted(.number.precision(.fractionLength(2))))")
                 }
-                Text("仅统计本次接口返回范围内、可确认的消费记录；充值、退款、失败与未知方向不算支出。未返回的日期不当作零消费，不代表完整历史账单。").font(.caption).foregroundStyle(.secondary)
+                DetailNote(text: "仅统计本次接口返回范围内、可确认的消费记录；充值、退款、失败与未知方向不算支出。未返回的日期不当作零消费，不代表完整历史账单。")
             }
             Section("已读取账单 · \(filtered.count) 笔") {
                 ForEach(filtered) { bill in

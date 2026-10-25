@@ -16,6 +16,8 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     var epoch: Int { revision }
     var cleID = ""
     var cleName = ""
+    private var libraryConnectionID: UUID?
+    private var libraryConnection: Task<String, Error>?
     private var connecting: [CASService: Task<Void, Never>] = [:]
     private let vault = "cn.sustech.community.daily.sessions.v1"
     override init() {
@@ -84,8 +86,23 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         }
         await save()
     }
+    func connectLibrary() async throws -> String {
+        if let task = libraryConnection { return try await task.value }
+        let version = revision
+        let connectionID = UUID(); libraryConnectionID = connectionID
+        let task = Task<String, Error> { @MainActor in
+            let (token, updated) = try await PrimoAuthentication().connect(cookies: await cookies())
+            guard version == revision, !clearing else { throw CancellationError() }
+            for cookie in updated { guard version == revision, !clearing else { throw CancellationError() }; await websiteDataStore.httpCookieStore.setCookie(cookie) }
+            guard version == revision, !clearing, !Task.isCancelled else { throw CancellationError() }
+            try CredentialVault.save(token, key: "library-token")
+            return token
+        }
+        libraryConnection = task; defer { if libraryConnectionID == connectionID { libraryConnection = nil; libraryConnectionID = nil } }; return try await task.value
+    }
     func clear() async {
         clearing = true; revision += 1; restored = true
+        libraryConnection?.cancel(); libraryConnection = nil; libraryConnectionID = nil
         cleID = ""; cleName = ""; CredentialVault.delete("library-token"); CredentialVault.delete("recharge-token"); CredentialVault.delete("court"); CredentialVault.delete("cle-identity")
         restoration?.cancel(); restoration = nil; restoring = false
         for task in connecting.values { task.cancel() }; connecting = [:]
