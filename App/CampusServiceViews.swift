@@ -301,6 +301,7 @@ struct PrintingView: View {
             message = "平台已接受上传，正在核对队列。"
             jobs = try await client.jobs(); message = "平台已接受上传；请在队列核对文件后到打印机领取。"
         } catch {
+            store.recordSession(.printing, error: error)
             let reason = error.localizedDescription
             if let value = try? await client.jobs(), version == store.sessionRevision { jobs = value }
             message = "本次未能完整确认结果：\(reason) 已尝试刷新队列，请核对文件后再决定是否重新提交。"
@@ -311,6 +312,6 @@ struct PrintingView: View {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.printing); let client = PrintingClient(http: http)
         do { try await client.delete(job.id); guard version == store.sessionRevision else { return }; jobs = try await client.jobs(); message = jobs.contains { $0.id == job.id } ? "任务仍在队列，请核对。" : "任务已不在当前队列。" }
-        catch { message = "删除结果需核对：\(error.localizedDescription)" }; await store.absorb(http, revision: version)
+        catch { store.recordSession(.printing, error: error); message = "删除结果需核对：\(error.localizedDescription)" }; await store.absorb(http, revision: version)
     }
 }

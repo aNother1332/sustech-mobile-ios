@@ -102,7 +102,7 @@ struct CourtReservationView: View {
         let version = store.sessionRevision
         do { try await client.cancel(order); orders = try await client.orders(); try await save(version)
             message = orders.first { $0.id == order.id }?.raw["status"].text == "6" ? "已回读确认取消。" : "取消请求已返回，请核对订单状态。"
-        } catch { message = "结果需核对：\(error.localizedDescription)" }
+        } catch { if (error as? CampusError) == .signInRequired { connected = false; needsLogin = true }; message = "结果需核对：\(error.localizedDescription)" }
     }
 }
 

@@ -143,7 +143,7 @@ struct LibraryLoansView: View {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         do { let client = await client(); try await client.renew(loan, token: token); let value = try await client.loans(token: token); loans = value
             message = value.first(where: { $0.id == loan.id }).map { "学校返回到期日：" + $0.due } ?? "未在当前借阅列表找到该书，请核对学校记录。"
-        } catch { message = "续借结果需核对：" + error.localizedDescription }
+        } catch { if (error as? CampusError) == .signInRequired { expired = true; verified = false }; message = "续借结果需核对：" + error.localizedDescription }
     }
 }
 

@@ -81,7 +81,7 @@ struct BBSubmissionView: View {
             CredentialVault.delete(vaultKey); pending = nil; self.preview = nil; self.file = nil
             message = "服务器已确认新提交及文件名，提交记录：" + receipt
             if let course = store.blackboard?.courses.first(where: { $0.id == task.courseID }) { await store.refreshCourse(course) }
-        } catch { message = "结果需核对：" + error.localizedDescription }
+        } catch { store.recordSession(.blackboard, error: error); message = "结果需核对：" + error.localizedDescription }
         await store.absorb(http, revision: store.sessionRevision)
     }
     private func reconcile(_ pending: Pending) async {

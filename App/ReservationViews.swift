@@ -73,7 +73,7 @@ struct ICReservationView: View {
     private func cancel(_ order: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         do { let api = try await client(); try await api.cancel(order); orders = try await api.mine(); message = orders.contains { $0.id == order.id } ? "取消请求已返回，请核对记录状态。" : "当前预约列表已不包含此项。" }
-        catch { message = "结果需核对：\(error.localizedDescription)" }
+        catch { if (error as? CampusError) == .signInRequired { connected = false; needsLogin = true }; message = "结果需核对：\(error.localizedDescription)" }
     }
 }
 private struct ICBookingForm: View {
@@ -175,12 +175,12 @@ struct CLEReservationView: View {
         do { let api = await client(); try await api.book(slot, sid: store.sessions.cleID, name: store.sessions.cleName, note: requestedNote)
             orders = try await api.mine(sid: store.sessions.cleID)
             message = orders.contains { $0.raw["SJSZ_WID"].text == slot.id && $0.raw["YYZT"].text == "1" } ? "已在我的预约中确认。" : "请求已返回，但预约尚未回读确认，请先到学校页面核对。"
-        } catch { message = "结果需核对：\(error.localizedDescription)" }
+        } catch { if (error as? CampusError) == .signInRequired { connected = false; needsLogin = true }; message = "结果需核对：\(error.localizedDescription)" }
     }
     private func cancel(_ order: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         do { let api = await client(); try await api.cancel(order); orders = try await api.mine(sid: store.sessions.cleID)
             message = orders.first { $0.id == order.id }?.raw["YYZT"].text == "4" ? "已回读确认取消。" : "取消请求已返回，请核对记录状态。"
-        } catch { message = "结果需核对：\(error.localizedDescription)" }
+        } catch { if (error as? CampusError) == .signInRequired { connected = false; needsLogin = true }; message = "结果需核对：\(error.localizedDescription)" }
     }
 }
