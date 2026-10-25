@@ -25,28 +25,26 @@ struct StudyView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
-                CampusHero(eyebrow: "LEARNING", title: "学习工作台", subtitle: "课程 · 考试 · 成绩 · Blackboard", symbol: "books.vertical.fill")
+                CampusHero(eyebrow: "", title: "学习", subtitle: "", symbol: "books.vertical")
+                LearningOverviewView()
                 ModeNotice()
                 HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision) }; Spacer(); NavigationLink("排课") { PlannerView() }; NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision) } }.font(.caption)
                 if let message = store.cacheMessage { Text(message).font(.caption).foregroundStyle(.orange) }
-                Picker("学习内容", selection: $section) {
-                    ForEach(Section.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.segmented)
-                switch section {
-                case .blackboard: blackboardContent
-                case .grades: gradesContent
-                default: teachingContent
-                }
+                CampusFold(title: "课表", symbol: "calendar") { teachingContentFor(.timetable) }
+                CampusFold(title: "考试", symbol: "pencil.and.list.clipboard") { teachingContentFor(.exams) }
+                CampusFold(title: "成绩", symbol: "chart.bar.doc.horizontal") { gradesContent }
+                CampusFold(title: "Blackboard", symbol: "books.vertical") { blackboardContent }
+
             }.frame(maxWidth: 1100).padding(12).frame(maxWidth: .infinity)
         }
         .background(Color(uiColor: .systemGroupedBackground))
-        .refreshable { switch section { case .grades: await store.refreshGrades(); case .blackboard: await store.refreshBlackboard(); default: await store.refreshTeaching() } }
+        .refreshable { await store.refreshTeaching(); await store.refreshBlackboard() }
         .navigationTitle("学习").navigationBarTitleDisplayMode(.inline)
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
         .onChange(of: store.teaching?.week, initial: true) { _, week in if let week { selectedWeek = week } }
     }
 
-    private var teachingContent: some View {
+    private func teachingContentFor(_ section: Section) -> some View {
         VStack(spacing: 10) {
             CampusCard {
                 Label(store.teaching?.semester.name ?? "连接教务系统", systemImage: "graduationcap").font(.headline)
@@ -56,8 +54,6 @@ struct StudyView: View {
                         .disabled(store.teachingState.isLoading || store.clearing || store.authenticating)
                     ConnectionNotice(state: store.teachingState).font(.caption)
                 }
-                Text("离线显示缓存 · 调休以学校通知为准")
-                    .font(.caption).foregroundStyle(.secondary)
             }
             if section == .timetable {
                 if let snapshot = store.teaching {
@@ -163,8 +159,6 @@ struct StudyView: View {
                         .disabled(store.blackboardState.isLoading || store.clearing || store.authenticating)
                     ConnectionNotice(state: store.blackboardState).font(.caption)
                 }
-                Text("任务 · 公告 · 课件")
-                    .font(.caption).foregroundStyle(.secondary)
                 NavigationLink { OfflineDownloadsView() } label: { Label("离线文件 · \(store.files.count)", systemImage: "arrow.down.document") }
             }
             if let snapshot = store.blackboard {
@@ -183,7 +177,6 @@ struct StudyView: View {
                 let folded = snapshot.courses.filter { store.hiddenCourses.contains($0.id) }
                 if !folded.isEmpty {
                     DisclosureGroup("已折叠课程 · \(folded.count)") {
-                        Text("这些课程不参与首页截止日期汇总。恢复显示后重新纳入。").font(.caption).foregroundStyle(.secondary)
                         ForEach(folded) { course in
                             HStack {
                                 NavigationLink(course.name) { BBCourseView(course: course) }

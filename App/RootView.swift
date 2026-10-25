@@ -33,32 +33,13 @@ struct RootView: View {
     }
 
     var body: some View {
-        Group {
-        if sizeClass == .regular {
-            NavigationSplitView {
-                List(CampusPage.allCases, selection: Binding<CampusPage?>(
-                    get: { selection }, set: { if let value = $0 { selection = value } }
-                )) { page in
-                    Label(page.rawValue, systemImage: page.symbol).tag(page)
-                }
-                .navigationTitle("SUSTechMobile").navigationBarTitleDisplayMode(.inline)
-                .safeAreaInset(edge: .bottom) {
-                    Text("非官方校园工具 · 早期开发版")
-                        .font(.caption).foregroundStyle(.secondary).padding()
-                }
-            } detail: {
-                NavigationStack { destination(selection) }
-            }
-        } else {
-            TabView(selection: $selection) {
-                ForEach(CampusPage.allCases) { page in
-                    NavigationStack { destination(page) }
-                        .tabItem { Label(page.rawValue, systemImage: page.symbol) }
-                        .tag(page)
-                }
-            }
-        }
-        }.onOpenURL { url in
+        NavigationStack {
+            destination(selection)
+                .id(selection)
+                .safeAreaInset(edge: .bottom, spacing: 0) { CampusNavigation(selection: $selection) }
+                .toolbarBackground(Color.campusOrange, for: .navigationBar)
+                .toolbarColorScheme(.light, for: .navigationBar)
+        }        .onOpenURL { url in
             guard url.scheme == "sustechmobile", let host = url.host, ["today", "study", "code", "card", "bus", "printing", "reservations", "library"].contains(host) else { return }
             if host == "today" { selection = .today } else if host == "study" { selection = .study } else { route = host }
         }.sheet(item: Binding(get: { route.map(CampusRoute.init) }, set: { route = $0?.id })) { value in

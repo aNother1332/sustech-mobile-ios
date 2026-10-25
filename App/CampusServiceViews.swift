@@ -9,7 +9,7 @@ struct ServiceMessage: View {
     var body: some View { if let message { Text(message).font(.callout).foregroundStyle(.secondary).textSelection(.enabled) } }
 }
 
-struct CardView: View {
+struct CardAccountView: View {
     @Environment(CampusStore.self) private var store
     @State private var account: CardAccount?
     @State private var bills: [CardBill] = []
@@ -225,8 +225,9 @@ struct ClassroomView: View {
     }
 }
 
-struct PrintingView: View {
+struct PrintingWorkspaceView: View {
     var initialURL: URL? = nil
+    var startImport = false
     @Environment(CampusStore.self) private var store
     @State private var jobs: [PrintJob] = []
     @State private var message: String?
@@ -276,15 +277,15 @@ struct PrintingView: View {
             }
         }.navigationTitle("校园打印").navigationBarTitleDisplayMode(.inline)
         .refreshable { await refresh() }
-        .task { if let initialURL { importPDF(initialURL) }; await refresh() }
+        .task { if let initialURL { importPDF(initialURL) } else if startImport { importing = true }; await refresh() }
         .sheet(isPresented: $portal) { SchoolBrowser(service: .printing) }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.pdf]) { result in
             do { importPDF(try result.get()) } catch { message = error.localizedDescription }
         }
-        .confirmationDialog("提交 \(filename) · \(options.copies) 份？", isPresented: $confirmUpload, titleVisibility: .visible) {
+        .campusConfirmation("提交 \(filename) · \(options.copies) 份？", isPresented: $confirmUpload, titleVisibility: .visible) {
             Button("提交一次") { Task { await upload() } }
         } message: { Text("请核对纸张、颜色、单双面和页码。网络超时后先查队列，避免重复提交。") }
-        .confirmationDialog("删除打印任务？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+        .campusConfirmation("删除打印任务？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
             if let job = deleting { Button("删除 \(job.name)", role: .destructive) { Task { await remove(job) } } }
         }
     }

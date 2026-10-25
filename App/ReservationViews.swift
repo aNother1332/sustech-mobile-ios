@@ -4,19 +4,23 @@ import SwiftUI
 struct ReservationCenterView: View {
     @Environment(CampusStore.self) private var store
     var body: some View {
-        List {
-            Section { CampusHero(eyebrow: "RESERVATIONS", title: "预约中心", subtitle: "空间 · 语言辅导 · 体育", symbol: "calendar.badge.plus") }
-            Section("统一预约中心") {
-                NavigationLink { ICReservationView().id(store.sessionRevision) } label: { Label("IC 研讨间", systemImage: "person.3") }
-                NavigationLink { CLEReservationView().id(store.sessionRevision) } label: { Label("CLE 语言辅导", systemImage: "bubble.left.and.bubble.right") }
-                NavigationLink { CourtReservationView().id(store.sessionRevision) } label: { Label("体育场馆 · reservation", systemImage: "sportscourt") }
-            }
-            Section("其他场馆入口") {
-                NavigationLink { CollegeBookingView().id(store.sessionRevision) } label: { Label("书院与其他场地 · 原生查询", systemImage: "building.2") }
-                Link("体育场馆官方预约页面", destination: URL(string: "https://reservation.sustech.edu.cn")!)
-                Text("体育场馆与书院场地使用不同平台，授权分别保留。").font(.caption).foregroundStyle(.secondary)
-            }
-        }.navigationTitle("预约中心").navigationBarTitleDisplayMode(.inline)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                CampusHero(eyebrow: "", title: "预约中心", subtitle: "", symbol: "calendar")
+                CampusSectionTitle(title: "场地空间")
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    ServiceTile(title: "IC研讨间", detail: "", symbol: "door.left.hand.open", color: .campusOrange) { ICReservationView().id(store.sessionRevision) }
+                    ServiceTile(title: "书院场地", detail: "", symbol: "building.2", color: .campusOrange) { CollegeBookingView().id(store.sessionRevision) }
+                }
+                CampusSectionTitle(title: "运动与辅导")
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    ServiceTile(title: "体育场馆", detail: "", symbol: "sportscourt", color: .campusOrange) { CourtReservationView().id(store.sessionRevision) }
+                    ServiceTile(title: "CLE辅导", detail: "", symbol: "bubble.left.and.bubble.right", color: .campusOrange) { CLEReservationView().id(store.sessionRevision) }
+                }
+                NavigationLink { AgendaView().id(store.sessionRevision) } label: { Label("我的预约与日程", systemImage: "calendar.badge.clock").frame(maxWidth: .infinity, alignment: .leading).padding() }
+                CampusFold(title: "学校入口", symbol: "globe") { Link("体育场馆", destination: URL(string: "https://reservation.sustech.edu.cn")!) }
+            }.padding(16).frame(maxWidth: 900).frame(maxWidth: .infinity)
+        }.background(Color.campusPaper).navigationTitle("预约中心").navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -58,7 +62,7 @@ struct ICReservationView: View {
                 }
             }
         }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("IC 研讨间").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal, onDismiss: { Task { await refresh() } }) { SchoolBrowser(service: .rooms) }
-        .confirmationDialog("确认取消这项预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
+        .campusConfirmation("确认取消这项预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
             if let order = cancelling { Button("取消 \(order.title)", role: .destructive) { Task { await cancel(order) } } }
         }
     }
@@ -98,7 +102,7 @@ private struct ICBookingForm: View {
                 if busy { ProgressView() }; ServiceMessage(message: message)
             }
         }.navigationTitle("预约研讨间").navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("预约 \(room.title)？", isPresented: $confirm, titleVisibility: .visible) {
+        .campusConfirmation("预约 \(room.title)？", isPresented: $confirm, titleVisibility: .visible) {
             Button("确认提交") { Task { await submit() } }
         } message: { Text("\(begin.formatted()) 至 \(end.formatted())；同行：\(members.isEmpty ? "无" : members)。以学校回执为准。") }
     }
@@ -157,10 +161,10 @@ struct CLEReservationView: View {
             }
         }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("CLE 语言辅导").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal, onDismiss: { Task { await refresh() } }) { SchoolBrowser(service: .cle) }
         .onChange(of: day) { _, _ in slots = [] }
-        .confirmationDialog("确认预约该辅导？", isPresented: Binding(get: { selected != nil }, set: { if !$0 { selected = nil } }), titleVisibility: .visible) {
+        .campusConfirmation("确认预约该辅导？", isPresented: Binding(get: { selected != nil }, set: { if !$0 { selected = nil } }), titleVisibility: .visible) {
             if let slot = selected { Button("提交一次") { Task { await book(slot) } } }
         } message: { if let slot = selected { Text(slot.title + "\n" + slot.detail + "\n" + note) } }
-        .confirmationDialog("确认取消？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
+        .campusConfirmation("确认取消？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
             if let order = cancelling { Button("取消此预约", role: .destructive) { Task { await cancel(order) } } }
         }
     }

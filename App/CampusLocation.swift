@@ -5,10 +5,10 @@ import SwiftUI
 
 @MainActor @Observable final class CampusLocation: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
-    private var point: CLLocation?
+    private(set) var point: CLLocation?
     private var requested = false
     var message: String?
-    override init() { super.init(); manager.delegate = self; manager.desiredAccuracy = kCLLocationAccuracyHundredMeters }
+    override init() { super.init(); manager.delegate = self; manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters }
     func request() {
         requested = true
         switch manager.authorizationStatus {

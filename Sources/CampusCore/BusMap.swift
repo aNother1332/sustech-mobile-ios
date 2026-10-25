@@ -20,6 +20,7 @@ public struct BusVehicle: Identifiable, Sendable {
     public let routeID: String; public let directionID: String; public let nextStop: String
     public let speed: Double?; public let heading: Double?; public let updatedAt: Date?; public let receivedAt: Date?
     public let operating: Bool; public let status: String; public let dataStatus: String
+    public var tripID: String = ""; public var nextStopID: String = ""
     public func isFresh(at now: Date) -> Bool {
         guard let updatedAt else { return false }
         return (-60...120).contains(now.timeIntervalSince(updatedAt)) && (dataStatus.isEmpty || dataStatus.lowercased() == "normal")
@@ -62,7 +63,7 @@ public enum BusMapParser {
             return BusVehicle(id: id, name: display, type: row["vehicle_type"].text, coordinate: point,
                 routeID: row["route_id"].text, directionID: row["route_direction_id"].text, nextStop: row["next_stop_name"].text,
                 speed: speed, heading: heading, updatedAt: sourceDate, receivedAt: date(row["received_at"].text),
-                operating: ["true", "1"].contains(row["operating"].text.lowercased()), status: row["operation_status"].text, dataStatus: row["data_status"].text)
+                operating: ["true", "1"].contains(row["operating"].text.lowercased()), status: row["operation_status"].text, dataStatus: row["data_status"].text, tripID: row["trip_id"].text, nextStopID: row["current_position"]["next_stop_id"].text)
         }
     }
     private static func name(_ row: WireValue) -> String { [row["name_zh"].text, row["name_en"].text, row["id"].text].first { !$0.isEmpty } ?? "" }

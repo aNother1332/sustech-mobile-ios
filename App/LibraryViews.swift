@@ -2,7 +2,7 @@ import CampusCore
 import SwiftUI
 import WebKit
 
-struct LibraryView: View {
+struct LibrarySearchView: View {
     @Environment(CampusStore.self) private var store
     @State private var query = ""
     @State private var books: [LibraryBook] = []
@@ -124,7 +124,7 @@ struct LibraryLoansView: View {
         .sheet(isPresented: $login, onDismiss: { Task { await load() } }) {
             ProviderBrowser(kind: .library) { value in token = value; expired = false; try? CredentialVault.save(value, key: "library-token") }
         }
-        .confirmationDialog("续借《\(renew?.title ?? "")》？", isPresented: Binding(get: { renew != nil }, set: { if !$0 { renew = nil } }), titleVisibility: .visible) {
+        .campusConfirmation("续借《\(renew?.title ?? "")》？", isPresented: Binding(get: { renew != nil }, set: { if !$0 { renew = nil } }), titleVisibility: .visible) {
             if let loan = renew { Button("确认续借一次") { renew = nil; Task { await performRenew(loan) } } }
         } message: { Text("学校决定是否允许续借；提交后核对新的到期日期。") }
     }

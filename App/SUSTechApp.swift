@@ -55,7 +55,10 @@ struct SUSTechApp: App {
                 .environment(\.defaultMinListRowHeight, 36)
                 .task { await store.resumeSchoolConnections() }
                 .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.resumeSchoolConnections() } } }
-                .tint(.campusGreen)
+                .font(.system(.body, design: .default))
+                .tint(.campusOrange)
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .onAppear {
                     #if DEBUG
                     if ProcessInfo.processInfo.arguments.contains("--smoke-login") { showLogin = true }

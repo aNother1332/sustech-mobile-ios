@@ -49,7 +49,7 @@ struct PrintExtrasView: View {
             if tab == 1 { DetailNote(text: "此处读取扫描任务元数据。下载地址尚未验证，领取原文件请使用学校打印页面。") }
         }.navigationTitle("打印站点与用量").navigationBarTitleDisplayMode(.inline).refreshable { page = 1; await load() }
         .task { await load() }.onChange(of: tab) { _, _ in rows = []; page = 1; Task { await load() } }
-        .confirmationDialog("删除此扫描文件？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+        .campusConfirmation("删除此扫描文件？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
             Button("从学校服务器删除", role: .destructive) { if let item = deleting { deleting = nil; Task { await remove(item) } } }
         } message: { Text("将删除学校打印系统中的扫描文件，无法在应用中恢复。") }
     }

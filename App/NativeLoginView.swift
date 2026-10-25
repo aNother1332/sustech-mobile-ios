@@ -4,23 +4,26 @@ import CampusCore
 struct NativeLoginButton: View {
     @Environment(CampusStore.self) private var store
     @State private var presented = false
+    @State private var choices = false
+    @State private var openLogin = false
     var service: CASService = .teaching
     var body: some View {
         let status = store.serviceSessions[service] ?? ServiceSessionState()
         Group {
             if store.mode == .demo { Text("演示模式").font(.caption).foregroundStyle(.secondary) }
             else {
-                Menu {
-                    Button(status.valid ? "重新登录 / 切换账号" : "登录学校账号") { presented = true }
-                    Button("重新检测连接") { Task { await store.checkSession(service, force: true) } }.disabled(status.status == .checking)
-                } label: {
-                    Label(status.valid ? "已登录" : (status.status == .expired ? "登录学校账号" : status.label), systemImage: status.valid ? "checkmark.circle.fill" : "person.badge.key")
-                        .font(.caption)
+                Button { choices = true } label: {
+                    Label(status.valid ? "已登录" : (status.status == .expired ? "登录学校账号" : status.label), systemImage: status.valid ? "checkmark.circle.fill" : "person.badge.key").font(.caption)
                 }
+
             }
         }
         .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
         .task { await store.checkSession(service) }
+        .campusConfirmation("学校连接", isPresented: $choices, onDismiss: { if openLogin { openLogin = false; presented = true } }) {
+            Button("登录 / 切换账号") { openLogin = true }
+            Button("重新检测") { Task { await store.checkSession(service, force: true) } }.disabled(status.status == .checking)
+        }
         .sheet(isPresented: $presented, onDismiss: { Task { await store.checkSession(service, force: true); await store.checkSchoolSessions(force: true) } }) {
             if service == .printing { SchoolBrowser(service: .printing) }
             else if service == .card { SchoolBrowser(service: .card) }

@@ -17,6 +17,8 @@ enum ConnectionState {
 @MainActor @Observable
 final class CampusStore {
     private(set) var mode = DataMode.live
+    var profile: StudentProfile?
+    var profileMessage: String?
     private(set) var teaching: TeachingSnapshot?
     private(set) var academic: AcademicSnapshot?
     private(set) var blackboard: BlackboardSnapshot?
@@ -78,6 +80,7 @@ final class CampusStore {
     private func resetDisplayedData() {
         CampusWidgetBridge.clear()
         serviceSessions = [:]; serviceProbeTokens = [:]
+        profile = nil; profileMessage = nil
         teaching = nil; academic = nil; blackboard = nil
         courseDetails = [:]; contentCache = [:]; files = []; hiddenCourses = []
         teachingDate = nil; gradesDate = nil; blackboardDate = nil
@@ -86,6 +89,7 @@ final class CampusStore {
     }
     private func restore() {
         guard let archive = repository.load() else { return }
+        profile = archive.profile
         owner = archive.owner
         teaching = archive.teaching; academic = archive.grades; blackboard = archive.blackboard
         teachingDate = archive.teachingDate; gradesDate = archive.gradesDate; blackboardDate = archive.blackboardDate
@@ -104,6 +108,7 @@ final class CampusStore {
         archive.grades = academic; archive.gradesDate = gradesDate
         archive.blackboard = blackboard; archive.blackboardDate = blackboardDate
         archive.hiddenCourses = hiddenCourses
+        archive.profile = profile
         archive.courseDetails = courseDetails; archive.contents = contentCache; archive.files = files
         do { try repository.save(archive); cacheMessage = nil }
         catch { cacheMessage = "数据已读取，但本机缓存保存失败；请在解锁设备后重试。" }
@@ -198,7 +203,22 @@ final class CampusStore {
             automaticLoginMessage = credentialsReady ? "已保存至本机钥匙串；登录态失效时自动登录。" : nil
         } else if automatic { automaticLoginMessage = "自动登录未完成，稍后可手动重试。" }
         authenticationMessage = results.joined(separator: "\n")
+        if authenticated { await refreshProfile() }
         persist()
+    }
+
+    func refreshProfile() async {
+        if mode == .demo { profile = StudentProfile(name: "示例同学", studentID: "示例学号", major: "示例专业", department: "示例院系"); return }
+        guard !clearing else { return }
+        let version = generation
+        let http = await serviceHTTP(.teaching)
+        do {
+            let value = StudentProfile.parse(try await http.json("/user/me"))
+            guard version == generation else { return }
+            if !value.isEmpty { profile = value; profileMessage = nil; persist() }
+            else { profileMessage = "暂未读取到个人资料" }
+        } catch { if version == generation { profileMessage = "个人资料读取失败，点击刷新重试" } }
+        await absorb(http, revision: version)
     }
 
     /// Browsing a service preserves shared CAS and per-service sessions.

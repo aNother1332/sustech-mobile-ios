@@ -9,16 +9,28 @@ struct AccountView: View {
     var body: some View {
         List {
             Section {
-                CampusHero(eyebrow: "MY CAMPUS", title: "SUSTechMobile", subtitle: "账户与偏好", symbol: "person.crop.circle.fill")
-                Text("iPhone 与 iPad · 非官方校园工具\n0.6.1 试用版 · 学校接口需真机核对。")
-                    .font(.callout).foregroundStyle(.secondary)
-            }
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 14) {
+                        Image(systemName: "person.crop.circle").font(.system(size: 48, weight: .light)).foregroundStyle(.white)
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(store.profile?.name.isEmpty == false ? store.profile!.name : "我的").font(.title2.bold())
+                            if let id = store.profile?.studentID, !id.isEmpty { Text(id).font(.subheadline).textSelection(.enabled) }
+                            else if let account = store.rememberedUsername { Text(account).font(.subheadline).textSelection(.enabled) }
+                        }
+                        Spacer()
+                        Button { Task { await store.refreshProfile() } } label: { Image(systemName: "arrow.clockwise") }.accessibilityLabel("刷新个人信息")
+                    }
+                    if let profile = store.profile {
+                        let fields = [profile.major, profile.department, profile.college].filter { !$0.isEmpty }
+                        if !fields.isEmpty { Text(fields.joined(separator: " · ")).font(.subheadline).textSelection(.enabled) }
+                    }
+                }.foregroundStyle(.white).padding(20).frame(maxWidth: .infinity, alignment: .leading).background(CampusPalette.header, in: RoundedRectangle(cornerRadius: 21))
+                if let message = store.profileMessage { Text(message).font(.caption).foregroundStyle(.secondary) }
+            }.listRowSeparator(.hidden)
             Section("数据模式") {
                 Picker("当前模式", selection: Binding(get: { store.mode }, set: { store.setMode($0) })) {
                     ForEach(DataMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }.disabled(store.clearing || store.authenticating || store.writing)
-                Text("演示与学校数据隔离")
-                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("连接学校服务") {
                 HStack { Text("教务"); Spacer(); NativeLoginButton(service: .teaching) }
@@ -54,10 +66,11 @@ struct AccountView: View {
             }
         }
         .navigationTitle("我的").navigationBarTitleDisplayMode(.inline)
-        .refreshable { await store.checkSchoolSessions(force: true) }
+        .task { await store.refreshProfile() }
+        .refreshable { await store.refreshProfile(); await store.checkSchoolSessions(force: true) }
         .onChange(of: portal) { _, value in if value == nil { Task { await store.checkSchoolSessions(force: true) } } }
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
-        .confirmationDialog("清除本机会话、缓存和下载文件？", isPresented: $confirmClear, titleVisibility: .visible) {
+        .campusConfirmation("清除本机会话、缓存和下载文件？", isPresented: $confirmClear, titleVisibility: .visible) {
             Button("清除并退出本机会话", role: .destructive) { Task { await store.clearLocalSession() } }
         } message: { Text("已下载课件也会移除。记住的账号密码也会删除。之后需要重新登录；此操作不撤销学校服务器上的会话。") }
     }

@@ -24,12 +24,14 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 10) {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     let term = AcademicData.term(at: context.date)
-                    CampusHero(eyebrow: "SUSTECH MOBILE", title: AcademicData.dateTitle(context.date), subtitle: term.map { "第 \($0.week(context.date)) 教学周 · 校园生活，一目了然" } ?? "当前日期无已收录教学周 · 校园生活，一目了然", symbol: "sun.max.fill")
+                    CampusHero(eyebrow: "SUSTECH MOBILE", title: AcademicData.dateTitle(context.date), subtitle: term.map { "第 \($0.week(context.date)) 教学周" } ?? "", symbol: "sun.max.fill")
                 }
                 TodaySummaryView()
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 145))], spacing: 10) {
-                    ServiceTile(title: "校园码", detail: "校园码 / 身份核验", symbol: "qrcode", color: .campusOrange) { CampusCodeView().id(store.sessionRevision) }
-                    ServiceTile(title: "附近校车", detail: "站点与预计到站", symbol: "bus.fill", color: .campusGreen) { BusView() }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
+                    ServiceTile(title: "校园卡", detail: "", symbol: "creditcard", color: .campusOrange) { CardView().id(store.sessionRevision) }
+                    ServiceTile(title: "校车", detail: "", symbol: "bus", color: .campusOrange) { BusView() }
+                    ServiceTile(title: "打印", detail: "", symbol: "printer", color: .campusOrange) { PrintingView().id(store.sessionRevision) }
+                    ServiceTile(title: "预约", detail: "", symbol: "calendar", color: .campusOrange) { ReservationCenterView().id(store.sessionRevision) }
                 }
                 ModeNotice()
                 SessionBadge()
@@ -38,8 +40,6 @@ struct TodayView: View {
                 if store.mode == .live, store.teaching == nil, store.blackboard == nil {
                     CampusCard {
                         Label("从连接学校服务开始", systemImage: "link").font(.headline)
-                        Text("先登录学校账号并同步；网页登录可用于验证码等情况。也可以先体验示例界面。")
-                            .font(.callout).foregroundStyle(.secondary)
                         NativeLoginButton()
                         Button("体验演示模式") { store.setMode(.demo) }.buttonStyle(.bordered)
                     }
@@ -56,7 +56,7 @@ struct TodayView: View {
                     if store.teaching == nil {
                         Text("同步课表后，在这里查看今天的安排。").foregroundStyle(.secondary)
                     } else if todayMeetings.isEmpty {
-                        Text(store.mode == .demo ? "示例课表今天没有安排，完整示例见「学习」。" : "本次读取的课表中，今天没有课程。请留意学校临时调整。")
+                        Text(store.mode == .demo ? "今天没有课程" : "今天没有已同步课程")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(todayMeetings) { MeetingRow(meeting: $0) }
@@ -70,10 +70,8 @@ struct TodayView: View {
 
                 CampusCard(accent: .campusOrange) {
                     Label("近期截止日期", systemImage: "clock").font(.headline)
-                    Text("已同步课程 · 折叠课程不参与提醒")
-                        .font(.caption).foregroundStyle(.secondary)
-                    if upcoming.isEmpty {
-                        Text(store.blackboard == nil ? "连接 Blackboard 后查看。" : "本次读取未发现近期截止日期；不代表没有其他任务。")
+                        if upcoming.isEmpty {
+                        Text(store.blackboard == nil ? "连接 Blackboard 后查看。" : "暂无近期截止日期")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(upcoming) { DeadlineRow(deadline: $0) }

@@ -3,12 +3,14 @@ import Foundation
 public struct BusStop: Identifiable, Sendable {
     public let id: String; public let name: String; public let directions: String
     public var latitude: Double? = nil; public var longitude: Double? = nil
-    public init(id: String, name: String, directions: String, latitude: Double? = nil, longitude: Double? = nil) { self.id = id; self.name = name; self.directions = directions; self.latitude = latitude; self.longitude = longitude }
+    public var directionIDs: [String] = []
+    public init(id: String, name: String, directions: String, latitude: Double? = nil, longitude: Double? = nil, directionIDs: [String] = []) { self.directionIDs = directionIDs; self.id = id; self.name = name; self.directions = directions; self.latitude = latitude; self.longitude = longitude }
 }
 public struct BusArrival: Identifiable, Sendable {
     public let id: String; public let route: String; public let direction: String
     public let minutes: Int?; public let planned: String; public let reason: String; public let source: String
     public var metres: Int? = nil; public var stopsAway: Int? = nil
+    public var routeID: String = ""; public var directionID: String = ""; public var tripID: String = ""
 }
 public struct BusClient: Sendable {
     public let http: ServiceHTTP
@@ -20,7 +22,7 @@ public struct BusClient: Sendable {
             guard !row["id"].text.isEmpty else { return nil }
             let name = [Self.localized(row, "group_name"), Self.localized(row, "name")].filter { !$0.isEmpty }.joined(separator: " · ")
             return BusStop(id: row["id"].text, name: name,
-                directions: row["directions"].rows.map { Self.localized($0, "route_name") + " " + Self.localized($0, "direction_name") }.joined(separator: " / "), latitude: Double(row["latitude"].text), longitude: Double(row["longitude"].text))
+                directions: row["directions"].rows.map { Self.localized($0, "route_name") + " " + Self.localized($0, "direction_name") }.joined(separator: " / "), latitude: Double(row["latitude"].text), longitude: Double(row["longitude"].text), directionIDs: row["directions"].rows.map { $0["route_direction_id"].text })
         }
     }
     public func arrivals(_ stop: String) async throws -> [BusArrival] {
@@ -39,7 +41,7 @@ public struct BusClient: Sendable {
             let remaining = here.flatMap { index in vehicle?["current_position"]["next_stop_num"].int.map { index + 1 - $0 } }
             return BusArrival(id: "\(index)", route: Self.localized(row, "route_name"), direction: Self.localized(row, "direction_name"),
                 minutes: row["eta_minutes"].int, planned: row["planned_arrival_at"].text,
-                reason: row["unavailable_reason"].text, source: row["source"].text, metres: row["distance"].int, stopsAway: remaining)
+                reason: row["unavailable_reason"].text, source: row["source"].text, metres: row["distance"].int, stopsAway: remaining, routeID: row["route_id"].text, directionID: row["route_direction_id"].text, tripID: row["trip_id"].text)
         }
     }
     private static func localized(_ row: WireValue, _ key: String) -> String {

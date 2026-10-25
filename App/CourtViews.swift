@@ -84,7 +84,7 @@ struct CourtReservationView: View {
                 }
             }
         }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("体育场馆").navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("确认取消这项场馆预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
+        .campusConfirmation("确认取消这项场馆预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
             if let order = cancelling { Button("取消 \(order.title)", role: .destructive) { Task { await cancel(order) } } }
         }
     }
@@ -184,7 +184,7 @@ private struct CourtBookingView: View {
             }
         }.navigationTitle(ground.title)
         .onChange(of: day) { _, _ in slots = []; selected = nil; challenge = nil; captchaToken = "" }
-        .confirmationDialog("确认手动预约？", isPresented: $confirm, titleVisibility: .visible) {
+        .campusConfirmation("确认手动预约？", isPresented: $confirm, titleVisibility: .visible) {
             Button("提交一次") { Task { await submit() } }
         } message: { Text("\(ground.title) · \(selected?.day ?? "") \(selected?.start ?? "")–\(selected?.end ?? "") · \(people) 人。以学校订单回读结果为准。") }
     }

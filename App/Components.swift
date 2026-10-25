@@ -16,9 +16,8 @@ struct CampusCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 8) { content }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
-            .overlay(alignment: .leading) { RoundedRectangle(cornerRadius: 2).fill(accent).frame(width: 3).padding(.vertical, 16) }
-            .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(accent.opacity(0.13), lineWidth: 1) }
+            .background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 18))
+            .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(Color.primary.opacity(0.07), lineWidth: 1) }
     }
 }
 

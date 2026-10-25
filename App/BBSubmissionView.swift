@@ -57,10 +57,10 @@ struct BBSubmissionView: View {
                 file = try Data(contentsOf: url); filename = url.lastPathComponent; preview = nil; message = nil
             } catch { message = error.localizedDescription }
         }
-        .confirmationDialog("正式提交到 \(task.course) / \(task.title)？", isPresented: $confirm, titleVisibility: .visible) {
+        .campusConfirmation("正式提交到 \(task.course) / \(task.title)？", isPresented: $confirm, titleVisibility: .visible) {
             Button("确认提交 \(filename) 一次", role: .destructive) { Task { await submit() } }
         } message: { Text("请确认这是最终文件。提交后查询服务器回执；结果不明时不会自动重试。SHA256：" + hash) }
-        .confirmationDialog("已在学校确认原提交状态？", isPresented: $reset, titleVisibility: .visible) {
+        .campusConfirmation("已在学校确认原提交状态？", isPresented: $reset, titleVisibility: .visible) {
             Button("已核对，解除本机限制", role: .destructive) { CredentialVault.delete(vaultKey); pending = nil; preview = nil; message = "本机限制已解除；没有更改学校提交记录。" }
         } message: { Text("此操作不撤销学校提交。尚未核对时请先查询，避免重复提交。") }
     }
