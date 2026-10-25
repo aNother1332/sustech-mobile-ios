@@ -27,7 +27,9 @@ extension CampusStore {
         let http = ServiceHTTP(origin: service.entry, cookies: cookies)
         do {
             switch service {
-            case .teaching: _ = try TISParser.semester(await http.data("/component/querydangqianxnxq", form: [:]))
+            case .teaching:
+                let me = try await http.json("/user/me")
+                guard !me["userName"].text.isEmpty else { throw CampusError.invalidResponse("教务本人身份") }
             case .blackboard:
                 let me = try await http.json("/learn/api/public/v1/users/me")
                 guard !me["id"].text.isEmpty else { throw CampusError.signInRequired }
@@ -50,6 +52,7 @@ extension CampusStore {
     func recordSession(_ service: CASService, error: Error? = nil) {
         serviceProbeTokens[service] = nil
         if let error {
+            if serviceSessions[service]?.valid == true, error is ServiceFailure { return }
             let expired = (error as? CampusError) == .signInRequired || (error as? CampusError) == .unexpectedHTML
             serviceSessions[service] = ServiceSessionState(status: expired ? .expired : .unavailable, checked: .now, note: error.localizedDescription)
         } else { serviceSessions[service] = ServiceSessionState(status: .valid, checked: .now) }

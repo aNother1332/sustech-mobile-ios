@@ -64,7 +64,7 @@ struct ICReservationView: View {
         return ICClient(http: await store.serviceHTTP(origin: SchoolService.rooms.portalURL))
     }
     private func refresh() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         do { let api = try await client(); rooms = try await api.rooms(); orders = try await api.mine(); message = "读取于 \(Date.now.formatted())" }
         catch { message = error.localizedDescription }
     }
@@ -161,7 +161,7 @@ struct CLEReservationView: View {
     }
     private func client() async -> CLEClient { CLEClient(http: await store.serviceHTTP(origin: CLEClient.index)) }
     private func refresh() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         do { let api = await client(); slots = try await api.slots(day: day); orders = try await api.mine(sid: store.sessions.cleID); message = "读取于 \(Date.now.formatted())" }
         catch { message = error.localizedDescription }
     }

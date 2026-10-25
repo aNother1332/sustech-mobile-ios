@@ -73,7 +73,7 @@ struct CardView: View {
         }
     }
     private func refresh() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision
         let http = await store.serviceHTTP(.card); let client = CardClient(http: http)
         do {
@@ -187,7 +187,7 @@ struct ClassroomView: View {
         try TISParser.semester(await http.data("/component/querydangqianxnxq", form: [:]))
     }
     private func load() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.teaching)
         do { let sem = try await semester(http); let value = try await ClassroomClient(http: http).catalog(semester: sem)
             guard version == store.sessionRevision else { return }; rooms = value; results = [:]; message = nil
@@ -195,7 +195,7 @@ struct ClassroomView: View {
         await store.absorb(http, revision: version)
     }
     private func check() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let w = week, d = weekday, a = first, b = last
         let selected = Array(filtered.prefix(20)); let http = await store.serviceHTTP(.teaching)
         do {
@@ -285,7 +285,7 @@ struct PrintingView: View {
         } catch { message = error.localizedDescription }
     }
     private func refresh() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.printing)
         do { let value = try await PrintingClient(http: http).jobs(); guard version == store.sessionRevision else { return }; jobs = value; store.recordSession(.printing); message = "队列读取于 \(Date.now.formatted())" }
         catch { if version == store.sessionRevision { store.recordSession(.printing, error: error); message = error.localizedDescription } }; await store.absorb(http, revision: version)

@@ -137,7 +137,10 @@ def generate() -> None:
     output = ROOT / "SUSTech.xcodeproj"
     output.mkdir(exist_ok=True)
     document = {"archiveVersion": "1", "classes": {}, "objectVersion": "56", "objects": objects, "rootObject": project}
-    (output / "project.pbxproj").write_text("// !$*UTF8*$!\n" + serialize(document) + "\n", encoding="utf-8", newline="\n")
+    project_file = output / "project.pbxproj"
+    project_bytes = ("// !$*UTF8*$!\n" + serialize(document) + "\n").encode("utf-8")
+    if not project_file.exists() or project_file.read_bytes() != project_bytes:
+        project_file.write_bytes(project_bytes)
 
     scheme = ET.Element("Scheme", LastUpgradeVersion="2600", version="1.3")
     build = ET.SubElement(scheme, "BuildAction", parallelizeBuildables="YES", buildImplicitDependencies="YES")
@@ -155,8 +158,10 @@ def generate() -> None:
     ET.indent(scheme)
     schemes = output / "xcshareddata" / "xcschemes"
     schemes.mkdir(parents=True, exist_ok=True)
-    with (schemes / "SUSTech.xcscheme").open("wb") as handle:
-        ET.ElementTree(scheme).write(handle, encoding="utf-8", xml_declaration=True)
+    scheme_file = schemes / "SUSTech.xcscheme"
+    scheme_bytes = ET.tostring(scheme, encoding="utf-8", xml_declaration=True)
+    if not scheme_file.exists() or scheme_file.read_bytes() != scheme_bytes:
+        scheme_file.write_bytes(scheme_bytes)
     print(f"Generated {output.name}: {len(sources)} Swift files, {len(resources)} resources.")
 
 

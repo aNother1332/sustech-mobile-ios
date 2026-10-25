@@ -82,13 +82,13 @@ struct CourtReservationView: View {
         if let credentials = await client.currentCredentials() { try CredentialVault.save(credentials, key: "court") }
     }
     private func login() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let input = code; code = ""; let version = store.sessionRevision
         do { try await client.login(codeOrURL: input); try await save(version); gyms = try await client.gyms(); orders = try await client.orders(); message = "场馆授权已连接。" }
         catch { message = error.localizedDescription }
     }
     private func refresh() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision
         do { gyms = try await client.gyms(); orders = try await client.orders(); try await save(version); message = "读取于 \(Date.now.formatted())" }
         catch { message = error.localizedDescription }
@@ -173,12 +173,12 @@ private struct CourtBookingView: View {
         } message: { Text("\(ground.title) · \(selected?.day ?? "") \(selected?.start ?? "")–\(selected?.end ?? "") · \(people) 人。以学校订单回读结果为准。") }
     }
     private func load() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         do { slots = try await client.slots(ground: ground.id, day: day); selected = nil; captchaToken = ""; challenge = nil; message = "读取于 \(Date.now.formatted())" }
         catch { message = error.localizedDescription }
     }
     private func captcha() async {
-        guard !busy else { return }; busy = true; defer { busy = false }
+        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         do { challenge = try await client.captcha(); captchaToken = ""; message = nil } catch { message = error.localizedDescription }
     }
     private func submit() async {

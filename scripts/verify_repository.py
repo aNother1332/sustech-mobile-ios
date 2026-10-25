@@ -55,7 +55,7 @@ def verify_syntax() -> None:
     parser = tree_sitter.Parser(tree_sitter.Language(tree_sitter_swift.language()))
     errors = []
     paths = [ROOT / "Package.swift"]
-    for directory in ("App", "Sources", "Tests"):
+    for directory in ("App", "Sources", "Tests", "ShareExtension"):
         paths.extend(sorted((ROOT / directory).rglob("*.swift")))
     for path in paths:
         root = parser.parse(path.read_bytes()).root_node
