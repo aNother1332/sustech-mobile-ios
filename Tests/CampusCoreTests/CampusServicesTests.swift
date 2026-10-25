@@ -100,7 +100,7 @@ private final class SessionProtocol: URLProtocol, @unchecked Sendable {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
-        Task {
+        Task { @Sendable [self] in
             let scenario = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "scenario" }?.value ?? "reuse"
             await Self.log.record(request.httpMethod ?? "GET", scenario: scenario)
             var code = 200; var headers: [String: String] = [:]; var body = "service"
