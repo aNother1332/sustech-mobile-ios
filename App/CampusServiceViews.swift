@@ -37,7 +37,8 @@ struct CardView: View {
                 if busy { ProgressView() }
                 if let synced { Text("读取于 \(synced.formatted())").font(.caption) }
                 ServiceMessage(message: message)
-                Text("此服务提供余额与账单查询，不提供充值。").font(.caption).foregroundStyle(.secondary)
+                NavigationLink { CardRechargeView() } label: { Label("校园卡充值", systemImage: "plus.circle") }
+                Text("充值由支付宝或学校微信页面完成，返回后可刷新余额与账单。").font(.caption).foregroundStyle(.secondary)
             }
             Section("消费曲线") {
                 Picker("账单范围", selection: $days) { Text("近 7 天").tag(7); Text("近 30 天").tag(30); Text("已读取全部").tag(0) }.pickerStyle(.segmented)

@@ -38,6 +38,7 @@ def main():
                 ("account", ["--smoke-demo", "--smoke-account"]),
                 ("native-login", ["--smoke-login"]),
                 ("card", ["--smoke-demo", "--smoke-card"]),
+                ("recharge", ["--smoke-demo", "--smoke-recharge"]),
                 ("classrooms", ["--smoke-demo", "--smoke-classrooms"]),
                 ("printing", ["--smoke-demo", "--smoke-printing"]),
                 ("reservations", ["--smoke-demo", "--smoke-reservations"]),

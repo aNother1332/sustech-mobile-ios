@@ -45,6 +45,8 @@ jobs:
         run: |
           cp docs/WINDOWS_SIDELOAD.md dist/INSTALL-WINDOWS.md
           cp docs/RELEASE_0_3.md dist/RELEASE_0_3.md
+          cp docs/RELEASE_0_3_1.md dist/RELEASE_0_3_1.md
+          cp docs/RECHARGE_PAYMENT_RESEARCH.md dist/RECHARGE_PAYMENT_RESEARCH.md
       - name: Upload downloadable device package
         uses: actions/upload-artifact@v4
         with:

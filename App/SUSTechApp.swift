@@ -17,7 +17,8 @@ struct SUSTechApp: App {
     @ViewBuilder private var launchContent: some View {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("--smoke-card") { NavigationStack { CardView() } }
+        if arguments.contains("--smoke-recharge") { NavigationStack { CardRechargeView() } }
+        else if arguments.contains("--smoke-card") { NavigationStack { CardView() } }
         else if arguments.contains("--smoke-classrooms") { NavigationStack { ClassroomView() } }
         else if arguments.contains("--smoke-printing") { NavigationStack { PrintingView() } }
         else if arguments.contains("--smoke-reservations") { NavigationStack { ReservationCenterView() } }

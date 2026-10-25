@@ -13,7 +13,7 @@
 | 模块 | 协议与来源 | 当前边界 |
 | --- | --- | --- |
 | 会话 | 已有 CAS Cookie → GET 服务票据交换；WebKit 与原生共享 Cookie | Keychain 保存，不保存密码；学校有效期与独立 OAuth 不可统一承诺 |
-| 校园卡 | Android EcardApi：`/epay/h5/accountinfo`、`/epay/h5/bill` 的 HTML | 余额、已返回账单、确认支出曲线；没有充值和未经证实的历史分页接口 |
+| 校园卡 | Android EcardApi：`/epay/h5/accountinfo`、`/epay/h5/bill` 的 HTML | 余额、已返回账单、确认支出曲线；0.3.1 增加充值渠道页，外部平台完成授权与付款；没有原生下单或未经证实的历史分页接口 |
 | 空教室 | CLI remaining-classroom / survival classroom：`/component/queryDiDian`、`/cdkb/querycdkbList` | RoleCode 请求头，教学周、借用与节次范围；不保留借用人姓名电话 |
 | 校车 | CRA 公共 `/stops`、`/arrivals/{stop}` | 本轮开发时只读探测确认站点数组和到站响应结构；没有学校私人数据验证 |
 | 打印 | Android PMS：`/api/client/CloudPrint/Upload`、`/api/client/PrintJob/Get`、`/api/client/PrintJob/Del` | PDF multipart，字段和单双面编码按上游映射；未知回执先查队列 |
