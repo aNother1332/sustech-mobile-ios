@@ -4,6 +4,8 @@ import WebKit
 
 struct SchoolBrowser: View {
     let service: SchoolService
+    var initialURL: URL? = nil
+    private var entryURL: URL { initialURL ?? service.portalURL }
     @Environment(CampusStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var browserState = BrowserState()
@@ -19,7 +21,7 @@ struct SchoolBrowser: View {
                     Text(failure).font(.callout).foregroundStyle(.orange).padding()
                 }
                 if ready {
-                    BrowserWebView(url: service.portalURL, dataStore: store.websiteDataStore, state: browserState, sessions: store.sessions)
+                    BrowserWebView(url: entryURL, dataStore: store.websiteDataStore, state: browserState, sessions: store.sessions)
                 } else if preparing { ProgressView("正在准备学校页面…").frame(maxWidth: .infinity, maxHeight: .infinity) }
                 else { ContentUnavailableView("暂时无法打开登录页面", systemImage: "lock", description: Text("请解锁设备，关闭页面后重新打开。")) }
             }
@@ -27,7 +29,7 @@ struct SchoolBrowser: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Link(destination: service.portalURL) { Image(systemName: "safari") }
+                    Link(destination: entryURL) { Image(systemName: "safari") }
                         .accessibilityLabel("在系统浏览器打开学校页面")
                 }
                 ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } }

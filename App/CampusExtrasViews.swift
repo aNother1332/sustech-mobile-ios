@@ -100,6 +100,13 @@ struct ExchangeProgramsView: View {
                 Button("官方交换平台") { portal = true }
                 ServiceMessage(message: message); if busy { ProgressView() }
             }
+            if store.mode == .demo {
+                Section("虚构示例 · 不代表真实开放项目") {
+                    ForEach(["暑期交流项目", "学期交换项目"], id: \.self) { name in
+                        VStack(alignment: .leading, spacing: 6) { Text("示例 · " + name).font(.subheadline.bold()); Text("示例地区 · 示例合作学校").font(.caption).foregroundStyle(.secondary); Label("示例：申请窗口内", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Color.campusGreen); Text("真实项目时间、资格与申请以官方平台为准").font(.caption).foregroundStyle(.secondary) }
+                    }
+                }
+            }
             ForEach(items.filter { (!onlyOpen || $0.available) && (query.isEmpty || ($0.name + $0.location).localizedCaseInsensitiveContains(query)) }) { item in
                 Button { detail = item } label: { VStack(alignment: .leading, spacing: 6) {
                     Text(item.name).font(.subheadline.bold()).foregroundStyle(.primary)
@@ -112,7 +119,7 @@ struct ExchangeProgramsView: View {
         }.navigationTitle("交换项目").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "在已加载项目中搜索学校、地区")
             .task { await load(reset: true) }.refreshable { await load(reset: true) }
             .sheet(isPresented: $portal, onDismiss: { Task { await load(reset: true) } }) { SchoolBrowser(service: .exchange) }
-            .sheet(item: $detail) { item in NavigationStack { BrowserWebView(url: item.url, dataStore: store.websiteDataStore, state: BrowserState(), sessions: store.sessions).navigationTitle("官方项目详情").navigationBarTitleDisplayMode(.inline).toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { detail = nil } } } } }
+            .sheet(item: $detail) { item in SchoolBrowser(service: .exchange, initialURL: item.url) }
     }
     private func load(reset: Bool) async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
