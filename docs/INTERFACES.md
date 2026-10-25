@@ -105,3 +105,22 @@ Pinned Android evidence: `dumixthestpd/sustech-mobile@509a65357579f220d69b582956
 
 No campus/identity QR text is persisted or sent to widgets. Widget shared storage is opt-in
 text/time snapshots only; authenticating cookies remain in the main app's on-device session store.
+
+
+## 0.6 public bus map and faculty contacts
+
+Reference CRA source: https://github.com/sustech-cra/sustech-online-ng/tree/48c9773c38619761e82c5c639542dc4737517b85/docs/.vuepress/components/bus-v2
+
+- `/routes`: direction `geometry_json` is a JSON longitude/latitude array string; direction
+  `stops` gives stop IDs in travel order. Native MapKit draws these source coordinates as-is.
+- `/vehicles` and optional `/vehicles/all`: `id`, `route_id`, `route_direction_id`, `latitude`,
+  `longitude`, `vehicle_type`, `heading`, `speed`, `next_stop_name`, `operating`, `data_status`,
+  `source_updated_at` / Unix `source_time`, and `received_at`. Receive/fetch time never substitutes
+  for a fresh source report. Unknown or >120-second source age is gray; positions are not extrapolated.
+- Public routes/vehicles read-only checks on 2026-10-25 returned arrays matching these fields.
+  Runtime polls vehicles every 10 seconds only while the map is foregrounded; routes/stops
+  load once/retry when absent/manual refresh. Public clients receive no school authentication.
+- Teacher public school pages: `message-left` contact sidebar supplies envelope/email and
+  official personal-homepage link. Explicit `办公室/办公地点/办公地址/Office` labels supply office;
+  a generic campus/mailing address is not converted into a teacher's office. One optional official
+  personal-page request; no bulk profile crawl or guessed contacts. Cache is public data, seven days.

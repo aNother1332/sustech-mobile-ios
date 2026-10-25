@@ -1,3 +1,24 @@
+# 0.6.0（构建 9）验收
+
+- 最终包源码：`e07485d9c80f56d8e0c9043330e49e4f36ce3d60`，已在 main。
+- 最终成功构建：[40178259028](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40178259028)。84 项 Swift 测试、8 项 Python 打包测试通过；模拟器与 arm64 iPhoneOS 主应用、分享和 Widget 扩展编译通过。使用临时验证分支，避免中断地图截图；最终周次徽标修正通过编译，未重复拍摄已有页面。
+- 地图成功运行：[40177111042](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40177111042)，界面源码 `c284168`。iPhone/iPad 浅色、深色四次均检查到 4 条线路、351 个轨迹点、33 个站点、2 辆虚构车；检查截图可见轨迹、站点和新旧位置不同标记。包括桌面共 6 张。
+- 教师详情/名录与首页来自运行 [40175903374](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40175903374)，源码 `e37b382`；只采用教师详情/名录图片，未采用该轮空示例地图。首页日期教学周已实际启动验证，最后进一步统一课程徽标与上海时区。
+- 图库现有 70 张跨 0.5/0.6 的场景/设备截图，精确来源见 [SOURCES.json](screenshots/SOURCES.json)。地图和联系方式截图使用虚构车辆/教师联系方式；路线与站点为公开快照。
+- 最终 IPA 的 ZIP、SHA256、版本 0.6.0/9、最低 iOS 17、设备族 [1,2]、名称 SUSTechMobile、Bundle ID、主程序和两个扩展 arm64 Mach-O 已核对。普通包不含 PlugIns。
+- 文件位于 `D:/Altstore/App/SUSTechMobile-0.6.0`；日志 `D:/Altstore/Diagnostics/SUSTechMobile-0.6-final-build.log`、`SUSTechMobile-0.6-map-build.log`。
+
+- `SUSTechMobile-unsigned.ipa`：2,257,912 字节，SHA256 `38631c4aa06f97d2acec2f278713fdc89beaa9d32d705f7dc22e4668c3eb586c`。
+- `SUSTechMobile-with-extensions-unsigned.ipa`：2,344,234 字节，SHA256 `4fc36c687563c4b54ed540276f3b4d513ec9d22cadb1e04d607fbd79d26f3b58`。
+
+公开接口只读检查确认 routes/vehicles 的返回字段和教师官网邮箱模板。未在真实设备使用校园账号或 Apple 签名；车辆真实上报延迟、校园内底图对齐、教师页面动态/失效链接、扩展签名仍需本人设备验收。办公室必须来自明确标签，未公开/未识别时保留缺失提示。
+
+此前本地旧版本清理被自动审批拒绝，本次未重试或绕过，旧版目录仍保留。
+
+说明：[0.6 发布说明](RELEASE_0_6.md)、[源与界面检查](REVIEW_0_6.md)、[设备清单](DEVICE_TESTING.md)。
+
+---
+
 # 0.5.0（构建 8）验收
 
 - 最终安装包源码：`778d84205ec6781de4d2ad10d2d7f6c91ae97725`。

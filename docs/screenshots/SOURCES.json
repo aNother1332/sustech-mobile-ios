@@ -52,8 +52,8 @@
     "source": "778d84205ec6781de4d2ad10d2d7f6c91ae97725"
   },
   "iPad-faculty.png": {
-    "run": 40172533665,
-    "source": "6f752effaf12d2668485a32f6fc48a2337362040"
+    "run": 40175903374,
+    "source": "e37b382"
   },
   "iPad-grades.png": {
     "run": 40172533665,
@@ -180,8 +180,8 @@
     "source": "778d84205ec6781de4d2ad10d2d7f6c91ae97725"
   },
   "iPhone-faculty.png": {
-    "run": 40172533665,
-    "source": "6f752effaf12d2668485a32f6fc48a2337362040"
+    "run": 40175903374,
+    "source": "e37b382"
   },
   "iPhone-grades.png": {
     "run": 40172533665,
@@ -254,5 +254,29 @@
   "iPhone-widgets.png": {
     "run": 40173815553,
     "source": "778d84205ec6781de4d2ad10d2d7f6c91ae97725"
+  },
+  "iPhone-faculty-detail.png": {
+    "run": 40175903374,
+    "source": "e37b382"
+  },
+  "iPad-faculty-detail.png": {
+    "run": 40175903374,
+    "source": "e37b382"
+  },
+  "iPhone-bus-map.png": {
+    "run": 40177111042,
+    "source": "c284168a330a1599a121c0fe158227f80dd4163d"
+  },
+  "iPad-bus-map.png": {
+    "run": 40177111042,
+    "source": "c284168a330a1599a121c0fe158227f80dd4163d"
+  },
+  "iPhone-bus-map-dark.png": {
+    "run": 40177111042,
+    "source": "c284168a330a1599a121c0fe158227f80dd4163d"
+  },
+  "iPad-bus-map-dark.png": {
+    "run": 40177111042,
+    "source": "c284168a330a1599a121c0fe158227f80dd4163d"
   }
 }

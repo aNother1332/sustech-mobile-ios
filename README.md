@@ -39,7 +39,7 @@
 
 | 模块 | 已实现的能力 | 使用边界 |
 | --- | --- | --- |
-| 今天 | 校园天气/US AQI、下一节课/考试、今日课程、BB 任务与常用入口 | 折叠课程不进入截止日期汇总；不自动扫描全部 BB 历史 |
+| 今天 | 当前教学周、校园天气/US AQI、下一节课/考试、今日课程、BB 任务与常用入口 | 折叠课程不进入截止日期汇总；不自动扫描全部 BB 历史 |
 | 学校登录 | 原生 CAS 表单、App 内网页共享会话、Keychain 保留 Cookie、按需交换业务会话 | 不保存密码；有效期由学校决定；验证码与独立 OAuth 仍需本人操作 |
 | 课表与考试 | 网格/列表周课表、本学期课程汇总、教学日历、放假与补课、考试和离线缓存 | 全学期失败时当前周回退；未知周次和临时调整需核对 |
 | 成绩 | 分页读取、学期筛选、成绩与学分、GPA 记录试算 | 不代表学校官方总 GPA 或毕业审核结论 |
@@ -75,7 +75,19 @@
 
 ## 界面截图
 
-以下为云端 iOS 模拟器实际运行的 **0.5.0 界面截图**，包含 iPhone/iPad、深色外观及大字号。课程、任务、余额等为虚构示例或未连接状态；教师目录为学校已公开资料快照；不含真实学生账号或认证凭据。完整截图运行 [40172533665](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40172533665)，界面提交 `6f752ef`。最后的校历/小组件过期逻辑、官方项目详情控件与说明修正经[最终构建 40173815553](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40173815553)验证，78 项 Swift 测试与 8 项打包测试通过，重点场景另复查 12 张。每张图的来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。截图不作为真实校园业务验收。
+以下为云端 iOS 模拟器实际运行的 **0.5／0.6 版本界面截图（70 张）**，包含 iPhone/iPad、深色外观及大字号。课程、任务、余额等为虚构示例或未连接状态；教师目录为学校已公开资料快照；不含真实学生账号或认证凭据。0.5 基础界面运行 [40172533665](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40172533665)，界面提交 `6f752ef`。最后的校历/小组件过期逻辑、官方项目详情控件与说明修正经[最终构建 40173815553](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40173815553)验证，78 项 Swift 测试与 8 项打包测试通过，重点场景另复查 12 张。每张图的来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。截图不作为真实校园业务验收。
+
+### 0.6 校园巴士地图与教师联系方式
+
+地图采用原生 Apple 地图，车辆为虚构示例；路线与站点来自 CRA 公开数据快照。浅色、深色和 iPad 地图均已实际运行，自动检查确认加载 4 条线路、351 个轨迹点、33 个站点与 2 辆示例车。
+
+| iPhone | iPad |
+| --- | --- |
+| ![校园巴士地图（示例车辆）](docs/screenshots/iPhone-bus-map.png) | ![校园巴士地图（示例车辆）](docs/screenshots/iPad-bus-map.png) |
+| ![深色巴士地图](docs/screenshots/iPhone-bus-map-dark.png) | ![深色巴士地图](docs/screenshots/iPad-bus-map-dark.png) |
+| ![教师联系方式（虚构示例）](docs/screenshots/iPhone-faculty-detail.png) | ![教师联系方式（虚构示例）](docs/screenshots/iPad-faculty-detail.png) |
+
+新增地图截图运行 [40177111042](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40177111042)，教师详情运行 [40175903374](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40175903374)。教师详情中的邮箱与办公室为虚构样例，真实使用按需读取官方页面。名录与既有页面保留各版本截图，70 个文件的来源记录于 SOURCES.json。
 
 ### 学校标识色与深色外观
 

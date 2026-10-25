@@ -22,3 +22,9 @@ basemap, no CRA tiles or Vue code bundled. Source links and data license are ava
 
 Earlier limits remain: no verified full native recharge order contract, no physical-device
 App Groups signing validation. No actual payment, printing, booking or deletion during tests.
+
+
+Validation: final build 40178259028 at e07485d, 84 Swift tests and 8 Python tests;
+main app/share/widget simulator and device builds passed. Map UI run 40177111042 checked
+populated overlays on iPhone/iPad in light/dark mode. Exact screenshot/IPA provenance is in
+BUILD_VALIDATION.md and screenshots/SOURCES.json. Physical-device boundaries above remain.
