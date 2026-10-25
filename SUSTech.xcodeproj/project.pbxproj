@@ -35,26 +35,6 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "509FDBC271E15CF8008E7D72";
 		};
-		"1D2B6654E25468F10956FCF0" = {
-			"isa" = "PBXFileReference";
-			"lastKnownFileType" = "text";
-			"path" = "App/Assets.xcassets/AppIcon.appiconset/Contents.json";
-			"sourceTree" = "SOURCE_ROOT";
-		};
-		"E1CB508267769FCFA53D8731" = {
-			"isa" = "PBXBuildFile";
-			"fileRef" = "1D2B6654E25468F10956FCF0";
-		};
-		"EA0842756DA7CC8C3D630C19" = {
-			"isa" = "PBXFileReference";
-			"lastKnownFileType" = "text";
-			"path" = "App/Assets.xcassets/Contents.json";
-			"sourceTree" = "SOURCE_ROOT";
-		};
-		"8C96C67524C5FAED7D816BF5" = {
-			"isa" = "PBXBuildFile";
-			"fileRef" = "EA0842756DA7CC8C3D630C19";
-		};
 		"DFC97F2F8B63E4C0E3AD55AA" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -468,8 +448,6 @@
 				"EEEA53E15AB490E545EB9ABA",
 				"7FE110A1B16F1C76E2B44EAB",
 				"509FDBC271E15CF8008E7D72",
-				"1D2B6654E25468F10956FCF0",
-				"EA0842756DA7CC8C3D630C19",
 				"DFC97F2F8B63E4C0E3AD55AA",
 				"A094126B570970D6A1C596B3",
 				"E269DF450F358D2F73DA2EC7",
@@ -574,8 +552,6 @@
 			"isa" = "PBXResourcesBuildPhase";
 			"buildActionMask" = "2147483647";
 			"files" = (
-				"E1CB508267769FCFA53D8731",
-				"8C96C67524C5FAED7D816BF5",
 				"41B849452884CFF4F4BF1354",
 				"84464AE0513848BDCE7F925F",
 				"E635625DF65D222D4C81669E",

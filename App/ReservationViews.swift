@@ -5,6 +5,7 @@ struct ReservationCenterView: View {
     @Environment(CampusStore.self) private var store
     var body: some View {
         List {
+            Section { CampusHero(eyebrow: "RESERVATIONS", title: "预约中心", subtitle: "空间 · 语言辅导 · 体育", symbol: "calendar.badge.plus") }
             Section("统一预约中心") {
                 NavigationLink { ICReservationView().id(store.sessionRevision) } label: { Label("IC 研讨间", systemImage: "person.3") }
                 NavigationLink { CLEReservationView().id(store.sessionRevision) } label: { Label("CLE 语言辅导", systemImage: "bubble.left.and.bubble.right") }

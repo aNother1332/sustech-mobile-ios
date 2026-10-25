@@ -36,8 +36,7 @@ public struct BusClient: Sendable {
             let here = direction?["stops"].rows.firstIndex { $0["id"].text == stop }
             let vehicle = vehicles?.rows.first { !$0["trip_id"].text.isEmpty && $0["trip_id"].text == row["trip_id"].text }
             let remaining = here.flatMap { index in vehicle?["current_position"]["next_stop_num"].int.map { index + 1 - $0 } }
-            return
-            BusArrival(id: "\(index)", route: Self.localized(row, "route_name"), direction: Self.localized(row, "direction_name"),
+            return BusArrival(id: "\(index)", route: Self.localized(row, "route_name"), direction: Self.localized(row, "direction_name"),
                 minutes: row["eta_minutes"].int, planned: row["planned_arrival_at"].text,
                 reason: row["unavailable_reason"].text, source: row["source"].text, metres: row["distance"].int, stopsAway: remaining)
         }

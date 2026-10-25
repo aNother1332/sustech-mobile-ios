@@ -17,6 +17,7 @@ struct LibraryView: View {
     var body: some View {
         List {
             Section {
+                CampusHero(eyebrow: "LIBRARY", title: "图书馆", subtitle: "馆藏 · 借阅 · 校园阅读", symbol: "books.vertical.fill")
                 ModeNotice()
                 NavigationLink { LibraryLoansView().id(store.sessionRevision) } label: { Label("我的借阅与续借", systemImage: "books.vertical") }
                 HStack {

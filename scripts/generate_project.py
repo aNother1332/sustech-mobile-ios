@@ -43,6 +43,8 @@ def generate() -> None:
         if not path.is_file():
             continue
         relative = path.relative_to(ROOT).as_posix()
+        if any(parent.suffix == ".xcassets" for parent in path.parents):
+            continue
         if path.suffix == ".swift":
             file_type, phase = "sourcecode.swift", sources
         elif path.suffix in {".txt", ".xcprivacy", ".json"}:
