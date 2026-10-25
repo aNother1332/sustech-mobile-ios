@@ -35,7 +35,7 @@ struct AgendaView: View {
                 guard let a = snapshot.periods.first(where: { $0.period == meeting.firstPeriod })?.start,
                       let b = snapshot.periods.first(where: { $0.period == meeting.lastPeriod })?.end else { continue }
                 let days: [Date]
-                if let term = AcademicData.term() { days = AcademicData.dates(meeting, term: term) }
+                if let term = store.academicTerm { days = AcademicData.dates(meeting, term: term) }
                 else { days = (meeting.weeks ?? []).compactMap { Calendar.current.date(byAdding: .day, value: ($0 - 1) * 7 + meeting.weekday - 1, to: monday) } }
                 for day in days {
                     guard
@@ -55,7 +55,7 @@ struct AgendaView: View {
                 Picker("显示范围", selection: $range) { Text("一周").tag(7); Text("一月").tag(30); Text("一学期").tag(180) }.pickerStyle(.segmented)
                 DisclosureGroup("课程日期设置") {
                     Toggle("显示课表课程", isOn: $includeLessons)
-                    if let term = AcademicData.term() { Text("已使用内置校历：第一周周一 " + CampusClock.format(term.monday)); NavigationLink("查看放假与补课") { AcademicCalendarView() } } else { DatePicker("第一教学周周一", selection: $monday, displayedComponents: .date) }
+                    if let term = store.academicTerm { Text("已使用内置校历：第一周周一 " + CampusClock.format(term.monday)); NavigationLink("查看放假与补课") { AcademicCalendarView() } } else { DatePicker("第一教学周周一", selection: $monday, displayedComponents: .date) }
                     Text("有校历时自动处理已收录的节假日与补课；临时调整请核对学校通知。").font(.caption).foregroundStyle(.secondary)
                 }
                 Button("同步学习与预约日程") { Task { await refresh() } }.disabled(busy || store.mode == .demo || store.authenticating || store.clearing)

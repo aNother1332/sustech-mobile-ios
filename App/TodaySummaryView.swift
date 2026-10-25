@@ -8,7 +8,7 @@ struct TodaySummaryView: View {
     @State private var fetched: Date?
     @State private var message: String?
     private var nextLesson: (CourseMeeting, Date)? {
-        guard let snapshot = store.teaching, let term = AcademicData.term() else { return nil }
+        guard let snapshot = store.teaching, let term = store.academicTerm else { return nil }
         return snapshot.meetings.flatMap { item -> [(CourseMeeting, Date)] in
             guard let time = snapshot.periods.first(where: { $0.period == item.firstPeriod })?.start else { return [] }
             return AcademicData.dates(item, term: term).compactMap { date in
@@ -36,7 +36,7 @@ struct TodaySummaryView: View {
         }.task { await load() }.onChange(of: phase) { _, value in if value == .active, fetched == nil || Date.now.timeIntervalSince(fetched!) > 900 { Task { await load() } } }
     }
     private func load() async {
-        if store.mode == .demo { message = "演示模式不请求实时天气"; return }
+        if store.mode == .demo { message = "示例天气 · 晴 26℃ · US AQI 35（虚构）"; return }
         do { weather = try await CampusWeather.read(); fetched = .now; message = nil } catch { message = "天气暂不可用，点击刷新重试" }
     }
 }

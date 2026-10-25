@@ -8,7 +8,7 @@ struct TodayView: View {
     private var todayMeetings: [CourseMeeting] {
         let day = Calendar(identifier: .gregorian).component(.weekday, from: .now)
         let mondayBased = (day + 5) % 7 + 1
-        if let term = AcademicData.term(), store.teaching?.fullSemester == true { return store.teaching?.meetings.filter { AcademicData.dates($0, term: term).contains { CampusClock.format($0) == CampusClock.format(.now) } } ?? [] }
+        if let term = store.academicTerm, store.teaching?.fullSemester == true { return store.teaching?.meetings.filter { AcademicData.dates($0, term: term).contains { CampusClock.format($0) == CampusClock.format(.now) } } ?? [] }
         return store.teaching?.meetings.filter { $0.weekday == mondayBased && (store.teaching?.fullSemester != true || $0.weeks?.contains(store.teaching?.week ?? -1) == true) } ?? []
     }
 

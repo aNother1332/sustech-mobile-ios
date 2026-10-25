@@ -69,7 +69,7 @@ final class BrowserState {
     var zoom = 0.75
 }
 
-private struct BrowserWebView: UIViewRepresentable {
+struct BrowserWebView: UIViewRepresentable {
     let url: URL
     let dataStore: WKWebsiteDataStore
     let state: BrowserState

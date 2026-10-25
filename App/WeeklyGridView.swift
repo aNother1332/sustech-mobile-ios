@@ -4,12 +4,13 @@ import SwiftUI
 struct WeeklyGridView: View {
     let meetings: [CourseMeeting]
     let week: Int
+    @Environment(CampusStore.self) private var store
     @Environment(\.dynamicTypeSize) private var textSize
     @State private var selected: CourseMeeting?
     private let colors: [Color] = [.campusGreen, .campusOrange, .blue, .purple, .teal, .pink]
     private var last: Int { max(12, meetings.map(\.lastPeriod).max() ?? 12) }
     private var dates: [(CourseMeeting, Int)] {
-        guard meetings.contains(where: { $0.weeks != nil }), let term = AcademicData.term(), let first = term.date(week: week, weekday: 1), let end = term.date(week: week + 1, weekday: 1) else { return meetings.map { ($0, $0.weekday) } }
+        guard meetings.contains(where: { $0.weeks != nil }), let term = store.academicTerm, let first = term.date(week: week, weekday: 1), let end = term.date(week: week + 1, weekday: 1) else { return meetings.filter { $0.weeks == nil || $0.weeks!.contains(week) }.map { ($0, $0.weekday) } }
         return meetings.flatMap { item in AcademicData.dates(item, term: term).filter { $0 >= first && $0 < end }.map { (item, (AcademicTerm.calendar.component(.weekday, from: $0) + 5) % 7 + 1) } }
     }
     var body: some View {

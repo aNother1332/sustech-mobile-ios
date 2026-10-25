@@ -4,6 +4,8 @@ import SwiftUI
 struct StudyView: View {
     private enum Section: String, CaseIterable { case timetable = "课表", exams = "考试", grades = "成绩", blackboard = "BB" }
     @Environment(CampusStore.self) private var store
+    @Environment(\.dynamicTypeSize) private var dynamicType
+    private var isLargeText: Bool { dynamicType.isAccessibilitySize }
     @State private var section = Section.timetable
     @State private var portal: SchoolService?
     @State private var selectedWeek = 1
@@ -65,13 +67,13 @@ struct StudyView: View {
                         if snapshot.week != nil { Button("返回当前教学周") { selectedWeek = snapshot.week ?? selectedWeek } }
                     }
                     let rows = snapshot.meetings.filter { !snapshot.fullSemester || $0.weeks?.contains(selectedWeek) == true }
-                    if rows.isEmpty {
+                    if rows.isEmpty && (store.academicTerm == nil || (1...7).allSatisfy { meetings(on: $0, fallback: rows).isEmpty }) {
                         ContentUnavailableView("本次课表中该周没有已确认安排", systemImage: "calendar.badge.questionmark",
                             description: Text("请核对同步状态和学校临时通知。"))
                     }
-                    if grid { WeeklyGridView(meetings: snapshot.meetings, week: selectedWeek) }
+                    if grid && !isLargeText { WeeklyGridView(meetings: snapshot.meetings, week: selectedWeek) }
                     else { ForEach(1...7, id: \.self) { day in
-                        let meetings = rows.filter { $0.weekday == day }
+                        let meetings = meetings(on: day, fallback: rows)
                         if !meetings.isEmpty {
                             HStack(alignment: .top, spacing: 10) {
                                 Text(["周一", "周二", "周三", "周四", "周五", "周六", "周日"][day - 1]).font(.caption.bold()).foregroundStyle(Color.campusGreen).frame(width: 28).padding(.top, 12)
@@ -107,6 +109,11 @@ struct StudyView: View {
                 } else { ContentUnavailableView("考试安排尚未同步", systemImage: "doc.text") }
             }
         }
+    }
+    private func meetings(on day: Int, fallback: [CourseMeeting]) -> [CourseMeeting] {
+        guard let snapshot = store.teaching, snapshot.fullSemester, let term = store.academicTerm,
+              let date = term.date(week: selectedWeek, weekday: day) else { return fallback.filter { $0.weekday == day } }
+        return snapshot.meetings.filter { AcademicData.dates($0, term: term).contains(date) }
     }
     private var gradesContent: some View {
         VStack(spacing: 10) {

@@ -47,6 +47,7 @@ struct SUSTechApp: App {
             launchContent
                 .environment(store)
                 .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("--smoke-dark") ? .dark : nil)
+                .transformEnvironment(\.dynamicTypeSize) { value in if ProcessInfo.processInfo.arguments.contains("--smoke-large") { value = .accessibility2 } }
                 .environment(\.defaultMinListRowHeight, 36)
                 .task { await store.checkSchoolSessions() }
                 .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.checkSchoolSessions() } } }

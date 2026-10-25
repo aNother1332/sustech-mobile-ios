@@ -197,9 +197,9 @@ private struct ProviderWeb: UIViewRepresentable {
                 parent.received(text)
             }
         }
-        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
             guard let url = navigationAction.request.url, url.scheme == "https", url.user == nil, url.password == nil, url.port == nil || url.port == 443,
-                  ["sustc.primo.exlibrisgroup.com.cn", "cas.sustech.edu.cn", "campuscard.xh.sustech.edu.cn", "wechat.xh.sustech.edu.cn"].contains(url.host?.lowercased() ?? "") else { decisionHandler(.cancel); return }
+                  ["sustc.primo.exlibrisgroup.com.cn", "cas.sustech.edu.cn", "campuscard.xh.sustech.edu.cn", "wechat.xh.sustech.edu.cn"].contains(url.host?.lowercased() ?? "") else { return .cancel }
             if parent.kind == .library, url.host == "sustc.primo.exlibrisgroup.com.cn", !minting,
                let login = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "loginId" })?.value,
                login.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil {
@@ -214,7 +214,7 @@ private struct ProviderWeb: UIViewRepresentable {
                     } catch { minting = false }
                 }
             }
-            decisionHandler(.allow)
+            return .allow
         }
     }
 }

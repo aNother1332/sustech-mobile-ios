@@ -2,6 +2,14 @@ import CampusCore
 import Foundation
 
 enum AcademicData {
+    static func term(for snapshot: TeachingSnapshot, at date: Date = .now) -> AcademicTerm? {
+        guard let term = term(at: date) else { return nil }
+        let month = AcademicTerm.calendar.component(.month, from: term.monday)
+        let year = AcademicTerm.calendar.component(.year, from: term.monday)
+        let academicYear = month < 7 ? year - 1 : year
+        guard snapshot.semester.year.hasPrefix(String(academicYear)), snapshot.semester.term == (month < 7 ? "2" : "1") else { return nil }
+        return term
+    }
     static func term(at date: Date = .now, level: String = UserDefaults.standard.string(forKey: "academic-level") ?? "undergraduate") -> AcademicTerm? {
         let year = AcademicTerm.calendar.component(.year, from: date)
         for y in [year, year - 1] {
@@ -15,4 +23,8 @@ enum AcademicData {
         return try? JSONDecoder().decode(WireValue.self, from: data)
     }
     static func dates(_ meeting: CourseMeeting, term: AcademicTerm) -> [Date] { term.dates(weeks: meeting.weeks ?? [], weekday: meeting.weekday) }
+}
+
+extension CampusStore {
+    var academicTerm: AcademicTerm? { teaching.flatMap { AcademicData.term(for: $0) } }
 }

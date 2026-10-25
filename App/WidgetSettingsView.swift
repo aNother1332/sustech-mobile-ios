@@ -15,7 +15,7 @@ enum CampusWidgetBridge {
             try? FileManager.default.removeItem(at: path); WidgetCenter.shared.reloadAllTimelines(); return
         }
         let lessons = store.teaching?.meetings.filter { row in
-            guard let term = AcademicData.term() else { return false }
+            guard let term = store.academicTerm else { return false }
             return AcademicData.dates(row, term: term).contains { CampusClock.format($0) == CampusClock.format(.now) }
         }.sorted { $0.firstPeriod < $1.firstPeriod }.map { "\($0.firstPeriod)–\($0.lastPeriod)节 · \($0.name)" } ?? []
         let deadlines = store.deadlines.filter { $0.due.map { $0 > .now } ?? false }.sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }.prefix(3).map { "\($0.title) · \($0.due?.formatted(date: .abbreviated, time: .shortened) ?? "")" }

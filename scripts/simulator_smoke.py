@@ -30,6 +30,7 @@ def main():
             run("install", uid, APP)
             scenes = (
                 ("today", ["--smoke-demo"]),
+                ("study-large", ["--smoke-demo", "--smoke-study", "--smoke-large"]),
                 ("today-dark", ["--smoke-demo", "--smoke-dark"]),
                 ("services-dark", ["--smoke-demo", "--smoke-services", "--smoke-dark"]),
                 ("faculty", ["--smoke-demo", "--smoke-faculty"]),
