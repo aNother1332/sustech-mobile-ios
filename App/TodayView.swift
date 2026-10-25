@@ -3,6 +3,11 @@ import SwiftUI
 
 struct TodayView: View {
     @Environment(CampusStore.self) private var store
+    private var pendingCount: String {
+        guard let snapshot = store.blackboard else { return "—" }
+        if store.mode == .live, store.courseDetails.isEmpty, !snapshot.courses.isEmpty { return "—" }
+        return "\(store.deadlines.filter { ($0.submission == .pending || $0.submission == .draft) && ($0.due ?? .distantPast) > .now }.count) 项"
+    }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -21,8 +26,8 @@ struct TodayView: View {
                         Text(store.mode == .demo ? "¥126.80" : store.cardBalance ?? "—").font(.title2.bold()).monospacedDigit()
                     }
                     CampusCard {
-                        Text("学习待办").font(.caption).foregroundStyle(.secondary)
-                        Text("\(store.deadlines.filter { ($0.submission == .pending || $0.submission == .draft) && ($0.due ?? .distantPast) > .now }.count) 项").font(.title2.bold()).monospacedDigit()
+                        Text("已同步待办").font(.caption).foregroundStyle(.secondary)
+                        Text(pendingCount).font(.title2.bold()).monospacedDigit()
                     }
                 }
                 if store.mode == .demo { ModeNotice() }

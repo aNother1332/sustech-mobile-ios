@@ -66,7 +66,7 @@ struct AccountView: View {
             }
         }
         .navigationTitle("我的").navigationBarTitleDisplayMode(.inline)
-        .task { await store.refreshProfile() }
+        .task(id: store.mode.rawValue) { await store.refreshProfile() }
         .refreshable { await store.refreshProfile(); await store.checkSchoolSessions(force: true) }
         .onChange(of: portal) { _, value in if value == nil { Task { await store.checkSchoolSessions(force: true) } } }
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
