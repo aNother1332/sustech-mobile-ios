@@ -118,8 +118,9 @@ struct BusMapView: View {
         return Color(red: Double((value >> 16) & 255) / 255, green: Double((value >> 8) & 255) / 255, blue: Double(value & 255) / 255)
     }
     private func load(staticData: Bool) async {
-        guard !busy, phase == .active else { return }; busy = true; defer { busy = false }
+        guard !busy else { return }; busy = true; defer { busy = false }
         if store.mode == .demo { loadDemo(); return }
+        guard phase == .active else { return }
         let all = includeInactive
         do {
             var warnings: [String] = []
