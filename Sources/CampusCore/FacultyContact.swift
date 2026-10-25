@@ -20,7 +20,7 @@ public enum FacultyContactParser {
         let iconMail = HTMLText.captures("(?is)fa-envelope[^>]*>.*?<span[^>]*>(.*?)</span>", in: scoped).first?[1]
         let mailto = HTMLText.captures("(?i)href=[\"']mailto:([^?\"']+)", in: scoped).first?[1]
         let email = [iconMail, mailto].compactMap { $0 }.compactMap { validEmail(HTMLText.plain($0)) }.first
-        let iconOffice = (HTMLText.captures("(?is)fa-(?:map-marker|location-dot|building)[^>]*>.*?<span[^>]*>(.*?)</span>", in: scoped).first?[1]).map(HTMLText.plain)
+        let iconOffice = (HTMLText.captures("(?is)fa-(?:map-marker|location-dot)[^>]*>.*?<span[^>]*>(.*?)</span>", in: scoped).first?[1]).map(HTMLText.plain)
         let plain = HTMLText.plain(body)
         let labeled = HTMLText.captures("(?i)(?:办公室(?:地址|地点)?|办公(?:地址|地点|位置)|Office(?:\\s+(?:Address|Location))?)\\s*[:：]\\s*([^\\n\\r]{2,160})", in: plain).first?[1]
         let office = [iconOffice, labeled].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }.first { !$0.isEmpty }
@@ -51,7 +51,7 @@ public struct FacultyContactClient: Sendable {
         return result
     }
     private func read(_ url: URL, session: URLSession) async throws -> String {
-        var request = URLRequest(url: url); request.setValue("SUSTechMobile/0.6 (public faculty details)", forHTTPHeaderField: "User-Agent")
+        var request = URLRequest(url: url); request.setValue(CASPolicy.userAgent, forHTTPHeaderField: "User-Agent")
         let (data, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse, (200..<300).contains(response.statusCode), let final = response.url, FacultyContactParser.official(final), data.count < 5_000_000 else { throw CampusError.invalidResponse("教师官方资料") }
         guard let text = String(data: data, encoding: .utf8) else { throw CampusError.invalidResponse("教师页面编码") }; return text

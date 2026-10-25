@@ -21,10 +21,10 @@ struct FacultyDetailView: View {
             Section("联系方式") {
                 if let email = contact?.email {
                     LabeledContent("邮箱") { Text(email).textSelection(.enabled) }
-                    if let mail = URL(string: "mailto:" + email) { Link(destination: mail) { Label("撰写邮件", systemImage: "envelope") } }
+                    if let mail = mailURL(email) { Link(destination: mail) { Label("撰写邮件", systemImage: "envelope") } }
                     ShareLink("复制／分享邮箱", item: email)
-                } else { LabeledContent("邮箱", value: busy ? "读取中…" : contact == nil ? "尚未读取" : "官方页面未提供") }
-                LabeledContent("办公室") { Text(contact?.office ?? (busy ? "读取中…" : contact == nil ? "尚未读取" : "官方页面未提供")).textSelection(.enabled) }
+                } else { LabeledContent("邮箱", value: busy ? "读取中…" : contact == nil ? "尚未读取" : "未读取到公开信息") }
+                LabeledContent("办公室") { Text(contact?.office ?? (busy ? "读取中…" : contact == nil ? "尚未读取" : "未读取到公开信息")).textSelection(.enabled) }
             }
             Section("官方资料") {
                 Link("学校教师页面", destination: url)
@@ -35,6 +35,9 @@ struct FacultyDetailView: View {
                 Text("仅显示官方页面明确公开的邮箱和办公地点；暂未提供时不推测。已读取资料可离线查看。").font(.caption).foregroundStyle(.secondary)
             }
         }.navigationTitle("教师信息").navigationBarTitleDisplayMode(.inline).task { await load(force: false) }.refreshable { await load(force: true) }
+    }
+    private func mailURL(_ email: String) -> URL? {
+        var components = URLComponents(); components.scheme = "mailto"; components.path = email; return components.url
     }
     private func load(force: Bool) async {
         guard !busy else { return }; busy = true; defer { busy = false }

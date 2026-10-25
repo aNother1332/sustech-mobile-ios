@@ -62,7 +62,7 @@ struct BusMapView: View {
                         Annotation(vehicle.name, coordinate: vehicle.coordinate.mapCoordinate) {
                             Button { selectedVehicle = vehicle.id } label: {
                                 VStack(spacing: 0) {
-                                    Image(systemName: "arrowtriangle.up.fill").font(.caption2).rotationEffect(.degrees(vehicle.heading ?? 0))
+                                    if let heading = vehicle.heading { Image(systemName: "arrowtriangle.up.fill").font(.caption2).rotationEffect(.degrees(heading)) }
                                     Image(systemName: vehicle.type == "SHUTTLE" ? "car.side.fill" : "bus.fill").font(.body.bold()).padding(7).background(.background, in: Circle()).overlay { Circle().strokeBorder(vehicle.isFresh(at: context.date) ? routeColor(vehicle.routeID) : .gray, lineWidth: 3) }
                                 }.foregroundStyle(vehicle.isFresh(at: context.date) ? routeColor(vehicle.routeID) : .gray)
                             }.accessibilityLabel(vehicle.name + (vehicle.isFresh(at: context.date) ? "，位置正常上报" : "，位置已过期或时间未知"))
@@ -93,9 +93,9 @@ struct BusMapView: View {
         }
         .task(id: store.mode.rawValue + String(includeInactive)) {
             await load(staticData: routes.isEmpty)
-            while !Task.isCancelled { do { try await Task.sleep(for: .seconds(10)) } catch { return }; if phase == .active, store.mode == .live { await load(staticData: false) } }
+            while !Task.isCancelled { do { try await Task.sleep(for: .seconds(10)) } catch { return }; if phase == .active, store.mode == .live { await load(staticData: routes.isEmpty) } }
         }
-        .onChange(of: phase) { _, value in if value == .active, store.mode == .live { Task { await load(staticData: false) } } }
+        .onChange(of: phase) { _, value in if value == .active, store.mode == .live { Task { await load(staticData: routes.isEmpty) } } }
         .sheet(item: $selectedStop) { stop in NavigationStack {
             if store.mode == .live { BusStopView(stop: stop, client: client).toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { selectedStop = nil } } } }
             else { List { Text(stop.name); Text("示例模式：切换学校服务后查询实际到站信息。") }.navigationTitle("示例站点").toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { selectedStop = nil } } } }

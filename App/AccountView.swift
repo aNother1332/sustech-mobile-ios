@@ -78,6 +78,15 @@ private struct NoticesView: View {
                 Link("学校标识与标准色", destination: URL(string: "https://www.sustech.edu.cn/zh/school_logo.html")!)
                 Link("sustech-calendar · 校历数据", destination: URL(string: "https://github.com/dumixthestpd/sustech-calendar")!)
                 Link("sustech-online-ng · CRA 校园巴士", destination: URL(string: "https://github.com/sustech-cra/sustech-online-ng")!)
+                NavigationLink("校园巴士数据许可 · CC BY-SA 4.0") {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            ForEach(["BusDataAttribution", "BusDataLicense"], id: \.self) { name in
+                                if let url = Bundle.main.url(forResource: name, withExtension: "txt"), let text = try? String(contentsOf: url, encoding: .utf8) { Text(text).font(.caption).textSelection(.enabled) }
+                            }
+                        }.padding()
+                    }.navigationTitle("巴士数据来源与许可").navigationBarTitleDisplayMode(.inline)
+                }
                 Link("Open-Meteo · 空气质量（CC BY 4.0）", destination: URL(string: "https://open-meteo.com/en/docs/air-quality-api")!)
                 Text("教师资料使用上游收录的学校公开目录快照，最新资料以教师官方主页为准。").font(.caption).foregroundStyle(.secondary)
             }
