@@ -1,3 +1,25 @@
+# 0.4.0（构建 7）验收
+
+- 最终安装包源码：`e302728fc0242d0e64cc17632718084a138f1ffc`。
+- 最终成功构建：[40168349920](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40168349920)。69 项 Swift 测试、8 项 Python 打包测试通过；iPhone/iPad 模拟器、arm64 iPhoneOS 主 App 与分享扩展编译通过。
+- 界面成功运行：[40167331512](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40167331512)，界面提交 `a7f9a04`，共 48 张 iPhone/iPad 截图。已查看紧凑课表、办事页、图书馆与排课页。之后仅继续修正登录连续性、连接状态绑定与提示文字，最终构建未重复截图；这些后续状态变化仍需设备验收。
+- 本地 59 个 Swift 语法树（含分享扩展）、工程生成一致性、配置与打包测试通过。生成器避免重复写相同工程文件，以适应 Windows 文件占用。
+- 普通包：`D:/Altstore/App/SUSTechMobile-0.4.0/SUSTechMobile-unsigned.ipa`，1,750,388 字节。
+- 普通包 SHA256：`b2b26e269e74e85d4827cc7c0b6ac2a2eaa64f4d0fbe119a42f02574aae339b8`。
+- 分享扩展验证包：`D:/Altstore/App/SUSTechMobile-0.4.0/SUSTechMobile-with-share-unsigned.ipa`，1,780,065 字节。
+- 扩展包 SHA256：`58dadd47a7fe56a872ab1918d886fac312392a831380dff436613eaad526c32e`。
+- 两个包 ZIP 完整性、名称/Bundle ID、版本 0.4.0/构建 7、最低系统 17、设备族 [1,2]、元数据提交和 SHA256 已核对。普通包没有 PlugIns；扩展包包含唯一的 CampusPrintShare.appex，其 Bundle ID/构建号和 arm64 Mach-O 已核对。
+- 本机日志：`D:/Altstore/Diagnostics/SUSTechMobile-0.4-final-build.log` 与 `SUSTechMobile-0.4-ui-build.log`。
+- 独立协议测试覆盖 BB 表单/nonce、草稿/分组/外域/禁用字段拒绝，POST 响应丢失后回读且只有一次 POST，后续历史页 404、缺少本人归属、多个新增 attempt 均不误报成功；候选课程单双周/部分时段拒绝、取消预约过滤、充值身份/金额约束和关闭真实下单。
+- 公开 NCES 搜索只读返回 HTTP 200，结构符合客户端。Primo 在 Windows Python/OpenSSL 遇到旧式 TLS 握手错误，未降低 TLS；iOS URLSession/WKWebView 的实际兼容性仍待设备实测。
+- 真实校园登录、续借、打印、预约及 BB 提交没有用本人账号验收，本轮未执行真实写操作、订单创建或付款。69 项测试是离线/模拟协议测试，不能当作学校业务通过。
+- 充值只读授权/身份校验及金额准备已实现，正式下单因授权交接、下单分支与订单状态查询未验证而关闭。分享扩展需要有效 App Groups 签名，免费账号/iLoader 兼容性未验证；普通包可继续主 App 导入 PDF。
+- 未签名包需本地重新签名，本轮没有修复 Apple 证书申请限制，也未安装到本人设备。
+
+操作见 [0.4.0 说明](RELEASE_0_4.md)，独立验收见 [设备清单](DEVICE_TESTING.md)，签名见 [分享扩展说明](SHARE_SIGNING.md)，审查修正见 [记录](REVIEW_0_4.md)。
+
+---
+
 # 0.3.1（构建 6）验收
 
 - 应用名称 / Bundle ID：SUSTechMobile / `cn.sustech.community.daily`。

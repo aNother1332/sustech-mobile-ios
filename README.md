@@ -29,7 +29,7 @@
 
 ## 当前状态
 
-当前功能版本为 **0.4.0 试用版**。新增原生图书馆、借阅与续借、统一日程、日历与提醒、NCES 课程评价、候选教学班与排课方案、修读进度、打印站点/扫描元数据/用量，以及 BB Original 个人文件作业提交流程。登录改为按服务自动检测、有效时显示已连接、失效后显示连接操作；主要查询支持下拉刷新。页面采用紧凑导航、课程行与可展开说明。构建和真实设备验收分别记录于 [验证记录](docs/BUILD_VALIDATION.md)。
+当前功能版本为 **0.4.0 试用版**。新增原生图书馆、借阅与续借、统一日程、日历与提醒、NCES 课程评价、候选教学班与排课方案、修读进度、打印站点/扫描元数据/用量，以及 BB Original 个人文件作业提交流程。登录改为按服务自动检测、有效时显示已连接、失效后显示连接操作；主要查询支持下拉刷新。页面采用紧凑导航、课程行与可展开说明。本轮 **69 项 Swift 测试、8 项打包测试、模拟器/arm64 真机及分享扩展编译通过**，48 张界面截图与最终认证修正分两次验证；真实设备验收分别记录于 [验证记录](docs/BUILD_VALIDATION.md)。
 
 **真实校园账号下的新接口及续借、打印、预约、BB 提交仍待逐项真机验收。** 界面与编译通过不代表学校服务全部可用；未签名 IPA 仍需本地签名安装，Apple 证书申请问题不属于 App 内登录功能。
 
@@ -67,9 +67,39 @@
 
 ## 界面截图
 
-以下均为云端 iOS 模拟器中实际运行本项目得到的截图，使用虚构的课程、任务、校园卡账单，或空登录表单与未连接状态，**不含真实学生账号、成绩或课程记录**。每组左侧为 iPhone，右侧为 iPad；点击图片可查看原图。下方包含 36 张 0.3.0 截图和 2 张 0.3.1 充值页截图，展示当前界面，包括尚未同步的空状态；IC/CLE/体育场馆截图不包含真实可约时段或订单。
+以下为云端 iOS 模拟器实际运行所得 **48 张 0.4.0 界面截图**，使用虚构课程、任务、馆藏、评价与排课数据，或未连接状态，**不含真实学生账号、成绩或课程记录**。每组左侧为 iPhone，右侧为 iPad。截图运行 [40167331512](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40167331512)，对应界面提交 `a7f9a04`；之后补充了会话续期、连接状态绑定与提示文字，最终安装包的源码提交另见构建记录，截图不作为真实校园业务验收。
 
-### 校园卡充值 · 0.3.1
+### 图书馆
+
+| iPhone | iPad |
+| --- | --- |
+| ![iPhone 图书馆](docs/screenshots/iPhone-library.png) | ![iPad 图书馆](docs/screenshots/iPad-library.png) |
+
+### 统一日程
+
+| iPhone | iPad |
+| --- | --- |
+| ![iPhone 日程](docs/screenshots/iPhone-agenda.png) | ![iPad 日程](docs/screenshots/iPad-agenda.png) |
+
+### 课程评价
+
+| iPhone | iPad |
+| --- | --- |
+| ![iPhone 课程评价](docs/screenshots/iPhone-reviews.png) | ![iPad 课程评价](docs/screenshots/iPad-reviews.png) |
+
+### 排课工作台
+
+| iPhone | iPad |
+| --- | --- |
+| ![iPhone 排课](docs/screenshots/iPhone-planner.png) | ![iPad 排课](docs/screenshots/iPad-planner.png) |
+
+### 修读进度 · 未连接状态
+
+| iPhone | iPad |
+| --- | --- |
+| ![iPhone 修读进度](docs/screenshots/iPhone-degree.png) | ![iPad 修读进度](docs/screenshots/iPad-degree.png) |
+
+### 校园卡充值
 
 原生渠道选择与到账查询；截图为演示模式，支付入口禁用。金额和支付在外部平台完成，尚未验证真实充值到账。
 
