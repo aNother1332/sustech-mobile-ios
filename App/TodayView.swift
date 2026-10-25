@@ -24,7 +24,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 10) {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     let term = AcademicData.term(at: context.date)
-                    CampusHero(eyebrow: "SUSTECH MOBILE", title: context.date.formatted(.dateTime.month().day().weekday(.wide)), subtitle: term.map { "第 \($0.week(context.date)) 教学周 · 校园生活，一目了然" } ?? "当前日期无已收录教学周 · 校园生活，一目了然", symbol: "sun.max.fill")
+                    CampusHero(eyebrow: "SUSTECH MOBILE", title: AcademicData.dateTitle(context.date), subtitle: term.map { "第 \($0.week(context.date)) 教学周 · 校园生活，一目了然" } ?? "当前日期无已收录教学周 · 校园生活，一目了然", symbol: "sun.max.fill")
                 }
                 TodaySummaryView()
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 145))], spacing: 10) {

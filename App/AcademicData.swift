@@ -2,6 +2,11 @@ import CampusCore
 import Foundation
 
 enum AcademicData {
+    static func dateTitle(_ date: Date) -> String {
+        var style = Date.FormatStyle.dateTime.month().day().weekday(.wide)
+        style.timeZone = AcademicTerm.calendar.timeZone
+        return date.formatted(style)
+    }
     static func term(for snapshot: TeachingSnapshot, at date: Date = .now) -> AcademicTerm? {
         guard let term = term(at: date) else { return nil }
         let month = AcademicTerm.calendar.component(.month, from: term.monday)
