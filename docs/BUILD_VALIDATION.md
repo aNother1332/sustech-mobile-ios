@@ -1,3 +1,15 @@
+# 0.7.0（构建 11）验收
+
+- 安装包源码：`d39516493d045adccc731bed692bdb5cc5ca5d93`。
+- 成功构建：[40209710708](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40209710708)。94 项 Swift 测试与 8 项 Python 打包测试通过；iPhone/iPad 模拟器、arm64 iPhoneOS 主应用及两项扩展编译通过。
+- 普通与扩展 IPA 均核对 ZIP 完整、SHA256、版本 0.7.0/11、最低 iOS 17、设备族 [1,2]、显示名 SUSTechMobile、Bundle ID 以及主程序/扩展 arm64 iPhoneOS Mach-O；普通包无扩展，实验包两项扩展。
+- 文件位于 `D:/Altstore/App/SUSTechMobile-0.7.0`；逐包结果见该目录 `VERIFIED-PACKAGES.json`。普通包 2,491,478 字节，SHA256 `b71f298cf8bfab1948bc0a5f1e204565f0093470935ef3af8f6190c3561f8110`；扩展包 2,577,801 字节，SHA256 `9b57d04972270d33ebd2e7e2a1e550c84ef4f3d1a9be2655999934babbee0d0f`。
+- 相同源码 UI 运行 [40210109524](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40210109524) 成功：12 组 iPhone/iPad 场景与两张桌面共 26 张截图；每次地图启动检查 4 条线路、351 个轨迹点、33 个站点、2 辆虚构车辆。已人工查看学习/个人信息/iPad、首页、预约、校巴默认图/车辆浮卡/时刻表。截图均为演示数据，精确来源见 `docs/screenshots/SOURCES.json`。
+- Windows 本地仓库检查通过：91 个 Swift 语法树、确定性工程与资源检查、8 项 Python 打包测试。
+- 未在本人设备安装或使用真实账号执行登录、预约、打印或支付；学校个人资料字段、真实车辆预测、定位对齐和底栏手感仍待设备验收。详情见 [设备清单](DEVICE_TESTING.md) 和 [版本说明](RELEASE_0_7.md)。
+
+---
+
 # 0.6.1（构建 10）验收
 
 - 最终包源码：`58b5baf1efd690dd6d8a6f74200696608224276c`。

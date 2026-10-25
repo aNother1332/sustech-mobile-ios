@@ -75,6 +75,26 @@
 
 ## 界面截图
 
+**0.7.0 橙白新版实际界面**：以下截图来自相同源码 `d395164` 的 [iPhone/iPad 模拟器运行 40210109524](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40210109524)，共 26 张（12 组页面及两张桌面）。个人资料、课程、余额、车辆与到站均为演示数据；路线与站点来自公开快照。底栏使用 iOS 26 原生玻璃材质。截图仅验证界面，不代替校园业务实测。
+
+| 页面 | iPhone | iPad |
+| --- | --- | --- |
+| 今天 | <img src="docs/screenshots/v07-iPhone-today.png" width="230" alt="iPhone 今天"> | <img src="docs/screenshots/v07-iPad-today.png" width="420" alt="iPad 今天"> |
+| 学习摘要与折叠模块 | <img src="docs/screenshots/v07-iPhone-learning-home.png" width="230" alt="iPhone 学习摘要与折叠模块"> | <img src="docs/screenshots/v07-iPad-learning-home.png" width="420" alt="iPad 学习摘要与折叠模块"> |
+| 个人资料 | <img src="docs/screenshots/v07-iPhone-account.png" width="230" alt="iPhone 个人资料"> | <img src="docs/screenshots/v07-iPad-account.png" width="420" alt="iPad 个人资料"> |
+| 办事 | <img src="docs/screenshots/v07-iPhone-services.png" width="230" alt="iPhone 办事"> | <img src="docs/screenshots/v07-iPad-services.png" width="420" alt="iPad 办事"> |
+| 预约中心 | <img src="docs/screenshots/v07-iPhone-reservations.png" width="230" alt="iPhone 预约中心"> | <img src="docs/screenshots/v07-iPad-reservations.png" width="420" alt="iPad 预约中心"> |
+| 校园巴士 | <img src="docs/screenshots/v07-iPhone-bus-map.png" width="230" alt="iPhone 校园巴士"> | <img src="docs/screenshots/v07-iPad-bus-map.png" width="420" alt="iPad 校园巴士"> |
+| 时刻表抽屉 | <img src="docs/screenshots/v07-iPhone-bus-timetable.png" width="230" alt="iPhone 时刻表抽屉"> | <img src="docs/screenshots/v07-iPad-bus-timetable.png" width="420" alt="iPad 时刻表抽屉"> |
+| 站台浮卡 | <img src="docs/screenshots/v07-iPhone-bus-stop.png" width="230" alt="iPhone 站台浮卡"> | <img src="docs/screenshots/v07-iPad-bus-stop.png" width="420" alt="iPad 站台浮卡"> |
+| 车辆浮卡 | <img src="docs/screenshots/v07-iPhone-bus-vehicle.png" width="230" alt="iPhone 车辆浮卡"> | <img src="docs/screenshots/v07-iPad-bus-vehicle.png" width="420" alt="iPad 车辆浮卡"> |
+| 校园卡目录 | <img src="docs/screenshots/v07-iPhone-card.png" width="230" alt="iPhone 校园卡目录"> | <img src="docs/screenshots/v07-iPad-card.png" width="420" alt="iPad 校园卡目录"> |
+| 打印目录 | <img src="docs/screenshots/v07-iPhone-printing.png" width="230" alt="iPhone 打印目录"> | <img src="docs/screenshots/v07-iPad-printing.png" width="420" alt="iPad 打印目录"> |
+| 图书馆目录 | <img src="docs/screenshots/v07-iPhone-library.png" width="230" alt="iPhone 图书馆目录"> | <img src="docs/screenshots/v07-iPad-library.png" width="420" alt="iPad 图书馆目录"> |
+
+<details>
+<summary>此前版本界面与具体业务页面</summary>
+
 以下为云端 iOS 模拟器实际运行的 **0.5／0.6／0.6.1 版本界面截图（74 张）**，包含 iPhone/iPad、深色外观及大字号。课程、任务、余额等为虚构示例或未连接状态；教师目录为学校已公开资料快照；不含真实学生账号或认证凭据。0.5 基础界面运行 [40172533665](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40172533665)，界面提交 `6f752ef`。最后的校历/小组件过期逻辑、官方项目详情控件与说明修正经[最终构建 40173815553](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40173815553)验证，78 项 Swift 测试与 8 项打包测试通过，重点场景另复查 12 张。每张图的来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。截图不作为真实校园业务验收。
 
 ### 0.6 校园巴士地图与教师联系方式
@@ -487,3 +507,5 @@ docs/                      截图、功能规划、协议证据与验收记录
 ```
 
 维护流程见 [版本交付与本地清理](docs/RELEASE_WORKFLOW.md)。部分文档保留早期开发、个人安装路径与历史构建记录，请以 README 的当前状态为准。
+
+</details>
