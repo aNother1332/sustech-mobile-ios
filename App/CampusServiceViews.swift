@@ -62,7 +62,7 @@ struct CardView: View {
                 }
             }
             Section { Button("打开学校校园卡页面") { portal = true } }
-        }.refreshable { await refresh() }.navigationTitle("校园卡").sheet(isPresented: $portal) { SchoolBrowser(service: .card) }
+        }.refreshable { await refresh() }.navigationTitle("校园卡").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal) { SchoolBrowser(service: .card) }
         .task {
             if store.mode == .live { await refresh() }
             else {
@@ -105,7 +105,7 @@ struct BusView: View {
                     VStack(alignment: .leading) { Text(stop.name); Text(stop.directions).font(.caption).foregroundStyle(.secondary) }
                 }
             }
-        }.refreshable { await load() }.navigationTitle("校车查询").searchable(text: $query, prompt: "站点、线路或方向").task { await load() }
+        }.refreshable { await load() }.navigationTitle("校车查询").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "站点、线路或方向").task { await load() }
     }
     private func load() async {
         guard !busy else { return }; busy = true; defer { busy = false }
@@ -178,7 +178,7 @@ struct ClassroomView: View {
                     }
                 }
             }
-        }.refreshable { if rooms.isEmpty { await load() } else { await check() } }.navigationTitle("空教室").searchable(text: $query, prompt: "先按教学楼或教室名筛选")
+        }.refreshable { if rooms.isEmpty { await load() } else { await check() } }.navigationTitle("空教室").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "先按教学楼或教室名筛选")
         .onChange(of: week) { _, _ in results = [:] }.onChange(of: weekday) { _, _ in results = [:] }
         .onChange(of: first) { _, value in last = max(last, value); results = [:] }.onChange(of: last) { _, _ in results = [:] }
         .task { week = store.teaching?.week ?? 1 }
@@ -260,7 +260,7 @@ struct PrintingView: View {
                 }
                 Button("打开学校打印页面") { portal = true }
             }
-        }.navigationTitle("校园打印")
+        }.navigationTitle("校园打印").navigationBarTitleDisplayMode(.inline)
         .refreshable { await refresh() }
         .task { if let initialURL { importPDF(initialURL) }; await refresh() }
         .sheet(isPresented: $portal) { SchoolBrowser(service: .printing) }

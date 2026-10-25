@@ -12,10 +12,6 @@ struct ServicesView: View {
 
     var body: some View {
         List {
-            Section {
-                Text("查询 · 打印 · 预约")
-                    .font(.callout).foregroundStyle(.secondary)
-            }
             Section("原生校园服务") {
                 if matches("图书馆 借阅 续借 馆藏 人数") { NavigationLink { LibraryView().id(store.sessionRevision) } label: { Label("图书馆 · 馆藏与借阅", systemImage: "books.vertical") } }
                 if matches("日程 日历 提醒") { NavigationLink { AgendaView().id(store.sessionRevision) } label: { Label("我的日程与提醒", systemImage: "calendar") } }
@@ -54,7 +50,7 @@ struct ServicesView: View {
         }
         .searchable(text: $query, prompt: "搜索校园服务")
         .refreshable { await store.checkSchoolSessions(force: true) }
-        .navigationTitle("办事")
+        .navigationTitle("办事").navigationBarTitleDisplayMode(.inline)
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
     }
     private func matches(_ value: String) -> Bool { query.isEmpty || value.localizedCaseInsensitiveContains(query) }

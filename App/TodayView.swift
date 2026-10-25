@@ -24,10 +24,6 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(Date.now, format: .dateTime.month(.wide).day().weekday(.wide))
                         .font(.subheadline).foregroundStyle(.secondary)
-                    Text("SUSTechMobile")
-                        .font(.title2.bold()).minimumScaleFactor(0.7)
-                    Text("学习与办事")
-                        .foregroundStyle(.secondary)
                 }.padding(.vertical, 8)
 
                 ModeNotice()
@@ -92,7 +88,7 @@ struct TodayView: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .refreshable { await store.refreshTeaching(); await store.refreshBlackboard() }
-        .navigationTitle("今天")
+        .navigationTitle("今天").navigationBarTitleDisplayMode(.inline)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
     }

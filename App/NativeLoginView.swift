@@ -65,7 +65,7 @@ struct NativeLoginView: View {
                     Button("Blackboard 完整网页登录") { portal = .blackboard }
                 }.disabled(store.authenticating || store.clearing || store.writing)
             }
-            .navigationTitle("学校账号")
+            .navigationTitle("学校账号").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() }.disabled(store.authenticating) } }
             .sheet(item: $portal) { SchoolBrowser(service: $0) }
         }

@@ -41,7 +41,7 @@ struct LibraryView: View {
             if !favorites.isEmpty { Section("收藏书目") { ForEach(favorites) { book in
                 Button(book.title) { query = book.title; Task { await search() } }.swipeActions { Button("移除", role: .destructive) { var all = favorites; all.removeAll { $0.id == book.id }; save(all) } }
             } } }
-        }.navigationTitle("图书馆")
+        }.navigationTitle("图书馆").navigationBarTitleDisplayMode(.inline)
         .searchable(text: $query, prompt: "书名、作者或 ISBN").onSubmit(of: .search) { Task { await search() } }
         .refreshable { await loadOccupancy(); if searched { await search() } }
         .task {
@@ -83,7 +83,7 @@ private struct LibraryBookView: View {
             Section { Text(book.title).font(.headline); Text(book.author + " · " + book.year).font(.caption) }
             Section("馆藏位置") { ForEach(holdings) { item in VStack(alignment: .leading, spacing: 3) { Text(item.location); Text(item.callNumber + " · " + item.status).font(.caption).foregroundStyle(.secondary) } } }
             ServiceMessage(message: message)
-        }.navigationTitle("馆藏详情").task { await load() }.refreshable { await load() }
+        }.navigationTitle("馆藏详情").navigationBarTitleDisplayMode(.inline).task { await load() }.refreshable { await load() }
     }
     private func load() async { do { holdings = try await client.holdings(book); message = holdings.isEmpty ? "未返回纸质馆藏位置，可能为电子资源；请到学校页面核对。" : nil } catch { message = error.localizedDescription } }
 }
@@ -118,7 +118,7 @@ struct LibraryLoansView: View {
                 }
             }
             if loans.isEmpty && !busy && !expired { Text("本次未读取到在借记录") }
-        }.navigationTitle("我的借阅").task { token = CredentialVault.load(String.self, key: "library-token") ?? ""; await load() }
+        }.navigationTitle("我的借阅").navigationBarTitleDisplayMode(.inline).task { token = CredentialVault.load(String.self, key: "library-token") ?? ""; await load() }
         .refreshable { await load() }
         .sheet(isPresented: $login, onDismiss: { Task { await load() } }) {
             ProviderBrowser(kind: .library) { value in token = value; expired = false; try? CredentialVault.save(value, key: "library-token") }

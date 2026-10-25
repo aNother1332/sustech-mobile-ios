@@ -26,7 +26,7 @@ struct NativeRechargeView: View {
                 Text("正式下单尚未启用").font(.subheadline.bold())
                 Text("企业微信授权无法直接从外部客户端共享到本 App；下单响应和单笔订单到账查询也尚未验证。现在可使用充值渠道页完成付款。").font(.caption).foregroundStyle(.secondary)
             }
-        }.navigationTitle("原生充值验证").task { auth = CredentialVault.load(RechargeAuth.self, key: "recharge-token"); await check() }
+        }.navigationTitle("原生充值验证").navigationBarTitleDisplayMode(.inline).task { auth = CredentialVault.load(RechargeAuth.self, key: "recharge-token"); await check() }
         .refreshable { await check() }
         .sheet(isPresented: $login, onDismiss: { Task { await check() } }) {
             ProviderBrowser(kind: .recharge) { raw in

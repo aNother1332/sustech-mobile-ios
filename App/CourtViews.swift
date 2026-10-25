@@ -67,7 +67,7 @@ struct CourtReservationView: View {
                     }
                 }
             }
-        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("体育场馆")
+        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("体育场馆").navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("确认取消这项场馆预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
             if let order = cancelling { Button("取消 \(order.title)", role: .destructive) { Task { await cancel(order) } } }
         }

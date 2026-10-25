@@ -37,7 +37,7 @@ struct StudyView: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .refreshable { switch section { case .grades: await store.refreshGrades(); case .blackboard: await store.refreshBlackboard(); default: await store.refreshTeaching() } }
-        .navigationTitle("学习")
+        .navigationTitle("学习").navigationBarTitleDisplayMode(.inline)
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
         .onChange(of: store.teaching?.week, initial: true) { _, week in if let week { selectedWeek = week } }
     }
@@ -69,9 +69,9 @@ struct StudyView: View {
                     ForEach(1...7, id: \.self) { day in
                         let meetings = rows.filter { $0.weekday == day }
                         if !meetings.isEmpty {
-                            CampusCard {
-                                Text(["周一", "周二", "周三", "周四", "周五", "周六", "周日"][day - 1]).font(.headline).foregroundStyle(Color.campusGreen)
-                                ForEach(meetings) { MeetingRow(meeting: $0) }
+                            HStack(alignment: .top, spacing: 10) {
+                                Text(["周一", "周二", "周三", "周四", "周五", "周六", "周日"][day - 1]).font(.caption.bold()).foregroundStyle(Color.campusGreen).frame(width: 28).padding(.top, 12)
+                                CampusCard { ForEach(meetings) { MeetingRow(meeting: $0) } }
                             }
                         }
                     }

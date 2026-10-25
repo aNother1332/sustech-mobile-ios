@@ -18,7 +18,7 @@ struct CandidateClassesView: View {
             Section { SessionBadge(); Text("只查询教学班并加入本地方案，不执行学校选课。").font(.caption).foregroundStyle(.secondary); ServiceMessage(message: message); if busy { ProgressView() } }
             if !favorites.isEmpty { Section("收藏教学班 · 时段为收藏时快照") { ForEach(favorites) { item in row(item) } } }
             Section("候选教学班") { ForEach(classes) { item in row(item) }; if more { Button("加载更多") { Task { await load(append: true) } }.disabled(busy) } }
-        }.navigationTitle("候选课程").searchable(text: $query, prompt: "课程名称、代码或教师")
+        }.navigationTitle("候选课程").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "课程名称、代码或教师")
         .onSubmit(of: .search) { Task { await load() } }.refreshable { await load() }
     }
     private func row(_ item: CandidateClass) -> some View {

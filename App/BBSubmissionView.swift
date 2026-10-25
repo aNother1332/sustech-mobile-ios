@@ -48,7 +48,7 @@ struct BBSubmissionView: View {
                     }
                 }
             }
-        }.navigationTitle("提交作业")
+        }.navigationTitle("提交作业").navigationBarTitleDisplayMode(.inline)
         .task { pending = CredentialVault.load(Pending.self, key: vaultKey) }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.data]) { result in
             do { let url = try result.get(); let scoped = url.startAccessingSecurityScopedResource(); defer { if scoped { url.stopAccessingSecurityScopedResource() } }

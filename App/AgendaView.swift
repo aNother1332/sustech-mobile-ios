@@ -75,7 +75,7 @@ struct AgendaView: View {
                 Button("添加") { let value = personal + [Personal(id: "personal-" + UUID().uuidString, title: personalTitle, start: personalDate)]; save(value); personalTitle = "" }.disabled(personalTitle.trimmingCharacters(in: .whitespaces).isEmpty)
                 ForEach(personal, id: \.id) { item in HStack { Text(item.title); Spacer(); Text(item.start, style: .date).font(.caption) }.swipeActions { Button("删除", role: .destructive) { save(personal.filter { $0.id != item.id }); UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["campus-" + store.accountScope + "-" + item.id]) } } }
             }
-        }.navigationTitle("我的日程").task { personalData = UserDefaults.standard.string(forKey: "personal-agenda-" + store.accountScope) ?? "[]" }.refreshable { await refresh() }
+        }.navigationTitle("我的日程").navigationBarTitleDisplayMode(.inline).task { personalData = UserDefaults.standard.string(forKey: "personal-agenda-" + store.accountScope) ?? "[]" }.refreshable { await refresh() }
     }
     private func save(_ items: [Personal]) { if let data = try? JSONEncoder().encode(items) { personalData = String(decoding: data, as: UTF8.self); UserDefaults.standard.set(personalData, forKey: "personal-agenda-" + store.accountScope) } }
     private func reservation(_ value: ReservationItem, source: String, begin: String, end: String) -> AgendaEntry? {
@@ -133,7 +133,7 @@ struct EventActionView: View {
                 ServiceMessage(message: message)
                 DetailNote(text: "提醒与导出基于本次已同步信息。学校变更后需重新同步和更新。系统日历事件由你管理，App 内折叠课程不会自动删除已导出日历事件。")
             }
-        }.navigationTitle("日历与提醒")
+        }.navigationTitle("日历与提醒").navigationBarTitleDisplayMode(.inline)
     }
     private func remind() async {
         guard !busy, store.mode == .live, !store.authenticating, !store.clearing else { return }

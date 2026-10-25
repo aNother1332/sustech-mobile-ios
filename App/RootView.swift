@@ -39,7 +39,7 @@ struct RootView: View {
                 )) { page in
                     Label(page.rawValue, systemImage: page.symbol).tag(page)
                 }
-                .navigationTitle("SUSTechMobile")
+                .navigationTitle("SUSTechMobile").navigationBarTitleDisplayMode(.inline)
                 .safeAreaInset(edge: .bottom) {
                     Text("非官方校园工具 · 早期开发版")
                         .font(.caption).foregroundStyle(.secondary).padding()

@@ -43,7 +43,7 @@ struct PrintExtrasView: View {
             }
             if tab == 2 && page < pages { Button("下一页 · \(page)/\(pages)") { Task { page += 1; await load() } }.disabled(busy) }
             if tab == 1 { DetailNote(text: "此处读取扫描任务元数据。下载地址尚未验证，领取原文件请使用学校打印页面。") }
-        }.navigationTitle("打印站点与用量").refreshable { page = 1; await load() }
+        }.navigationTitle("打印站点与用量").navigationBarTitleDisplayMode(.inline).refreshable { page = 1; await load() }
         .task { await load() }.onChange(of: tab) { _, _ in rows = []; page = 1; Task { await load() } }
     }
     private func load() async {

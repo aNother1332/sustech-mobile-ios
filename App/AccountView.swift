@@ -42,7 +42,7 @@ struct AccountView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
-        .navigationTitle("我的")
+        .navigationTitle("我的").navigationBarTitleDisplayMode(.inline)
         .refreshable { await store.checkSchoolSessions(force: true) }
         .onChange(of: portal) { _, value in if value == nil { Task { await store.checkSchoolSessions(force: true) } } }
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
@@ -69,6 +69,6 @@ private struct NoticesView: View {
                 Link("sustech_survival · dumixthestpd", destination: URL(string: "https://github.com/dumixthestpd/sustech_survival")!)
             }
             Section("上游许可") { Text(license).font(.caption).textSelection(.enabled) }
-        }.navigationTitle("许可与来源")
+        }.navigationTitle("许可与来源").navigationBarTitleDisplayMode(.inline)
     }
 }

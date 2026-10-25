@@ -21,10 +21,10 @@ struct ModeNotice: View {
 
     var body: some View {
         if store.mode == .demo {
-            Label("演示模式 · 下列课程与任务均为示例", systemImage: "sparkles")
-                .font(.callout).foregroundStyle(Color.campusGreen)
+            Label("演示数据", systemImage: "sparkles")
+                .font(.caption).foregroundStyle(Color.campusGreen)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding().background(Color.campusGreen.opacity(0.09), in: RoundedRectangle(cornerRadius: 16))
+                .padding(.horizontal, 8).padding(.vertical, 6).background(Color.campusGreen.opacity(0.09), in: RoundedRectangle(cornerRadius: 8))
         }
     }
 }
@@ -66,11 +66,11 @@ struct MeetingRow: View {
     let meeting: CourseMeeting
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("第 \(meeting.firstPeriod)").font(.headline)
                 Text("至 \(meeting.lastPeriod) 节").font(.caption).foregroundStyle(.secondary)
-            }.frame(width: 64, alignment: .leading).foregroundStyle(Color.campusGreen)
+            }.frame(width: 52, alignment: .leading).foregroundStyle(Color.campusGreen)
             VStack(alignment: .leading, spacing: 4) {
                 Text(meeting.name).font(.headline)
                 if !meeting.details.isEmpty { Text(meeting.details).font(.caption).foregroundStyle(.secondary) }

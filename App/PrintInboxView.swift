@@ -10,7 +10,7 @@ struct PrintInboxView: View {
                 Button("移除", role: .destructive) { do { try FileManager.default.removeItem(at: url); files.removeAll { $0 == url } } catch { message = "无法移除文件，请解锁设备后重试。" } }
             } }
             if files.isEmpty { ContentUnavailableView("没有待打印 PDF", systemImage: "tray", description: Text("也可在校园打印中直接导入 PDF。")) }
-        }.navigationTitle("系统分享待打印").task { load() }.refreshable { load() }
+        }.navigationTitle("系统分享待打印").navigationBarTitleDisplayMode(.inline).task { load() }.refreshable { load() }
     }
     private func load() {
         guard let group = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.cn.sustech.community.daily") else { message = "当前签名没有共享容器；系统分享版需单独验证签名能力。"; return }

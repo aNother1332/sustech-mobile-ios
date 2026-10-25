@@ -21,7 +21,7 @@ struct CourseReviewsView: View {
             Section("搜索结果") { ForEach(courses) { course in courseRow(course) }
                 if more { Button("加载更多") { Task { await search(append: true) } }.disabled(busy) }
             }
-        }.navigationTitle("课程评价").searchable(text: $query, prompt: "课程代码、名称或教师")
+        }.navigationTitle("课程评价").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "课程代码、名称或教师")
         .onSubmit(of: .search) { Task { await search() } }.refreshable { await search() }
         .task { if store.mode == .demo {
             let data = Data(#"{"courses":{"items":[{"id":10001,"name":"线性代数（虚构示例）","course_code":"DEMO101","teacher_names":"示例教师","review_count":12,"rate_average":4.5},{"id":10002,"name":"信号与系统（虚构示例）","course_code":"DEMO102","teacher_names":"示例教师","review_count":8,"rate_average":4.2}]}}"#.utf8)
@@ -62,7 +62,7 @@ private struct ReviewsDetailView: View {
             ForEach(items) { item in VStack(alignment: .leading, spacing: 5) { Text(item.term + " · 评分 " + item.rating).font(.caption).foregroundStyle(.secondary); Text(item.content).font(.subheadline).textSelection(.enabled) } }
             Button(page == 0 ? "读取评价" : "读取下一页") { Task { await load() } }.disabled(busy)
             if busy { ProgressView() }
-        }.navigationTitle("课程评价").task { await load() }.refreshable { page = 0; await load() }
+        }.navigationTitle("课程评价").navigationBarTitleDisplayMode(.inline).task { await load() }.refreshable { page = 0; await load() }
     }
     private func load() async {
         guard store.mode == .live, !busy else { return }; busy = true; defer { busy = false }
@@ -84,7 +84,7 @@ struct DegreeProgressView: View {
             if let result { ForEach(result.sections) { section in Section(section.title) { ForEach(Array(section.values.enumerated()), id: \.offset) { _, value in LabeledContent(value.0, value: value.1) } } }
                 if !result.warnings.isEmpty { Section("部分来源未读取") { ForEach(result.warnings, id: \.self) { Text($0).font(.caption).foregroundStyle(.orange) } } }
             }
-        }.navigationTitle("学业修读进度").task { await load() }.refreshable { await load() }
+        }.navigationTitle("学业修读进度").navigationBarTitleDisplayMode(.inline).task { await load() }.refreshable { await load() }
     }
     private func load() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }; let version = store.sessionRevision
@@ -150,7 +150,7 @@ struct PlannerView: View {
                 Button("加入当前方案") { save(all + [PlanEntry(name: name, code: code, credits: credits, weekday: day, first: first, last: last, firstWeek: firstWeek, lastWeek: lastWeek, scenario: scenario)]); name = ""; code = "" }.disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             Section("方案对比") { ForEach(["方案 A", "方案 B", "方案 C"], id: \.self) { key in let values = all.filter { $0.scenario == key }; LabeledContent(key, value: "\(values.count) 时段 · \(values.reduce(0) { $0 + $1.credits }.formatted()) 学分") } }
-        }.navigationTitle("排课工作台")
+        }.navigationTitle("排课工作台").navigationBarTitleDisplayMode(.inline)
     }
     private func save(_ entries: [PlanEntry]) { guard store.mode == .live else { return }; if let data = try? JSONEncoder().encode(entries) { saved = String(decoding: data, as: UTF8.self) } }
 }

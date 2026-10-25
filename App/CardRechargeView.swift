@@ -56,7 +56,7 @@ struct CardRechargeView: View {
             }
         }
         .refreshable { await refresh() }
-        .navigationTitle("校园卡充值")
+        .navigationTitle("校园卡充值").navigationBarTitleDisplayMode(.inline)
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, awaitingReturn {
                 awaitingReturn = false

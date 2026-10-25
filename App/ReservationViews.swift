@@ -15,7 +15,7 @@ struct ReservationCenterView: View {
                 Link("体育场馆官方预约页面", destination: URL(string: "https://reservation.sustech.edu.cn")!)
                 Text("学校存在多个预约平台。新体育场馆目录从 reservation 平台读取；原平台入口一并保留。").font(.caption).foregroundStyle(.secondary)
             }
-        }.navigationTitle("预约中心")
+        }.navigationTitle("预约中心").navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -54,7 +54,7 @@ struct ICReservationView: View {
                     }
                 }
             }
-        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("IC 研讨间").sheet(isPresented: $portal) { SchoolBrowser(service: .rooms) }
+        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("IC 研讨间").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal) { SchoolBrowser(service: .rooms) }
         .confirmationDialog("确认取消这项预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
             if let order = cancelling { Button("取消 \(order.title)", role: .destructive) { Task { await cancel(order) } } }
         }
@@ -94,7 +94,7 @@ private struct ICBookingForm: View {
                 Button("核对并预约一次") { confirm = true }.disabled(busy || store.mode == .demo)
                 if busy { ProgressView() }; ServiceMessage(message: message)
             }
-        }.navigationTitle("预约研讨间")
+        }.navigationTitle("预约研讨间").navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("预约 \(room.title)？", isPresented: $confirm, titleVisibility: .visible) {
             Button("确认提交") { Task { await submit() } }
         } message: { Text("\(begin.formatted()) 至 \(end.formatted())；同行：\(members.isEmpty ? "无" : members)。以学校回执为准。") }
@@ -150,7 +150,7 @@ struct CLEReservationView: View {
                     }
                 }
             }
-        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("CLE 语言辅导").sheet(isPresented: $portal) { SchoolBrowser(service: .cle) }
+        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("CLE 语言辅导").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal) { SchoolBrowser(service: .cle) }
         .onChange(of: day) { _, _ in slots = [] }
         .confirmationDialog("确认预约该辅导？", isPresented: Binding(get: { selected != nil }, set: { if !$0 { selected = nil } }), titleVisibility: .visible) {
             if let slot = selected { Button("提交一次") { Task { await book(slot) } } }

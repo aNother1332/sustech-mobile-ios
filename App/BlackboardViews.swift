@@ -187,7 +187,7 @@ struct OfflineDownloadsView: View {
                 }.swipeActions { Button("删除", role: .destructive) { store.deleteFile(file) } }
             }
             if store.files.isEmpty { Text("还没有下载文件。") }
-        }.navigationTitle("离线文件").sheet(item: $selected) { OfflinePreview(file: $0) }
+        }.navigationTitle("离线文件").navigationBarTitleDisplayMode(.inline).sheet(item: $selected) { OfflinePreview(file: $0) }
     }
 }
 
