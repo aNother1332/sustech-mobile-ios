@@ -72,6 +72,7 @@ jobs:
           cp docs/WRITE_PROTOCOL_AUDIT_0_4.md dist/WRITE_PROTOCOL_AUDIT_0_4.md
           cp docs/RECHARGE_PAYMENT_RESEARCH.md dist/RECHARGE_PAYMENT_RESEARCH.md
           cp docs/RELEASE_0_5.md dist/RELEASE_0_5.md
+          cp docs/RELEASE_0_6.md dist/RELEASE_0_6.md
       - name: Upload downloadable device package
         uses: actions/upload-artifact@v4
         with:

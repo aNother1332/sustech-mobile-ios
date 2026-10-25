@@ -10,7 +10,7 @@ struct AccountView: View {
         List {
             Section {
                 CampusHero(eyebrow: "MY CAMPUS", title: "SUSTechMobile", subtitle: "账户与偏好", symbol: "person.crop.circle.fill")
-                Text("iPhone 与 iPad · 非官方校园工具\n0.5.0 试用版 · 学校接口需真机核对。")
+                Text("iPhone 与 iPad · 非官方校园工具\n0.6.0 试用版 · 学校接口需真机核对。")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Section("数据模式") {
@@ -77,6 +77,7 @@ private struct NoticesView: View {
             Section("公开资料与设计来源") {
                 Link("学校标识与标准色", destination: URL(string: "https://www.sustech.edu.cn/zh/school_logo.html")!)
                 Link("sustech-calendar · 校历数据", destination: URL(string: "https://github.com/dumixthestpd/sustech-calendar")!)
+                Link("sustech-online-ng · CRA 校园巴士", destination: URL(string: "https://github.com/sustech-cra/sustech-online-ng")!)
                 Link("Open-Meteo · 空气质量（CC BY 4.0）", destination: URL(string: "https://open-meteo.com/en/docs/air-quality-api")!)
                 Text("教师资料使用上游收录的学校公开目录快照，最新资料以教师官方主页为准。").font(.caption).foregroundStyle(.secondary)
             }

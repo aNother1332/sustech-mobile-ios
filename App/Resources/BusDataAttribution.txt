@@ -1,0 +1,8 @@
+Campus bus route and stop demonstration snapshot: SUSTech CRA, retrieved from
+https://buseta.sustcra.com/routes and /stops, 2026-10-25. Data snapshot redistributed
+under CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/ .
+Reference project https://github.com/sustech-cra/sustech-online-ng,
+commit 48c9773c38619761e82c5c639542dc4737517b85.
+Only routes/stops are from the source; example vehicle records are newly synthesized.
+The native Swift UI is an independent implementation of the public protocol.
+Apple Maps supplies basemap/attribution at runtime; no upstream tiles are bundled.

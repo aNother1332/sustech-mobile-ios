@@ -30,3 +30,9 @@ commit e5e102c74670eba53c187d3f98b3f97921dbf42a via pinned sustech-mobile assets
 Faculty directory is the upstream bundled snapshot of official public faculty pages.
 Official identity colours: https://www.sustech.edu.cn/zh/school_logo.html
 Weather: SUSTech CRA; air quality: Open-Meteo, CC BY 4.0.
+
+0.6 campus bus reference: SUSTech CRA / sustech-online-ng
+https://github.com/sustech-cra/sustech-online-ng @ 48c9773c38619761e82c5c639542dc4737517b85.
+Native UI reads public buseta.sustcra.com routes/stops/vehicles APIs. Bundled demo route/stop
+data is attributed to SUSTech CRA under CC BY-SA 4.0; demonstration vehicles are synthetic.
+No Vue components or upstream map tiles are bundled; native basemap is Apple Maps.

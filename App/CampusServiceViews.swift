@@ -89,7 +89,7 @@ struct CardView: View {
     }
 }
 
-struct BusView: View {
+struct BusStopsView: View {
     @State private var location = CampusLocation()
     private var orderedStops: [BusStop] { stops.sorted { (location.distance($0) ?? .greatestFiniteMagnitude) < (location.distance($1) ?? .greatestFiniteMagnitude) } }
     @State private var stops: [BusStop] = []
@@ -119,7 +119,7 @@ struct BusView: View {
         do { stops = try await client.stops(); message = nil } catch { message = error.localizedDescription }
     }
 }
-private struct BusStopView: View {
+struct BusStopView: View {
     @Environment(\.scenePhase) private var phase
     let stop: BusStop; let client: BusClient
     @State private var arrivals: [BusArrival] = []

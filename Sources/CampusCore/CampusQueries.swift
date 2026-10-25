@@ -3,6 +3,7 @@ import Foundation
 public struct BusStop: Identifiable, Sendable {
     public let id: String; public let name: String; public let directions: String
     public var latitude: Double? = nil; public var longitude: Double? = nil
+    public init(id: String, name: String, directions: String, latitude: Double? = nil, longitude: Double? = nil) { self.id = id; self.name = name; self.directions = directions; self.latitude = latitude; self.longitude = longitude }
 }
 public struct BusArrival: Identifiable, Sendable {
     public let id: String; public let route: String; public let direction: String

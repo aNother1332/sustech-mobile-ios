@@ -24,6 +24,8 @@ struct SUSTechApp: App {
         else if arguments.contains("--smoke-reviews") { NavigationStack { CourseReviewsView() } }
         else if arguments.contains("--smoke-degree") { NavigationStack { DegreeProgressView() } }
         else if arguments.contains("--smoke-recharge") { NavigationStack { CardRechargeView() } }
+        else if arguments.contains("--smoke-bus") { NavigationStack { BusView() } }
+        else if arguments.contains("--smoke-faculty-detail") { NavigationStack { FacultyDetailView(name: "示例教师", detail: "示例院系 · 示例职称", url: URL(string: "https://www.sustech.edu.cn/zh/faculties/wuyabei.html")!) } }
         else if arguments.contains("--smoke-faculty") { NavigationStack { FacultyDirectoryView() } }
         else if arguments.contains("--smoke-calendar") { NavigationStack { AcademicCalendarView() } }
         else if arguments.contains("--smoke-code") { NavigationStack { CampusCodeView() } }

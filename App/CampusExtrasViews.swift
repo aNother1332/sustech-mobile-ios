@@ -65,7 +65,7 @@ struct FacultyDirectoryView: View {
         List {
             Section { Text("学校公开教师目录 · 离线快照").font(.subheadline.bold()); Text("资料更新：" + generated).font(.caption).foregroundStyle(.secondary) }
             ForEach(people.filter { query.isEmpty || $0.search.localizedCaseInsensitiveContains(query) }) { person in
-                Link(destination: person.url) { HStack(spacing: 12) { Image(systemName: "person.crop.square").foregroundStyle(Color.campusGreen).font(.title2); VStack(alignment: .leading, spacing: 4) { Text(person.name).foregroundStyle(.primary).font(.subheadline.bold()); Text(person.detail).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.secondary) } }
+                NavigationLink { FacultyDetailView(name: person.name, detail: person.detail, url: person.url) } label: { HStack(spacing: 12) { Image(systemName: "person.crop.square").foregroundStyle(Color.campusGreen).font(.title2); VStack(alignment: .leading, spacing: 4) { Text(person.name).foregroundStyle(.primary).font(.subheadline.bold()); Text(person.detail).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "info.circle").font(.caption).foregroundStyle(.secondary) } }
             }
             if people.isEmpty { Text("目录资源暂不可读。") }
         }.navigationTitle("教师目录").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "中英文姓名、院系、职称").task { load() }
