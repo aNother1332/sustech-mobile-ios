@@ -85,3 +85,23 @@ BB 截止日期不是完整 assessment 任务接口。当前原生界面明确�
 
 Tests 中 JSON 是依据上述字段契约手写的虚构样例，不是校园账号流量抓取，也不包含真实学生信息。
 解析测试能验证错误结构、时区、节次语义等本地行为，不能替代学校真实权限和网络验证。
+
+
+## 0.5 Android parity additions
+
+Pinned Android evidence: `dumixthestpd/sustech-mobile@509a65357579f220d69b582956b38fc79d291f6a`.
+
+- Card QR: `/epay/vcard/index` CSRF metadata → POST `/epay/vcard/getqrcode`.
+- Identity QR: GET `/epay/h5/v5qrcode?codetype=O5`, `input#myText` value.
+- Exchange: `ws.sustech.edu.cn/Main/GetSmartLeftMenuTData.do` session →
+  `/StudentExchange_2247/GetShortProjectListForStudent.do`, `DataList`, 24/page.
+  Details/application remains on the official WS site, using the shared WK cookie store.
+- Scan deletion: POST `/api/client/Scan/Del`, `dwJobId`, explicit confirmation; success only code 0.
+- Shuttle: `/stops`, `/arrivals/{id}`; optional `/routes` and `/vehicles` enrich position from matching trip IDs.
+- Weather: `api.sustech.online/weather`; AQI: Open-Meteo `/v1/air-quality`, US AQI.
+- Calendar data: `sustech-calendar@e5e102c74670eba53c187d3f98b3f97921dbf42a`, bundled 2026 JSON.
+- Faculty: upstream bundled official public directory snapshot, generated 2026-10-02, 994 records.
+- Release checks: GitHub Releases public API. No APK-style automatic installation on iOS.
+
+No campus/identity QR text is persisted or sent to widgets. Widget shared storage is opt-in
+text/time snapshots only; authenticating cookies remain in the main app's on-device session store.

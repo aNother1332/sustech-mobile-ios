@@ -97,7 +97,7 @@ struct ExchangeProgramsView: View {
         List {
             Section {
                 Toggle("仅看可申请项目", isOn: $onlyOpen)
-                Button("学校平台／登录") { portal = true }
+                Button("官方交换平台") { portal = true }
                 ServiceMessage(message: message); if busy { ProgressView() }
             }
             ForEach(items.filter { (!onlyOpen || $0.available) && (query.isEmpty || ($0.name + $0.location).localizedCaseInsensitiveContains(query)) }) { item in

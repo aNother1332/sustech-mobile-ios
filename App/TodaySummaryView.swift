@@ -16,7 +16,12 @@ struct TodaySummaryView: View {
             }
         }.min { $0.1 < $1.1 }
     }
-    private var nextExam: CampusExam? { store.teaching?.exams.filter { $0.date >= CampusClock.format(.now) }.sorted { $0.date + $0.time < $1.date + $1.time }.first }
+    private var nextExam: CampusExam? {
+        store.teaching?.exams.filter { item in
+            if let time = HTMLText.captures("[0-9]{1,2}:[0-9]{2}", in: item.time).first?[0], let date = CampusClock.date(item.date + " " + time, "yyyy-MM-dd HH:mm") { return date > .now }
+            return item.date > CampusClock.format(.now)
+        }.sorted { $0.date + $0.time < $1.date + $1.time }.first
+    }
     var body: some View {
         VStack(spacing: 10) {
             CampusCard(accent: .campusOrange) {

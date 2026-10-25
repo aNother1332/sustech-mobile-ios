@@ -74,6 +74,12 @@ private struct NoticesView: View {
                 Link("sustech-cli · wormforce", destination: URL(string: "https://github.com/wormforce/sustech-cli")!)
                 Link("sustech_survival · dumixthestpd", destination: URL(string: "https://github.com/dumixthestpd/sustech_survival")!)
             }
+            Section("公开资料与设计来源") {
+                Link("学校标识与标准色", destination: URL(string: "https://www.sustech.edu.cn/zh/school_logo.html")!)
+                Link("sustech-calendar · 校历数据", destination: URL(string: "https://github.com/dumixthestpd/sustech-calendar")!)
+                Link("Open-Meteo · 空气质量（CC BY 4.0）", destination: URL(string: "https://open-meteo.com/en/docs/air-quality-api")!)
+                Text("教师资料使用上游收录的学校公开目录快照，最新资料以教师官方主页为准。").font(.caption).foregroundStyle(.secondary)
+            }
             Section("上游许可") { Text(license).font(.caption).textSelection(.enabled) }
         }.navigationTitle("许可与来源").navigationBarTitleDisplayMode(.inline)
     }

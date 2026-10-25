@@ -14,12 +14,17 @@ enum CampusWidgetBridge {
         guard UserDefaults.standard.bool(forKey: "widget-share-learning"), store.mode == .live, !store.clearing else {
             try? FileManager.default.removeItem(at: path); WidgetCenter.shared.reloadAllTimelines(); return
         }
-        let lessons = store.teaching?.meetings.filter { row in
+        let lessons: [[String: Any]] = (store.teaching?.meetings ?? []).filter { row in
             guard let term = store.academicTerm else { return false }
             return AcademicData.dates(row, term: term).contains { CampusClock.format($0) == CampusClock.format(.now) }
-        }.sorted { $0.firstPeriod < $1.firstPeriod }.map { "\($0.firstPeriod)–\($0.lastPeriod)节 · \($0.name)" } ?? []
-        let deadlines = store.deadlines.filter { $0.due.map { $0 > .now } ?? false }.sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }.prefix(3).map { "\($0.title) · \($0.due?.formatted(date: .abbreviated, time: .shortened) ?? "")" }
-        let value: [String: Any] = ["at": Date.now.timeIntervalSince1970, "day": CampusClock.format(.now), "classes": Array(lessons.prefix(3)), "deadlines": deadlines]
+        }.sorted { $0.firstPeriod < $1.firstPeriod }.compactMap { row in
+            guard let period = store.teaching?.periods.first(where: { $0.period == row.lastPeriod }), let end = CampusClock.date(CampusClock.format(.now) + " " + period.end, "yyyy-MM-dd HH:mm") else { return nil }
+            return ["text": "\(row.firstPeriod)–\(row.lastPeriod)节 · \(row.name)", "until": end.timeIntervalSince1970]
+        }
+        let deadlines: [[String: Any]] = store.deadlines.filter { $0.due.map { $0 > .now } ?? false }.sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }.prefix(12).map { row in
+            ["text": "\(row.title) · \(row.due?.formatted(date: .abbreviated, time: .shortened) ?? "")", "until": row.due!.timeIntervalSince1970]
+        }
+        let value: [String: Any] = ["at": Date.now.timeIntervalSince1970, "day": CampusClock.format(.now), "classes": lessons, "deadlines": deadlines]
         do { let data = try JSONSerialization.data(withJSONObject: value); try data.write(to: path, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]); WidgetCenter.shared.reloadAllTimelines() } catch { /* Main app continues without shared-container access. */ }
     }
 }

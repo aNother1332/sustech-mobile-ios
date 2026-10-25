@@ -27,6 +27,7 @@ struct AcademicCalendarTests {
         let term = try term()
         #expect(term.dates(weeks: [11], weekday: 5).isEmpty)
         #expect(term.dates(weeks: [17], weekday: 1).isEmpty)
+        #expect(term.dates(weeks: [18], weekday: 2).isEmpty)
     }
     @Test func shanghaiBoundaryAndUnknownWeeks() throws {
         let term = try term()
@@ -34,5 +35,14 @@ struct AcademicCalendarTests {
         #expect(term.date(week: 0, weekday: 1) == nil)
         #expect(term.date(week: 1, weekday: 8) == nil)
         #expect(term.dates(weeks: [], weekday: 1).isEmpty)
+    }
+    @Test func springFirstMondayMakeupSurvivesEarlierThanSignInSource() throws {
+        func load(_ name: String) throws -> WireValue {
+            let url = try #require(Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Fixtures"))
+            return try JSONDecoder().decode(WireValue.self, from: Data(contentsOf: url))
+        }
+        let term = try #require(AcademicTerm(level: load("calendar-2026-undergraduate"), general: load("calendar-2026-general"), season: "spring"))
+        #expect(term.dates(weeks: [1], weekday: 1).map { CampusClock.format($0) } == ["2026-02-28"])
+        #expect(term.dates(weeks: [1], weekday: 2).isEmpty)
     }
 }

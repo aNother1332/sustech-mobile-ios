@@ -100,7 +100,8 @@ struct DeadlineRow: View {
             Text(deadline.course).font(.caption).foregroundStyle(.secondary)
             Text(deadline.title).font(.headline)
             if let due = deadline.due {
-                Text(due.formatted(date: .abbreviated, time: .shortened)).font(.subheadline).foregroundStyle(Color.campusGreen)
+                Text(due.formatted(date: .abbreviated, time: .shortened)).font(.subheadline.weight(.semibold)).foregroundStyle(deadline.submission == .pending && due.timeIntervalSinceNow < 86400 ? Color(uiColor: .systemOrange) : Color.campusGreen)
+                if deadline.submission == .pending, due > .now, due.timeIntervalSinceNow < 86400 { Label("24 小时内截止", systemImage: "clock.badge.exclamationmark").font(.caption.bold()).foregroundStyle(Color(uiColor: .systemOrange)) }
             } else {
                 Text(deadline.rawDue.isEmpty ? "学校未提供截止日期" : "时间待核对：\(deadline.rawDue)").font(.subheadline).foregroundStyle(.orange)
             }

@@ -38,7 +38,7 @@ struct CampusWidgetProvider: AppIntentTimelineProvider {
                 let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"; formatter.timeZone = TimeZone(identifier: "Asia/Shanghai")
                 guard raw["day"] as? String == formatter.string(from: .now) else { value.lines = ["课程快照已过期，请打开 App 同步"]; return value }
             }
-            value.lines = raw[configuration.kind == .classes ? "classes" : "deadlines"] as? [String] ?? []
+            value.lines = (raw[configuration.kind == .classes ? "classes" : "deadlines"] as? [[String: Any]] ?? []).filter { ($0["until"] as? Double ?? 0) > Date.now.timeIntervalSince1970 }.compactMap { $0["text"] as? String }
             if value.lines.isEmpty { value.lines = ["本次快照没有记录，打开 App 核对"] }
         case .weather:
             value.title = "校园天气"

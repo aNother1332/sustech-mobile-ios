@@ -19,6 +19,9 @@ use the timetable list. Service tiles adapt to iPad width.
 Known boundaries: QR endpoints and all authenticated school operations require real-device
 validation. No actual deletion/payment/consumption/application performed in automated checks.
 Only the bundled 2026 academic calendar is covered; unknown dates require manual anchor.
+Calendar matching checks the academic year/term before applying dates to cached schedules.
+Spring first-week makeups may originate before sign-in, and the complete final exam date range
+is excluded from regular lessons. Widget entries expire against their lesson-end/deadline times.
 Official temporary changes remain authoritative. Exchange applications stay on official pages.
 Widget/shared-print extensions require matching signing profiles and App Groups; ordinary IPA
 omits extensions. WidgetKit refresh is system-budgeted, not continuous real time. No full native

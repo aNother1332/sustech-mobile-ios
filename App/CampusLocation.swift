@@ -6,9 +6,11 @@ import SwiftUI
 @MainActor @Observable final class CampusLocation: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var point: CLLocation?
+    private var requested = false
     var message: String?
     override init() { super.init(); manager.delegate = self; manager.desiredAccuracy = kCLLocationAccuracyHundredMeters }
     func request() {
+        requested = true
         switch manager.authorizationStatus {
         case .notDetermined: manager.requestWhenInUseAuthorization()
         case .authorizedAlways, .authorizedWhenInUse: manager.requestLocation()
@@ -16,7 +18,7 @@ import SwiftUI
         }
     }
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if [.authorizedAlways, .authorizedWhenInUse].contains(manager.authorizationStatus) { manager.requestLocation() }
+        if requested, [.authorizedAlways, .authorizedWhenInUse].contains(manager.authorizationStatus) { manager.requestLocation() }
     }
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let last = locations.last, last.horizontalAccuracy >= 0 else { return }; point = last; message = "已按距你的位置排序 · 距离为直线估算"

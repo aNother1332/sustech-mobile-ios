@@ -9,6 +9,8 @@ public struct AcademicTerm: Sendable {
     public let makeup: [Makeup]
     public let breaks: Set<String>
     public let finalWeeks: Set<Int>
+    private let teachingStart: Date
+    private let finalStart: Date?
     public struct Holiday: Sendable { public let name: String; public let start: Date; public let end: Date }
     public struct Makeup: Sendable { public let date: Date; public let weekday: Int; public let parity: Int }
     public static var calendar: Calendar {
@@ -20,6 +22,7 @@ public struct AcademicTerm: Sendable {
               let start = CampusClock.date(term["sign_in"].text),
               let end = CampusClock.date(term["final"]["end"].text) else { return nil }
         self.start = start; self.end = end
+        teachingStart = teaching; finalStart = CampusClock.date(term["final"]["start"].text)
         let day = (Self.calendar.component(.weekday, from: teaching) + 5) % 7
         monday = Self.calendar.date(byAdding: .day, value: -day, to: teaching)!
         holidays = general["holidays"].rows.compactMap { row in
@@ -45,7 +48,7 @@ public struct AcademicTerm: Sendable {
         for holiday in holidays {
             var day = holiday.start
             while day <= holiday.end {
-                if contains(day), (Self.calendar.component(.weekday, from: day) + 5) % 7 + 1 == item.weekday, week(day) % 2 == item.parity { candidates.append(day) }
+                if day >= monday, day <= end, (Self.calendar.component(.weekday, from: day) + 5) % 7 + 1 == item.weekday, week(day) % 2 == item.parity { candidates.append(day) }
                 day = Self.calendar.date(byAdding: .day, value: 1, to: day)!
             }
         }
@@ -54,12 +57,12 @@ public struct AcademicTerm: Sendable {
     public func dates(weeks: [Int], weekday: Int) -> [Date] {
         var output = Set<Date>()
         for week in weeks {
-            guard let day = date(week: week, weekday: weekday), contains(day) else { continue }
+            guard let day = date(week: week, weekday: weekday), day >= monday, day <= end else { continue }
             // Preserve explicitly scheduled weekend classes, unless this is a makeup destination.
             if makeup.contains(where: { $0.date == day }) { continue }
-            if holiday(day) != nil || breaks.contains(CampusClock.format(day)) || finalWeeks.contains(week) {
+            if holiday(day) != nil || breaks.contains(CampusClock.format(day)) || finalWeeks.contains(week) || finalStart.map({ day >= $0 }) == true {
                 if let replacement = makeup.first(where: { $0.weekday == weekday && $0.parity == week % 2 && source(for: $0) == day }) { output.insert(replacement.date) }
-            } else { output.insert(day) }
+            } else if day >= teachingStart { output.insert(day) }
         }
         return output.sorted()
     }
