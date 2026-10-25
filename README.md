@@ -25,7 +25,7 @@
 
 **非学校官方产品，按非商业用途开发。** 仓库名称为 `sustech-mobile-ios`，安装后的软件名称为 **SUSTechMobile**。最低支持 **iOS / iPadOS 17**。
 
-[界面截图](#界面截图) · [当前功能](#当前功能) · [构建与安装](#构建与安装) · [功能规划](docs/FEATURE_ROADMAP.md) · [接口来源](docs/FEATURE_EVIDENCE.md)
+[下载最新版本](https://github.com/aNother1332/sustech-mobile-ios/releases/latest) · [历史版本](https://github.com/aNother1332/sustech-mobile-ios/releases) · [界面截图](#界面截图) · [当前功能](#当前功能) · [构建与安装](#构建与安装) · [功能规划](docs/FEATURE_ROADMAP.md) · [接口来源](docs/FEATURE_EVIDENCE.md)
 
 ## 当前状态
 
@@ -422,6 +422,14 @@ IC、CLE、体育场馆与书院场地入口；书院目录与日程为原生，
 </table>
 
 ## 构建与安装
+
+### 下载已构建安装包
+
+前往 [GitHub Releases 最新版本](https://github.com/aNother1332/sustech-mobile-ios/releases/latest)，展开 **Assets**，下载 `SUSTechMobile-unsigned.ipa` 和对应 `.sha256` 校验文件，使用 Windows iLoader 等侧载工具以本人 Apple 账号签名安装。无需自己编译或拥有 Mac。
+
+[全部历史版本](https://github.com/aNother1332/sustech-mobile-ios/releases)保留 0.1.0 至 0.7.0 的交付包、构建元数据和版本说明。早期同为 0.2.0 的 build 2 独立标记为 `v0.2.0-build.2`，`v0.2.0` 为后续 build 4。`with-share` / `with-extensions` 为可选实验扩展包，签名与 App Groups 需单独验证。
+
+### 自行编译
 
 需要 Xcode 26.0+ 编译，应用运行最低要求 iOS / iPadOS 17。没有第三方 iOS 包依赖，不需要 XcodeGen。
 
