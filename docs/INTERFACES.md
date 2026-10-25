@@ -8,6 +8,21 @@
 
 这是上游源码的行为参考，不是本项目对学校接口的实时验证记录。
 
+## 0.4.0 原生模块与验证边界
+
+| 模块 | 来源与接口 | 本版边界 |
+| --- | --- | --- |
+| 图书馆 | Android LibraryApi/LoansApi：Primo 公共 pnxs、CAS/suprimaExtLogin/loginJwtCache、priv/myaccount/loans 与 renew_loan | 专用双主机认证器；JWT Keychain；当前显示前 50 条在借；续借本人确认并回读 |
+| NCES | Android NcesApi 与 CLI nces：/api/v1/search、/course/{id}/reviews | 公开评价；隐藏/受限评价排除；分页和收藏 |
+| 候选课 | CLI TIS client/normalise：queryXkdqXnxq、queryKxrw | 上游 bxxk 范围只读；明确保留单双周，部分时段识别则禁用自动导入；不做选课 |
+| 修读进度 | CLI degree-progress：cjxqList、getXss、querybyyq、queryBxkqk、queryXflbyq、queryMkyq | code/content 包装、分页、来源错误独立显示；白名单字段展示，不推断毕业资格 |
+| 打印增强 | Android PMS Station/GetList、Scan/Get、Report/DetailPage | 扫描暂提供元数据；分享扩展 App Groups 需独立签名验证 |
+| 日程 | 既有 TIS/BB/IC/CLE/体育/Primo + EventKit/UserNotifications | 本地权限、日期锚点、有效预约过滤、账号代际和提醒隔离；不承诺后台实时 |
+| BB 提交 | CLI blackboard-submission 的 Original 个人文件表单和 v2 attempts/v1 files | fresh form、一次 POST、本人唯一新增 attempt 和文件名回读，未知结果保留本机待确认记录 |
+| 充值原生准备 | 学校 SPA cardInfo/Session 同源读取 | 未验证授权交接/下单分支/订单查询，真实下单关闭；外部入口保留 |
+
+本轮没有执行真实业务写入；协议审计与详细限制见 [0.4 说明](RELEASE_0_4.md) 与 [写入审计](WRITE_PROTOCOL_AUDIT_0_4.md)。
+
 ## 0.3.0 当前新增实现
 
 | 模块 | 协议与来源 | 当前边界 |
