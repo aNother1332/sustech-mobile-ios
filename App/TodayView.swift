@@ -49,7 +49,7 @@ struct TodayView: View {
                     HStack {
                         Label("今天的课程", systemImage: "calendar").font(.headline)
                         Spacer()
-                        if let week = store.teaching?.week {
+                        if let week = store.academicTerm.map({ $0.week(.now) }) ?? store.teaching?.week {
                             Text("第 \(week) 周").font(.caption).foregroundStyle(.secondary)
                         }
                     }
