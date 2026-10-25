@@ -29,7 +29,7 @@
 
 ## 当前状态
 
-当前功能版本为 **0.3.0 试用版**，新增统一会话保留、校园卡与消费曲线、空教室、校车、原生 PDF 打印、统一预约中心和 BB 课程折叠。构建与设备验收以 [验证记录](docs/BUILD_VALIDATION.md) 为准。
+当前功能版本为 **0.3.0 试用版**，新增统一会话保留、校园卡与消费曲线、空教室、校车、原生 PDF 打印、统一预约中心和 BB 课程折叠。本版已通过 **51 项 Swift 测试、7 项打包测试、iPhone/iPad 模拟器启动与 36 张截图，以及 arm64 真机目标编译**。构建与设备验收以 [验证记录](docs/BUILD_VALIDATION.md) 为准。
 
 **真实校园账号下的新接口和打印/预约写入仍待逐项真机验收。** 界面与编译通过不代表学校服务全部可用；未签名 IPA 仍需本地签名安装，Apple 证书申请问题不属于 App 内登录功能。
 
@@ -55,7 +55,7 @@
 
 ## 界面截图
 
-以下均为云端 iOS 模拟器中实际运行本项目得到的截图，使用演示数据或空登录表单，**不含真实学生账号、成绩或课程记录**。每组左侧为 iPhone，右侧为 iPad；点击图片可查看原图。截图展示当前界面，包括尚未同步的空状态，不用概念图代替已实现页面。
+以下均为云端 iOS 模拟器中实际运行本项目得到的截图，使用虚构的课程、任务、校园卡账单，或空登录表单与未连接状态，**不含真实学生账号、成绩或课程记录**。每组左侧为 iPhone，右侧为 iPad；点击图片可查看原图。共 36 张 0.3.0 截图，展示当前界面，包括尚未同步的空状态；IC/CLE/体育场馆截图不包含真实可约时段或订单。
 
 ### 今天
 
@@ -180,6 +180,114 @@
   <tr>
     <td><img src="docs/screenshots/iPhone-home.png" width="260" alt="iPhone 桌面图标"></td>
     <td><img src="docs/screenshots/iPad-home.png" width="520" alt="iPad 桌面图标"></td>
+  </tr>
+</table>
+
+### 校园卡与消费曲线
+
+虚构余额与四笔样例账单；三笔支出合计 25.80 元，一笔退款不计入消费曲线。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-card.png" width="260" alt="iPhone 校园卡与消费曲线"></td>
+    <td><img src="docs/screenshots/iPad-card.png" width="520" alt="iPad 校园卡与消费曲线"></td>
+  </tr>
+</table>
+
+### 空教室查询
+
+教学周、星期与节次筛选。演示模式不请求私人教务数据，目录为空。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-classrooms.png" width="260" alt="iPhone 空教室查询"></td>
+    <td><img src="docs/screenshots/iPad-classrooms.png" width="520" alt="iPad 空教室查询"></td>
+  </tr>
+</table>
+
+### 原生 PDF 打印
+
+文件导入、纸张、颜色、单双面、份数和页码参数。演示模式不能提交真实打印。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-printing.png" width="260" alt="iPhone 原生 PDF 打印"></td>
+    <td><img src="docs/screenshots/iPad-printing.png" width="520" alt="iPad 原生 PDF 打印"></td>
+  </tr>
+</table>
+
+### 统一预约中心
+
+IC、CLE 和新体育场馆入口，并保留原体育预约平台。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-reservations.png" width="260" alt="iPhone 统一预约中心"></td>
+    <td><img src="docs/screenshots/iPad-reservations.png" width="520" alt="iPad 统一预约中心"></td>
+  </tr>
+</table>
+
+### IC 研讨间
+
+未连接状态：房间与本人预约需登录后读取，不用虚构列表冒充学校可约资源。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-ic.png" width="260" alt="iPhone IC 研讨间"></td>
+    <td><img src="docs/screenshots/iPad-ic.png" width="520" alt="iPad IC 研讨间"></td>
+  </tr>
+</table>
+
+### CLE 语言辅导
+
+官方连接、日期与预约说明，以及原生时段和本人预约区域。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-cle.png" width="260" alt="iPhone CLE 语言辅导"></td>
+    <td><img src="docs/screenshots/iPad-cle.png" width="520" alt="iPad CLE 语言辅导"></td>
+  </tr>
+</table>
+
+### 体育场馆
+
+企业微信授权入口、场馆列表和本人订单区域；未连接状态不显示虚构场地。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-court.png" width="260" alt="iPhone 体育场馆"></td>
+    <td><img src="docs/screenshots/iPad-court.png" width="520" alt="iPad 体育场馆"></td>
+  </tr>
+</table>
+
+### BB 课程折叠
+
+将示例线性代数课程移入“已折叠课程”，主列表仅保留程序设计基础。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-blackboard-folded.png" width="260" alt="iPhone BB 课程折叠"></td>
+    <td><img src="docs/screenshots/iPad-blackboard-folded.png" width="520" alt="iPad BB 课程折叠"></td>
+  </tr>
+</table>
+
+### 折叠后的首页截止日期
+
+线性代数的示例任务已从首页排除，仅保留未折叠课程的截止日期。
+
+<table>
+  <tr><th>iPhone</th><th>iPad</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/iPhone-today-folded.png" width="260" alt="iPhone 折叠后的首页截止日期"></td>
+    <td><img src="docs/screenshots/iPad-today-folded.png" width="520" alt="iPad 折叠后的首页截止日期"></td>
   </tr>
 </table>
 

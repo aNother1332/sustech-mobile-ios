@@ -1,3 +1,23 @@
+# 0.3.0（构建 5）最终验收
+
+- 应用名称与 Bundle ID 保持 SUSTechMobile / `cn.sustech.community.daily`。
+- 源码提交：`b5a26d1d9aecbcaaf2a84785633a10a2e8cb499b`。
+- 成功构建：https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40117884086
+- 51 项 Swift 测试通过；7 项 Python IPA 打包测试通过。
+- 模拟器和 arm64 iPhoneOS 目标编译通过；最低系统 iOS/iPadOS 17，设备族 [1, 2]。
+- iPhone/iPad 共 36 张启动与界面截图完成；已查看新功能汇总图、消费曲线、办事入口和 BB 折叠前后效果。
+- 真实 CRA 公共校车接口只读探测：站点返回 33 项；到站返回包含 arrivals 的对象，字段与客户端一致。
+- IPA ZIP 完整性、Info.plist、图标资源、版本、构建号、架构元数据与 SHA256 已核对。
+- 当前 IPA：`D:/Altstore/App/SUSTechMobile-0.3.0/SUSTechMobile-unsigned.ipa`，1,187,985 字节。
+- SHA256：`eaaf18cb91d82c97f556b900e8ca0a70a04f3e25656d34824207b391587e4330`。
+- 本机日志：`D:/Altstore/Diagnostics/SUSTechMobile-0.3-final-build.log`。
+- 未使用真实校园/Apple 凭据进行云端验证，未提交真实打印或预约；尚待本人真机接口验收和本地重新签名安装。
+- 本轮不声称修复 iLoader 的 Apple 证书申请错误。
+
+操作与边界见 [0.3.0 说明](RELEASE_0_3.md)。下方版本路径为历史记录；按用户清理约定，旧版安装包不保证在本地保留。
+
+---
+
 # 0.2.0（构建 4）最终验收
 
 - 应用名称：SUSTechMobile；中央火炬图标，深青背景，无外围文字和圆环。
