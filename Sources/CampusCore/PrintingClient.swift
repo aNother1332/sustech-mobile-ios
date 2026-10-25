@@ -17,6 +17,15 @@ public struct PrintJob: Identifiable, Sendable {
 public struct PrintingClient: Sendable {
     public let http: ServiceHTTP
     public init(http: ServiceHTTP) { self.http = http }
+    /// Public device directory. Do not require a CAS session or mark the user logged in.
+    public static func publicStations() async throws -> [WireValue] {
+        try await PrintingClient(http: ServiceHTTP(origin: URL(string: "https://pms.sustech.edu.cn")!)).stations()
+    }
+    public func stations() async throws -> [WireValue] {
+        let value = try Self.unwrap(await http.json("/api/client/Station/GetList", query: ["timestamp": String(Int(Date.now.timeIntervalSince1970))]))
+        guard case .array = value else { throw CampusError.invalidResponse("打印站点") }
+        return value.rows
+    }
     public static func unwrap(_ value: WireValue) throws -> WireValue {
         guard value["code"].text == "0" else {
             let message = value["message"].text

@@ -8,7 +8,7 @@ struct ServiceSessionState {
     var note = ""
     var valid: Bool { status == .valid }
     var label: String {
-        switch status { case .unknown: "未检测"; case .checking: "检测中"; case .valid: "已连接"; case .expired: "需要登录"; case .unavailable: "暂无法验证" }
+        switch status { case .unknown: "未检测"; case .checking: "检测中"; case .valid: "已登录"; case .expired: "需要登录"; case .unavailable: "暂无法验证" }
     }
 }
 
@@ -16,7 +16,16 @@ extension CampusStore {
     func checkSession(_ service: CASService, force: Bool = false) async {
         guard mode == .live, !clearing, !authenticating else { return }
         let old = serviceSessions[service] ?? ServiceSessionState()
-        guard old.status != .checking else { return }
+        if old.status == .checking {
+            // A page may already be probing when the foreground task starts.
+            // Wait for that verdict so automatic login can observe actual expiry.
+            let revision = sessionRevision
+            for _ in 0..<120 {
+                guard serviceSessions[service]?.status == .checking, revision == sessionRevision else { return }
+                do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+            }
+            return
+        }
         if !force, let checked = old.checked, Date.now.timeIntervalSince(checked) < 120 { return }
         let version = sessionRevision
         let probe = UUID(); serviceProbeTokens[service] = probe
@@ -28,8 +37,7 @@ extension CampusStore {
         do {
             switch service {
             case .teaching:
-                let me = try await http.json("/user/me")
-                guard !me["userName"].text.isEmpty else { throw CampusError.invalidResponse("教务本人身份") }
+                try await SchoolSessionProbe.teaching(http)
             case .blackboard:
                 let me = try await http.json("/learn/api/public/v1/users/me")
                 guard !me["id"].text.isEmpty else { throw CampusError.signInRequired }
@@ -70,10 +78,10 @@ struct SessionBadge: View {
                 Text(value.label)
                 if let checked = value.checked { Text(checked, style: .time).foregroundStyle(.secondary) }
                 Spacer(minLength: 4)
-                if value.status == .expired { NativeLoginButton(service: service) }
-                if value.status == .unavailable { Button("重试") { Task { await store.checkSession(service, force: true) } } }
+                NativeLoginButton(service: service)
             }.font(.caption).foregroundStyle(value.valid ? Color.campusGreen : .secondary)
             .task { await store.checkSession(service) }
+            if value.status == .unavailable, !value.note.isEmpty { Text(value.note).font(.caption2).foregroundStyle(.secondary) }
         }
     }
 }

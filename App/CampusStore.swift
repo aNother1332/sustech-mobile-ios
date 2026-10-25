@@ -36,6 +36,9 @@ final class CampusStore {
         writing = true; return true
     }
     func endWrite() { writing = false }
+    var automaticLoginMessage: String?
+    var resumingConnections = false
+    var lastAutomaticLogin: Date?
     private(set) var authenticationMessage: String?
     private(set) var challengeService: SchoolService?
     private(set) var cacheMessage: String?
@@ -114,7 +117,7 @@ final class CampusStore {
         else { restore() }
     }
 
-    func signIn(username: String, password: String) async {
+    func signIn(username: String, password: String, remember: Bool = false, automatic: Bool = false) async {
         guard !authenticating, !clearing, !writing, mode == .live else { return }
         authenticating = true
         defer { authenticating = false; if Task.isCancelled { authenticationMessage = "登录已取消。" } }
@@ -141,6 +144,8 @@ final class CampusStore {
         }
         guard generation == version, !Task.isCancelled else { return }
         let client = CASClient()
+        var authenticated = false
+        var stopAutomatic = false
         var results: [String] = []
         for service in [CASService.teaching, .blackboard] {
             guard generation == version, !Task.isCancelled else { return }
@@ -149,6 +154,7 @@ final class CampusStore {
             do {
                 let cookies = try await client.signIn(service: service, username: username, password: password)
                 guard generation == version, !Task.isCancelled else { return }
+                authenticated = true
                 await retainCookies(cookies, version: version)
                 guard generation == version else { return }
                 owner = LocalRepository.identity(username)
@@ -172,11 +178,23 @@ final class CampusStore {
                     challengeService = service == .teaching ? .teaching : .blackboard
                 }
                 // A rejection must not submit the same password again to another service.
-                if let error = error as? CASFailure, [.rejected, .challenge, .missingForm].contains(error) { break }
-                if error as? CampusError == .rateLimited { break }
+                if let error = error as? CASFailure, [.rejected, .challenge, .missingForm].contains(error) { stopAutomatic = true; break }
+                if error as? CampusError == .rateLimited { stopAutomatic = true; break }
             }
         }
         guard generation == version else { return }
+        if authenticated, remember {
+            do { try CredentialVault.save(RememberedSchoolAccount(username: username, password: password), key: "school-auto-login") }
+            catch { results.append("已登录，但账号密码未能存入钥匙串；请解锁设备后重试。") }
+        }
+        if !automatic, !remember { forgetSchoolAccount() }
+        if stopAutomatic {
+            UserDefaults.standard.set(true, forKey: "school-auto-login-paused")
+            automaticLoginMessage = "自动登录已暂停，请手动登录核对密码或完成学校验证。"
+        } else if authenticated {
+            UserDefaults.standard.removeObject(forKey: "school-auto-login-paused")
+            automaticLoginMessage = remember ? "已保存至本机钥匙串；登录态失效时自动登录。" : nil
+        } else if automatic { automaticLoginMessage = "自动登录未完成，稍后可手动重试。" }
         authenticationMessage = results.joined(separator: "\n")
         persist()
     }
@@ -374,6 +392,7 @@ final class CampusStore {
     func clearLocalSession() async {
         if let root = CampusWidgetBridge.root { try? FileManager.default.removeItem(at: root.appendingPathComponent("CampusWidget.json")) }; WidgetCenter.shared.reloadAllTimelines()
         guard !clearing, !writing else { return }
+        forgetSchoolAccount()
         clearing = true; generation += 1
         let requests = await UNUserNotificationCenter.current().pendingNotificationRequests()
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: requests.filter { $0.identifier.hasPrefix("campus-") }.map(\.identifier))

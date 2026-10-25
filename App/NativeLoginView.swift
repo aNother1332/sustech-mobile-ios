@@ -9,13 +9,15 @@ struct NativeLoginButton: View {
         let status = store.serviceSessions[service] ?? ServiceSessionState()
         Group {
             if store.mode == .demo { Text("演示模式").font(.caption).foregroundStyle(.secondary) }
-            else if status.valid { Label("已连接", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Color.campusGreen) }
-            else if status.status == .checking || status.status == .unknown {
-                ProgressView("检测登录态").font(.caption)
-            } else if status.status == .expired {
-                Button("登录学校账号", systemImage: "person.badge.key") { presented = true }.buttonStyle(.borderedProminent)
-            } else {
-                Button("重新检测连接", systemImage: "arrow.clockwise") { Task { await store.checkSession(service, force: true) } }
+            else if status.status == .checking { ProgressView("检测登录态").font(.caption) }
+            else {
+                Menu {
+                    Button(status.valid ? "重新登录 / 切换账号" : "登录学校账号") { presented = true }
+                    Button("重新检测连接") { Task { await store.checkSession(service, force: true) } }
+                } label: {
+                    Label(status.valid ? "已登录" : (status.status == .expired ? "登录学校账号" : "登录 / 检测"), systemImage: status.valid ? "checkmark.circle.fill" : "person.badge.key")
+                        .font(.caption)
+                }
             }
         }
         .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
@@ -33,6 +35,7 @@ struct NativeLoginView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var username = ""
     @State private var password = ""
+    @State private var remember = false
     @State private var loginTask: Task<Void, Never>?
     @State private var portal: SchoolService?
 
@@ -43,17 +46,18 @@ struct NativeLoginView: View {
                     TextField("校园账号 / 学号", text: $username)
                         .textContentType(.username).textInputAutocapitalization(.never).autocorrectionDisabled()
                     SecureField("密码", text: $password).textContentType(.password)
+                    Toggle("记住账号密码并自动登录", isOn: $remember)
                     Button {
                         let account = username.trimmingCharacters(in: .whitespacesAndNewlines)
                         let secret = password
                         password = ""
-                        loginTask = Task { await store.signIn(username: account, password: secret) }
+                        loginTask = Task { await store.signIn(username: account, password: secret, remember: remember); await store.checkSchoolSessions(force: true) }
                     } label: {
                         if store.authenticating { ProgressView("正在连接学校…") } else { Text("登录并连接教务 / Blackboard") }
                     }.disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || store.authenticating || store.clearing || store.writing)
                 }
                 Section {
-                    Text("账号密码由本机通过 HTTPS 直接发送给学校 CAS。本版不保存密码，也不会自动反复登录。同账号重新认证保留已有会话；换号时清除旧账号数据。")
+                    Text("账号密码由本机通过 HTTPS 直接发送给学校 CAS。开启后，账号密码仅保存于本机 iOS 钥匙串，不上传到开发者服务器。打开 App 时优先复用登录态，确认失效后自动登录；遇到验证码或密码错误会暂停，需手动处理。关闭选项并登录会删除已记住的密码。")
                         .font(.footnote).foregroundStyle(.secondary)
                     if let message = store.authenticationMessage { Text(message).textSelection(.enabled) }
                     if store.authenticating { Button("取消登录", role: .cancel) { loginTask?.cancel() } }
@@ -70,6 +74,7 @@ struct NativeLoginView: View {
             .sheet(item: $portal) { SchoolBrowser(service: $0) }
         }
         .interactiveDismissDisabled(store.authenticating)
+        .onAppear { username = store.rememberedUsername ?? ""; remember = store.remembersSchoolAccount }
         .onDisappear { password = ""; loginTask?.cancel() }
     }
 }

@@ -10,7 +10,7 @@ struct AccountView: View {
         List {
             Section {
                 CampusHero(eyebrow: "MY CAMPUS", title: "SUSTechMobile", subtitle: "账户与偏好", symbol: "person.crop.circle.fill")
-                Text("iPhone 与 iPad · 非官方校园工具\n0.6.0 试用版 · 学校接口需真机核对。")
+                Text("iPhone 与 iPad · 非官方校园工具\n0.6.1 试用版 · 学校接口需真机核对。")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Section("数据模式") {
@@ -23,6 +23,11 @@ struct AccountView: View {
             Section("连接学校服务") {
                 HStack { Text("教务"); Spacer(); NativeLoginButton(service: .teaching) }
                 HStack { Text("Blackboard"); Spacer(); NativeLoginButton(service: .blackboard) }
+                if let username = store.rememberedUsername {
+                    LabeledContent("已记住账号", value: username)
+                    Button("关闭自动登录并删除记住的密码", role: .destructive) { store.forgetSchoolAccount() }.disabled(store.authenticating)
+                }
+                if let message = store.automaticLoginMessage { Text(message).font(.caption).foregroundStyle(.secondary) }
                 Button("检测全部连接") { Task { await store.checkSchoolSessions(force: true) } }
                 DisclosureGroup("网页登录备用") {
                     Button("教务学校页面") { portal = .teaching }
@@ -31,7 +36,7 @@ struct AccountView: View {
             }
             Section("本机数据") {
                 if let message = store.cacheMessage { Text(message).foregroundStyle(.orange) }
-                DetailNote(title: "存储与隐私", text: "会话和文件保存在本机，不保存登录密码，没有聚合服务器或统计 SDK。退出时清除学校缓存与下载。")
+                DetailNote(title: "存储与隐私", text: "会话和文件保存在本机，账号密码仅在你选择记住时存入本机钥匙串，没有聚合服务器或统计 SDK。退出时清除学校缓存与下载。")
                     .font(.callout).foregroundStyle(.secondary)
                 Button(store.clearing ? "正在清除…" : "清除本机会话、离线数据与下载文件", role: .destructive) { confirmClear = true }
                     .disabled(store.clearing || store.writing)
@@ -54,7 +59,7 @@ struct AccountView: View {
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
         .confirmationDialog("清除本机会话、缓存和下载文件？", isPresented: $confirmClear, titleVisibility: .visible) {
             Button("清除并退出本机会话", role: .destructive) { Task { await store.clearLocalSession() } }
-        } message: { Text("已下载课件也会移除。之后需要重新登录；此操作不撤销学校服务器上的会话。") }
+        } message: { Text("已下载课件也会移除。记住的账号密码也会删除。之后需要重新登录；此操作不撤销学校服务器上的会话。") }
     }
 }
 

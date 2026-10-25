@@ -22,12 +22,17 @@ struct BusMapView: View {
     @State private var includeInactive = false
     @State private var selectedVehicle: String?
     @State private var selectedStop: BusStop?
-    @State private var camera: MapCameraPosition = .region(Self.campus)
+    @State private var camera: MapCameraPosition = .automatic
     @State private var busy = false
     @State private var fetched: Date?
     @State private var message: String?
     private let client = BusClient(http: ServiceHTTP(origin: URL(string: "https://buseta.sustcra.com")!))
-    private static let campus = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 22.60308, longitude: 113.99373), span: MKCoordinateSpan(latitudeDelta: 0.020, longitudeDelta: 0.018))
+    @AppStorage("bus-mainland-map-alignment") private var mainlandMap = true
+    private var campus: MKCoordinateRegion { MKCoordinateRegion(center: coordinate(BusCoordinate(latitude: 22.60308, longitude: 113.99373)!), span: MKCoordinateSpan(latitudeDelta: 0.020, longitudeDelta: 0.018)) }
+    private func coordinate(_ source: BusCoordinate) -> CLLocationCoordinate2D {
+        let point = mainlandMap ? source.gcj02 : source
+        return CLLocationCoordinate2D(latitude: point.latitude, longitude: point.longitude)
+    }
     private var shownRoutes: [BusMapRoute] { routes.filter { routeID.isEmpty || $0.id == routeID } }
     private var shownVehicles: [BusVehicle] { vehicles.filter { (routeID.isEmpty || $0.routeID == routeID) && (includeInactive || $0.operating) } }
     private var shownStops: [BusStop] {
@@ -40,26 +45,30 @@ struct BusMapView: View {
             HStack {
                 Picker("线路", selection: $routeID) { Text("全部线路").tag(""); ForEach(routes) { Text($0.name).tag($0.id) } }.labelsHidden()
                 Spacer()
-                Button { camera = .region(Self.campus) } label: { Image(systemName: "viewfinder") }.accessibilityLabel("返回校园范围")
+                Menu {
+                    Toggle("国内底图对齐", isOn: $mainlandMap)
+                    Text("国内底图开启；使用海外地图且偏移时关闭。")
+                } label: { Image(systemName: "map") }.accessibilityLabel("地图对齐设置")
+                Button { camera = .region(campus) } label: { Image(systemName: "viewfinder") }.accessibilityLabel("返回校园范围")
                 Button { Task { await load(staticData: true) } } label: { if busy { ProgressView() } else { Image(systemName: "arrow.clockwise") } }.disabled(busy).accessibilityLabel("刷新地图与车辆")
             }.padding(.horizontal, 12).padding(.vertical, 5)
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 Map(position: $camera) {
                     ForEach(shownRoutes) { route in
                         ForEach(route.directions) { direction in
-                            if direction.points.count > 1 { MapPolyline(coordinates: direction.points.map(\.mapCoordinate)).stroke(routeColor(route.id), lineWidth: 4) }
+                            if direction.points.count > 1 { MapPolyline(coordinates: direction.points.map { coordinate($0) }).stroke(routeColor(route.id), lineWidth: 4) }
                         }
                     }
                     ForEach(shownStops) { stop in
-                        if let lat = stop.latitude, let lon = stop.longitude {
-                            Annotation(stop.name, coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
+                        if let lat = stop.latitude, let lon = stop.longitude, let point = BusCoordinate(latitude: lat, longitude: lon) {
+                            Annotation(stop.name, coordinate: coordinate(point)) {
                                 Button { selectedStop = stop } label: { Image(systemName: "mappin.circle.fill").font(.title3).foregroundStyle(Color.campusGreen).background(.background, in: Circle()) }
                                     .accessibilityLabel("站点：" + stop.name)
                             }.annotationTitles(.hidden)
                         }
                     }
                     ForEach(shownVehicles) { vehicle in
-                        Annotation(vehicle.name, coordinate: vehicle.coordinate.mapCoordinate) {
+                        Annotation(vehicle.name, coordinate: coordinate(vehicle.coordinate)) {
                             Button { selectedVehicle = vehicle.id } label: {
                                 VStack(spacing: 0) {
                                     if let heading = vehicle.heading { Image(systemName: "arrowtriangle.up.fill").font(.caption2).rotationEffect(.degrees(heading)) }
@@ -91,6 +100,8 @@ struct BusMapView: View {
                 Text("车辆位置以上报时间为准，读取成功不代表 GPS 刚刚更新。底图由 Apple 地图提供。").font(.caption2).foregroundStyle(.secondary)
             }.padding(10).background(Color(uiColor: .secondarySystemGroupedBackground))
         }
+        .onAppear { camera = .region(campus) }
+        .onChange(of: mainlandMap) { _, _ in camera = .region(campus) }
         .task(id: store.mode.rawValue + String(includeInactive)) {
             await load(staticData: routes.isEmpty || stops.isEmpty)
             while !Task.isCancelled { do { try await Task.sleep(for: .seconds(10)) } catch { return }; if phase == .active, store.mode == .live { await load(staticData: routes.isEmpty || stops.isEmpty) } }
@@ -154,5 +165,3 @@ struct BusMapView: View {
         #endif
     }
 }
-
-private extension BusCoordinate { var mapCoordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: latitude, longitude: longitude) } }

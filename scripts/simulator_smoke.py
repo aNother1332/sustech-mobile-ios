@@ -57,6 +57,8 @@ def main():
                 ("reviews", ["--smoke-demo", "--smoke-reviews"]),
                 ("degree", ["--smoke-demo", "--smoke-degree"]),
                 ("classrooms", ["--smoke-demo", "--smoke-classrooms"]),
+                ("print-stations", ["--smoke-demo", "--smoke-print-stations"]),
+                ("college", ["--smoke-demo", "--smoke-college"]),
                 ("printing", ["--smoke-demo", "--smoke-printing"]),
                 ("reservations", ["--smoke-demo", "--smoke-reservations"]),
                 ("ic", ["--smoke-demo", "--smoke-ic"]),

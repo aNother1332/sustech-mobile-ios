@@ -12,9 +12,9 @@ struct ReservationCenterView: View {
                 NavigationLink { CourtReservationView().id(store.sessionRevision) } label: { Label("体育场馆 · reservation", systemImage: "sportscourt") }
             }
             Section("其他场馆入口") {
-                NavigationLink { SchoolBrowser(service: .booking) } label: { Label("原体育预约平台", systemImage: "globe") }
+                NavigationLink { CollegeBookingView().id(store.sessionRevision) } label: { Label("书院与其他场地 · 原生查询", systemImage: "building.2") }
                 Link("体育场馆官方预约页面", destination: URL(string: "https://reservation.sustech.edu.cn")!)
-                Text("学校存在多个预约平台。新体育场馆目录从 reservation 平台读取；原平台入口一并保留。").font(.caption).foregroundStyle(.secondary)
+                Text("体育场馆与书院场地使用不同平台，授权分别保留。").font(.caption).foregroundStyle(.secondary)
             }
         }.navigationTitle("预约中心").navigationBarTitleDisplayMode(.inline)
     }

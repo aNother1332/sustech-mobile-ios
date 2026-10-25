@@ -16,8 +16,8 @@ struct PrintExtrasView: View {
     var body: some View {
         List {
             Section {
-                SessionBadge(service: .printing)
-                Picker("查询", selection: $tab) { Text("打印站点").tag(0); Text("扫描任务").tag(1); Text("用量").tag(2) }.pickerStyle(.segmented)
+                if tab != 0 { SessionBadge(service: .printing) }
+                Picker("查询", selection: $tab) { Text("打印站点").tag(0); Text("扫描任务").tag(1); Text("用量").tag(2) }.pickerStyle(.segmented).disabled(busy)
                 if tab == 2 {
                     DatePicker("开始", selection: $begin, displayedComponents: .date); DatePicker("结束", selection: $end, displayedComponents: .date)
                     Picker("类型", selection: $type) { Text("打印").tag(1); Text("扫描").tag(2); Text("复印").tag(3) }
@@ -25,6 +25,7 @@ struct PrintExtrasView: View {
                 Button("刷新") { Task { page = 1; await load() } }.disabled(busy || store.mode == .demo)
                 if busy { ProgressView() }; ServiceMessage(message: message)
             }
+            if rows.isEmpty && !busy { Text(tab == 0 ? "暂无站点数据，请下拉刷新。" : "暂无记录").foregroundStyle(.secondary) }
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 VStack(alignment: .leading, spacing: 3) {
                     if tab == 0 {
@@ -65,8 +66,20 @@ struct PrintExtrasView: View {
         await store.absorb(http, revision: version)
     }
     private func load() async {
+        if store.mode == .demo {
+            rows = tab == 0 ? [.object(["szName": .string("示例教学楼 · 彩色打印"), "szStatInfo": .string("虚构示例设备"), "dwStatus": .integer(1)]), .object(["szName": .string("示例图书馆 · 黑白打印"), "szStatInfo": .string("虚构示例设备"), "dwStatus": .integer(2)])] : []
+            message = "演示站点，不代表真实设备状态。"; return
+        }
         guard !busy, store.mode == .live, begin <= end else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let selected = tab
+        if selected == 0 {
+            do {
+                let stations = try await PrintingClient.publicStations()
+                guard version == store.sessionRevision, selected == tab else { return }
+                rows = stations; message = "共 \(stations.count) 个站点 · " + Date.now.formatted(date: .omitted, time: .shortened)
+            } catch { if version == store.sessionRevision, selected == tab { message = error.localizedDescription } }
+            return
+        }
         let http = await store.serviceHTTP(.printing)
         do {
             let response: WireValue

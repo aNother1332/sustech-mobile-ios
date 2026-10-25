@@ -33,6 +33,8 @@ struct SUSTechApp: App {
         else if arguments.contains("--smoke-widgets") { NavigationStack { WidgetSettingsView() } }
         else if arguments.contains("--smoke-card") { NavigationStack { CardView() } }
         else if arguments.contains("--smoke-classrooms") { NavigationStack { ClassroomView() } }
+        else if arguments.contains("--smoke-print-stations") { NavigationStack { PrintExtrasView() } }
+        else if arguments.contains("--smoke-college") { NavigationStack { CollegeBookingView() } }
         else if arguments.contains("--smoke-printing") { NavigationStack { PrintingView() } }
         else if arguments.contains("--smoke-reservations") { NavigationStack { ReservationCenterView() } }
         else if arguments.contains("--smoke-ic") { NavigationStack { ICReservationView() } }
@@ -51,8 +53,8 @@ struct SUSTechApp: App {
                 .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("--smoke-dark") ? .dark : nil)
                 .transformEnvironment(\.dynamicTypeSize) { value in if ProcessInfo.processInfo.arguments.contains("--smoke-large") { value = .accessibility2 } }
                 .environment(\.defaultMinListRowHeight, 36)
-                .task { await store.checkSchoolSessions() }
-                .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.checkSchoolSessions() } } }
+                .task { await store.resumeSchoolConnections() }
+                .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.resumeSchoolConnections() } } }
                 .tint(.campusGreen)
                 .onAppear {
                     #if DEBUG
@@ -61,8 +63,8 @@ struct SUSTechApp: App {
                 }
                 .sheet(isPresented: $showLogin) { NativeLoginView().environment(store)
                 .environment(\.defaultMinListRowHeight, 36)
-                .task { await store.checkSchoolSessions() }
-                .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.checkSchoolSessions() } } } }
+                .task { await store.resumeSchoolConnections() }
+                .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.resumeSchoolConnections() } } } }
         }
     }
 }

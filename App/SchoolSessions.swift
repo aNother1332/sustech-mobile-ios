@@ -4,7 +4,7 @@ import Security
 import WebKit
 
 /// One on-device cookie store for native clients and embedded school pages.
-/// Session cookies are kept in Keychain; passwords are never retained.
+/// Session cookies are kept in Keychain; optional remembered CAS credentials use a separate Keychain entry.
 @MainActor
 final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     let websiteDataStore = WKWebsiteDataStore.default()
