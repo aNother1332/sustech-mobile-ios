@@ -9,7 +9,7 @@ struct BBCourseView: View {
     @State private var onlyPending = false
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 10) {
                 Picker("课程内容", selection: $tab) {
                     Text("任务").tag(0); Text("公告").tag(1); Text("课件").tag(2)
                 }.pickerStyle(.segmented)
@@ -45,8 +45,9 @@ struct BBCourseView: View {
                         }
                     } else { ContentUnavailableView("课程尚未读取", systemImage: "books.vertical", description: Text("点击刷新以读取本人任务和课程公告。")) }
                 }
-            }.padding(20).frame(maxWidth: 860).frame(maxWidth: .infinity)
+            }.padding(12).frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }
+        .refreshable { await store.refreshCourse(course) }
         .navigationTitle(course.name).navigationBarTitleDisplayMode(.inline)
         .background(Color(uiColor: .systemGroupedBackground))
         .task { if store.courseDetails[course.id] == nil { await store.refreshCourse(course) } }
@@ -57,14 +58,16 @@ struct BBTaskView: View {
     let task: LearningDeadline
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 10) {
                 DeadlineRow(deadline: task)
                 Text(task.statusNote).font(.callout).foregroundStyle(.secondary)
                 Divider()
                 Text(task.details.isEmpty ? "没有读取到任务正文，请到学校课程页面核对完整要求。" : task.details).textSelection(.enabled)
                 Link("在学校课程页面核对", destination: SchoolService.blackboard.portalURL)
-                Text("本版只读取任务，不提交作业。学校浏览器会话可能与应用不同。").font(.caption).foregroundStyle(.secondary)
-            }.padding(20).frame(maxWidth: 860).frame(maxWidth: .infinity)
+                NavigationLink("原生文件作业提交") { BBSubmissionView(task: task).id(task.courseID) }
+                if let due = task.due { NavigationLink("日历与提醒") { EventActionView(title: task.title, start: due, end: due.addingTimeInterval(900), key: "bb-" + task.id, courseID: task.courseID) } }
+                Text("个人文件作业可进入原生提交；其他类型使用学校页面。").font(.caption).foregroundStyle(.secondary)
+            }.padding(12).frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }.navigationTitle("任务详情").navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -87,7 +90,7 @@ struct BBContentList: View {
                 ForEach(rows) { item in
                     NavigationLink {
                         if item.hasChildren {
-                            ScrollView { BBContentList(course: course, parent: item.id).padding(20) }
+                            ScrollView { BBContentList(course: course, parent: item.id).padding(12) }
                                 .navigationTitle(item.title).navigationBarTitleDisplayMode(.inline)
                         } else { BBContentView(course: course, item: item) }
                     } label: {
@@ -120,7 +123,7 @@ struct BBContentView: View {
     @State private var preview: OfflineFile?
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text(item.title).font(.title2.bold())
                 if !item.body.isEmpty { Text(item.body).textSelection(.enabled) }
                 Button("读取可下载附件") { Task { await load() } }.disabled(loading || store.clearing || store.authenticating)
@@ -151,7 +154,7 @@ struct BBContentView: View {
                 }
                 NavigationLink("查看全部离线文件") { OfflineDownloadsView() }
                 Link("在学校页面查看完整内容", destination: SchoolService.blackboard.portalURL)
-            }.padding(20).frame(maxWidth: 860).frame(maxWidth: .infinity)
+            }.padding(12).frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }.navigationTitle("课件详情").navigationBarTitleDisplayMode(.inline)
             .sheet(item: $preview) { OfflinePreview(file: $0) }
     }
@@ -188,6 +191,7 @@ struct OfflineDownloadsView: View {
 }
 
 struct OfflinePreview: View {
+    @State private var printing = false
     let file: OfflineFile
     @Environment(CampusStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -195,8 +199,9 @@ struct OfflinePreview: View {
         NavigationStack {
             DocumentPreview(url: store.fileURL(file))
                 .navigationTitle(file.name).navigationBarTitleDisplayMode(.inline)
+                .sheet(isPresented: $printing) { NavigationStack { PrintingView(initialURL: store.fileURL(file)) } }
                 .toolbar {
-                    ToolbarItem(placement: .topBarLeading) { ShareLink(item: store.fileURL(file)) }
+                    ToolbarItem(placement: .topBarLeading) { HStack { ShareLink(item: store.fileURL(file)); if file.name.lowercased().hasSuffix(".pdf") { Button("校园打印", systemImage: "printer") { printing = true } } } }
                     ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } }
                 }
         }

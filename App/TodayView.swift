@@ -15,22 +15,24 @@ struct TodayView: View {
         Array(store.deadlines.filter { deadline in
             guard let due = deadline.due else { return true }
             return due >= .now
-        }.prefix(3))
+        }.prefix(8))
     }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(Date.now, format: .dateTime.month(.wide).day().weekday(.wide))
                         .font(.subheadline).foregroundStyle(.secondary)
-                    Text("校园日常，一处就好。")
-                        .font(.largeTitle.bold()).minimumScaleFactor(0.7)
-                    Text("课程、任务与校园服务")
+                    Text("SUSTechMobile")
+                        .font(.title2.bold()).minimumScaleFactor(0.7)
+                    Text("学习与办事")
                         .foregroundStyle(.secondary)
                 }.padding(.vertical, 8)
 
                 ModeNotice()
+                SessionBadge()
+                HStack { NavigationLink("我的日程") { AgendaView().id(store.sessionRevision) }; Spacer(); NavigationLink("图书馆") { LibraryView().id(store.sessionRevision) }; NavigationLink("排课") { PlannerView() } }.font(.subheadline)
 
                 if store.mode == .live, store.teaching == nil, store.blackboard == nil {
                     CampusCard {
@@ -67,7 +69,7 @@ struct TodayView: View {
 
                 CampusCard {
                     Label("近期截止日期", systemImage: "clock").font(.headline)
-                    Text("汇总已同步课程的任务；请进入 Blackboard 逐课程刷新，未知状态请到学校页面核对。")
+                    Text("已同步课程 · 折叠课程不参与提醒")
                         .font(.caption).foregroundStyle(.secondary)
                     if upcoming.isEmpty {
                         Text(store.blackboard == nil ? "连接 Blackboard 后查看。" : "本次读取未发现近期截止日期；不代表没有其他任务。")
@@ -78,7 +80,7 @@ struct TodayView: View {
                     if store.mode == .live {
                         ConnectionNotice(state: store.blackboardState).font(.caption)
                         HStack {
-                            Button("登录 BB") { portal = .blackboard }
+                            NativeLoginButton(service: .blackboard)
                             Spacer()
                             Button("同步 BB") { Task { await store.refreshBlackboard() } }
                                 .disabled(store.blackboardState.isLoading || store.clearing)
@@ -86,9 +88,10 @@ struct TodayView: View {
                     }
                 }
             }
-            .frame(maxWidth: 860).padding(20).frame(maxWidth: .infinity)
+            .frame(maxWidth: 1100).padding(12).frame(maxWidth: .infinity)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .refreshable { await store.refreshTeaching(); await store.refreshBlackboard() }
         .navigationTitle("今天")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $portal) { SchoolBrowser(service: $0) }

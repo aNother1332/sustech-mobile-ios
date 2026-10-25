@@ -54,7 +54,7 @@ struct ICReservationView: View {
                     }
                 }
             }
-        }.navigationTitle("IC 研讨间").sheet(isPresented: $portal) { SchoolBrowser(service: .rooms) }
+        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("IC 研讨间").sheet(isPresented: $portal) { SchoolBrowser(service: .rooms) }
         .confirmationDialog("确认取消这项预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
             if let order = cancelling { Button("取消 \(order.title)", role: .destructive) { Task { await cancel(order) } } }
         }
@@ -150,7 +150,7 @@ struct CLEReservationView: View {
                     }
                 }
             }
-        }.navigationTitle("CLE 语言辅导").sheet(isPresented: $portal) { SchoolBrowser(service: .cle) }
+        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("CLE 语言辅导").sheet(isPresented: $portal) { SchoolBrowser(service: .cle) }
         .onChange(of: day) { _, _ in slots = [] }
         .confirmationDialog("确认预约该辅导？", isPresented: Binding(get: { selected != nil }, set: { if !$0 { selected = nil } }), titleVisibility: .visible) {
             if let slot = selected { Button("提交一次") { Task { await book(slot) } } }

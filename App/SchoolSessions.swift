@@ -86,7 +86,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     }
     func clear() async {
         clearing = true; revision += 1; restored = true
-        cleID = ""; cleName = ""; CredentialVault.delete("court"); CredentialVault.delete("cle-identity")
+        cleID = ""; cleName = ""; CredentialVault.delete("library-token"); CredentialVault.delete("recharge-token"); CredentialVault.delete("court"); CredentialVault.delete("cle-identity")
         restoration?.cancel(); restoration = nil; restoring = false
         for task in connecting.values { task.cancel() }; connecting = [:]
         SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: vault] as CFDictionary)

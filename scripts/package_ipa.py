@@ -46,7 +46,7 @@ def device_binary(path: Path) -> None:
         raise ValueError("Executable is not an iOS device build (simulator apps cannot be sideloaded)")
 
 
-def package(app: Path, output: Path, commit: str = "local") -> dict:
+def package(app: Path, output: Path, commit: str = "local", include_extensions: bool = True) -> dict:
     app = app.resolve(strict=True)
     if not app.is_dir() or app.suffix != ".app":
         raise ValueError("--app must be an existing .app directory")
@@ -70,10 +70,11 @@ def package(app: Path, output: Path, commit: str = "local") -> dict:
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "x", compression=zipfile.ZIP_DEFLATED) as archive:
         for path in files:
-            if path.is_file():
+            if path.is_file() and (include_extensions or "PlugIns" not in path.relative_to(app).parts):
                 archive.write(path, (Path("Payload") / app.name / path.relative_to(app)).as_posix())
     metadata = {
         "file": output.name,
+        "share_extension": include_extensions and (app / "PlugIns").exists(),
         "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "commit": commit,
         "bundle_identifier": info["CFBundleIdentifier"],
@@ -93,6 +94,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--without-extensions", action="store_true")
     parser.add_argument("--commit", default="local")
     args = parser.parse_args()
-    print(json.dumps(package(args.app, args.output, args.commit), ensure_ascii=False, indent=2))
+    print(json.dumps(package(args.app, args.output, args.commit, not args.without_extensions), ensure_ascii=False, indent=2))

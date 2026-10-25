@@ -9,10 +9,10 @@ struct CampusCard<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) { content }
+        VStack(alignment: .leading, spacing: 8) { content }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22))
+            .padding(12)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -39,7 +39,7 @@ struct ConnectionNotice: View {
         case .loading:
             ProgressView("正在读取学校服务…")
         case .failed(let message):
-            Label(message + " 如仍显示数据，则为最近一次成功同步的缓存，请留意更新时间。", systemImage: "exclamationmark.triangle")
+            Label(message, systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.orange)
         case .cached(let date):
             VStack(alignment: .leading, spacing: 4) {
@@ -71,7 +71,7 @@ struct MeetingRow: View {
                 Text("第 \(meeting.firstPeriod)").font(.headline)
                 Text("至 \(meeting.lastPeriod) 节").font(.caption).foregroundStyle(.secondary)
             }.frame(width: 64, alignment: .leading).foregroundStyle(Color.campusGreen)
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(meeting.name).font(.headline)
                 if !meeting.details.isEmpty { Text(meeting.details).font(.caption).foregroundStyle(.secondary) }
                 if let snapshot = store.teaching {
@@ -90,7 +90,7 @@ struct DeadlineRow: View {
     let deadline: LearningDeadline
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(deadline.course).font(.caption).foregroundStyle(.secondary)
             Text(deadline.title).font(.headline)
             if let due = deadline.due {
@@ -113,7 +113,7 @@ struct PortalActions: View {
 
     var body: some View {
         HStack {
-            if [.teaching, .blackboard].contains(service) { NativeLoginButton() }
+            if [.teaching, .blackboard].contains(service) { NativeLoginButton(service: service == .blackboard ? .blackboard : .teaching) }
             Button("学校网页", action: open).buttonStyle(.bordered)
             Spacer()
             Link(destination: service.portalURL) {

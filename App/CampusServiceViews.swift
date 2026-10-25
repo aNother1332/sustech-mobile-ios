@@ -28,6 +28,7 @@ struct CardView: View {
         List {
             Section {
                 ModeNotice()
+                SessionBadge(service: .card)
                 if let account {
                     Text(account.balance).font(.largeTitle.bold()).foregroundStyle(Color.campusGreen)
                     Text("校园卡余额").font(.caption)
@@ -61,7 +62,7 @@ struct CardView: View {
                 }
             }
             Section { Button("打开学校校园卡页面") { portal = true } }
-        }.navigationTitle("校园卡").sheet(isPresented: $portal) { SchoolBrowser(service: .card) }
+        }.refreshable { await refresh() }.navigationTitle("校园卡").sheet(isPresented: $portal) { SchoolBrowser(service: .card) }
         .task {
             if store.mode == .live { await refresh() }
             else {
@@ -77,10 +78,10 @@ struct CardView: View {
         let http = await store.serviceHTTP(.card); let client = CardClient(http: http)
         do {
             let value = try await client.account()
-            guard store.sessionRevision == version else { return }; account = value
+            guard store.sessionRevision == version else { return }; account = value; store.recordSession(.card)
             let records = try await client.bills()
             guard store.sessionRevision == version else { return }; bills = records; synced = .now; message = nil
-        } catch { message = error.localizedDescription }
+        } catch { if version == store.sessionRevision { store.recordSession(.card, error: error); message = error.localizedDescription } }
         await store.absorb(http, revision: version)
     }
 }
@@ -104,7 +105,7 @@ struct BusView: View {
                     VStack(alignment: .leading) { Text(stop.name); Text(stop.directions).font(.caption).foregroundStyle(.secondary) }
                 }
             }
-        }.navigationTitle("校车查询").searchable(text: $query, prompt: "站点、线路或方向").task { await load() }
+        }.refreshable { await load() }.navigationTitle("校车查询").searchable(text: $query, prompt: "站点、线路或方向").task { await load() }
     }
     private func load() async {
         guard !busy else { return }; busy = true; defer { busy = false }
@@ -137,7 +138,7 @@ private struct BusStopView: View {
                 }
             }
             if arrivals.isEmpty, synced != nil { Text("本次未返回到站预测，请核对运营时间。") }
-        }.navigationTitle(stop.name).task { await load() }
+        }.refreshable { await load() }.navigationTitle(stop.name).task { await load() }
     }
     private func load() async {
         guard !busy else { return }; busy = true; defer { busy = false }
@@ -177,7 +178,7 @@ struct ClassroomView: View {
                     }
                 }
             }
-        }.navigationTitle("空教室").searchable(text: $query, prompt: "先按教学楼或教室名筛选")
+        }.refreshable { if rooms.isEmpty { await load() } else { await check() } }.navigationTitle("空教室").searchable(text: $query, prompt: "先按教学楼或教室名筛选")
         .onChange(of: week) { _, _ in results = [:] }.onChange(of: weekday) { _, _ in results = [:] }
         .onChange(of: first) { _, value in last = max(last, value); results = [:] }.onChange(of: last) { _, _ in results = [:] }
         .task { week = store.teaching?.week ?? 1 }
@@ -213,6 +214,7 @@ struct ClassroomView: View {
 }
 
 struct PrintingView: View {
+    var initialURL: URL? = nil
     @Environment(CampusStore.self) private var store
     @State private var jobs: [PrintJob] = []
     @State private var message: String?
@@ -245,7 +247,9 @@ struct PrintingView: View {
                 }
                 Button("确认打印参数并提交") { confirmUpload = true }.disabled(pdf == nil || busy || store.mode == .demo)
             }
+            Section { NavigationLink("打印站点、扫描与用量") { PrintExtrasView().id(store.sessionRevision) }; NavigationLink("系统分享待打印") { PrintInboxView() } }
             Section("打印队列") {
+                SessionBadge(service: .printing)
                 Button("刷新队列") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
                 if busy { ProgressView() }; ServiceMessage(message: message)
                 ForEach(jobs) { job in
@@ -257,16 +261,11 @@ struct PrintingView: View {
                 Button("打开学校打印页面") { portal = true }
             }
         }.navigationTitle("校园打印")
+        .refreshable { await refresh() }
+        .task { if let initialURL { importPDF(initialURL) }; await refresh() }
         .sheet(isPresented: $portal) { SchoolBrowser(service: .printing) }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.pdf]) { result in
-            do {
-                let url = try result.get(); let scoped = url.startAccessingSecurityScopedResource(); defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-                let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-                guard size > 0, size <= 50 * 1024 * 1024 else { throw ServiceFailure("请选择 50 MB 以内 PDF。") }
-                let data = try Data(contentsOf: url)
-                guard let document = PDFDocument(data: data), document.pageCount > 0, !document.isLocked else { throw ServiceFailure("无法读取该 PDF，或文件需要密码。") }
-                pdf = data; filename = url.lastPathComponent; pages = document.pageCount; options.first = 1; options.last = pages; message = nil
-            } catch { message = error.localizedDescription }
+            do { importPDF(try result.get()) } catch { message = error.localizedDescription }
         }
         .confirmationDialog("提交 \(filename) · \(options.copies) 份？", isPresented: $confirmUpload, titleVisibility: .visible) {
             Button("提交一次") { Task { await upload() } }
@@ -275,11 +274,21 @@ struct PrintingView: View {
             if let job = deleting { Button("删除 \(job.name)", role: .destructive) { Task { await remove(job) } } }
         }
     }
+    private func importPDF(_ url: URL) {
+        do {
+            let scoped = url.startAccessingSecurityScopedResource(); defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+            guard size > 0, size <= 50 * 1024 * 1024 else { throw ServiceFailure("请选择 50 MB 以内 PDF。") }
+            let data = try Data(contentsOf: url)
+            guard let document = PDFDocument(data: data), document.pageCount > 0, !document.isLocked else { throw ServiceFailure("PDF 无法读取或需要密码。") }
+            pdf = data; filename = url.lastPathComponent; pages = document.pageCount; options.first = 1; options.last = pages; message = nil
+        } catch { message = error.localizedDescription }
+    }
     private func refresh() async {
         guard !busy else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.printing)
-        do { let value = try await PrintingClient(http: http).jobs(); guard version == store.sessionRevision else { return }; jobs = value; message = "队列读取于 \(Date.now.formatted())" }
-        catch { message = error.localizedDescription }; await store.absorb(http, revision: version)
+        do { let value = try await PrintingClient(http: http).jobs(); guard version == store.sessionRevision else { return }; jobs = value; store.recordSession(.printing); message = "队列读取于 \(Date.now.formatted())" }
+        catch { if version == store.sessionRevision { store.recordSession(.printing, error: error); message = error.localizedDescription } }; await store.absorb(http, revision: version)
     }
     private func upload() async {
         guard !busy, let pdf, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }

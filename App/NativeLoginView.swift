@@ -4,11 +4,22 @@ import CampusCore
 struct NativeLoginButton: View {
     @Environment(CampusStore.self) private var store
     @State private var presented = false
+    var service: CASService = .teaching
     var body: some View {
-        Button("登录学校账号", systemImage: "person.badge.key") { presented = true }
-            .buttonStyle(.borderedProminent)
-            .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
-            .sheet(isPresented: $presented) { NativeLoginView() }
+        let status = store.serviceSessions[service] ?? ServiceSessionState()
+        Group {
+            if status.valid { Label("已连接", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Color.campusGreen) }
+            else if status.status == .checking || status.status == .unknown {
+                ProgressView("检测登录态").font(.caption)
+            } else if status.status == .expired {
+                Button("登录学校账号", systemImage: "person.badge.key") { presented = true }.buttonStyle(.borderedProminent)
+            } else {
+                Button("重新检测连接", systemImage: "arrow.clockwise") { Task { await store.checkSession(service, force: true) } }
+            }
+        }
+        .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
+        .task { await store.checkSession(service) }
+        .sheet(isPresented: $presented, onDismiss: { Task { await store.checkSchoolSessions(force: true) } }) { NativeLoginView() }
     }
 }
 
@@ -43,7 +54,7 @@ struct NativeLoginView: View {
                     if store.authenticating { Button("取消登录", role: .cancel) { loginTask?.cancel() } }
                 }
                 Section("学校网页登录备用") {
-                    Text("验证码或其他交互验证需要在学校页面完成。打开教务或 BB 登录网页会清除旧缓存与会话，避免账号混用；完成后返回手动同步。")
+                    Text("验证码或其他交互验证需要在学校页面完成。网页登录保留当前会话；完成后自动检测连接。切换账号请先退出。")
                         .font(.footnote).foregroundStyle(.secondary)
                     Button("教务完整网页登录") { portal = .teaching }
                     Button("Blackboard 完整网页登录") { portal = .blackboard }

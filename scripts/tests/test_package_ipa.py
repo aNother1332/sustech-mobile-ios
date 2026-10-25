@@ -75,6 +75,15 @@ class IPATests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "inside"):
             packager.package(self.app, self.app / "recursive.ipa")
 
+    def test_standard_package_excludes_optional_share_extension(self):
+        extension = self.app / "PlugIns/CampusPrintShare.appex"
+        extension.mkdir(parents=True)
+        (extension / "marker").write_bytes(b"extension")
+        metadata = packager.package(self.app, self.output, include_extensions=False)
+        with zipfile.ZipFile(self.output) as archive:
+            self.assertFalse(any("PlugIns" in name for name in archive.namelist()))
+        self.assertFalse(metadata["share_extension"])
+
     def test_existing_ipa_is_not_overwritten(self):
         self.output.parent.mkdir()
         self.output.write_bytes(b"keep")

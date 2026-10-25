@@ -41,7 +41,7 @@ struct SchoolBrowser: View {
                         Spacer()
                         Button("放大", systemImage: "plus.magnifyingglass") { browserState.zoom = min(2, browserState.zoom + 0.15) }
                     }
-                    Text("完成学校登录后，返回应用手动同步。应用内页面共享登录态。切换账号请先到“我的”清除并退出；系统浏览器与应用会话不同。")
+                    Text("完成后自动检测连接。切换账号请先在“我的”退出。")
                     .font(.caption).foregroundStyle(.secondary)
                 }
                     .frame(maxWidth: .infinity).padding().background(.regularMaterial)
@@ -53,6 +53,7 @@ struct SchoolBrowser: View {
             }
         }
         .interactiveDismissDisabled(store.clearing)
+        .onDisappear { Task { await store.checkSchoolSessions(force: true) } }
     }
 }
 

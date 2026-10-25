@@ -21,8 +21,9 @@ struct StudyView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 10) {
                 ModeNotice()
+                HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision) }; Spacer(); NavigationLink("排课") { PlannerView() }; NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision) } }.font(.caption)
                 if let message = store.cacheMessage { Text(message).font(.caption).foregroundStyle(.orange) }
                 Picker("学习内容", selection: $section) {
                     ForEach(Section.allCases, id: \.self) { Text($0.rawValue).tag($0) }
@@ -32,16 +33,17 @@ struct StudyView: View {
                 case .grades: gradesContent
                 default: teachingContent
                 }
-            }.frame(maxWidth: 860).padding(20).frame(maxWidth: .infinity)
+            }.frame(maxWidth: 1100).padding(12).frame(maxWidth: .infinity)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .refreshable { switch section { case .grades: await store.refreshGrades(); case .blackboard: await store.refreshBlackboard(); default: await store.refreshTeaching() } }
         .navigationTitle("学习")
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
         .onChange(of: store.teaching?.week, initial: true) { _, week in if let week { selectedWeek = week } }
     }
 
     private var teachingContent: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
             CampusCard {
                 Label(store.teaching?.semester.name ?? "连接教务系统", systemImage: "graduationcap").font(.headline)
                 if store.mode == .live {
@@ -50,7 +52,7 @@ struct StudyView: View {
                         .disabled(store.teachingState.isLoading || store.clearing || store.authenticating)
                     ConnectionNotice(state: store.teachingState).font(.caption)
                 }
-                Text("按学校返回的周次和节次显示；调休和临时调整以学校通知为准。离线时显示最近同步结果。")
+                Text("离线显示缓存 · 调休以学校通知为准")
                     .font(.caption).foregroundStyle(.secondary)
             }
             if section == .timetable {
@@ -102,7 +104,7 @@ struct StudyView: View {
         }
     }
     private var gradesContent: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
             CampusCard {
                 Label("成绩与学分", systemImage: "chart.bar.doc.horizontal").font(.headline)
                 if store.mode == .live {
@@ -141,7 +143,7 @@ struct StudyView: View {
         }
     }
     private var blackboardContent: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
             CampusCard {
                 Label("Blackboard 学习中心", systemImage: "books.vertical").font(.headline)
                 if store.mode == .live {
@@ -150,7 +152,7 @@ struct StudyView: View {
                         .disabled(store.blackboardState.isLoading || store.clearing || store.authenticating)
                     ConnectionNotice(state: store.blackboardState).font(.caption)
                 }
-                Text("进入课程后读取任务、提交状态和公告。首页汇总已同步课程；课件按需下载并保留在本机。")
+                Text("任务 · 公告 · 课件")
                     .font(.caption).foregroundStyle(.secondary)
                 NavigationLink { OfflineDownloadsView() } label: { Label("离线文件 · \(store.files.count)", systemImage: "arrow.down.document") }
             }

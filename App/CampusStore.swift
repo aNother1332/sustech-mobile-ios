@@ -2,6 +2,7 @@ import CampusCore
 import Foundation
 import Observation
 import WebKit
+import UserNotifications
 
 enum DataMode: String, CaseIterable { case live = "学校服务", demo = "演示模式" }
 enum ConnectionState {
@@ -37,9 +38,11 @@ final class CampusStore {
     private(set) var authenticationMessage: String?
     private(set) var challengeService: SchoolService?
     private(set) var cacheMessage: String?
+    var serviceSessions: [CASService: ServiceSessionState] = [:]
     private var generation = 0
     var sessionRevision: Int { generation }
     private var owner: String?
+    var accountScope: String { owner ?? "unverified" }
     private var teachingDate: Date?
     private var gradesDate: Date?
     private var blackboardDate: Date?
@@ -49,7 +52,10 @@ final class CampusStore {
     private(set) var hiddenCourses: Set<String> = []
     var activeCourses: [BlackboardCourse] { (blackboard?.courses ?? []).filter { !hiddenCourses.contains($0.id) } }
     func setCourseHidden(_ id: String, hidden: Bool) {
-        if hidden { hiddenCourses.insert(id) } else { hiddenCourses.remove(id) }
+        if hidden {
+            hiddenCourses.insert(id)
+            Task { let requests = await UNUserNotificationCenter.current().pendingNotificationRequests(); UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: requests.filter { ($0.content.userInfo["courseID"] as? String) == id }.map(\.identifier)) }
+        } else { hiddenCourses.remove(id) }
         if let owner, mode == .live {
             do { try CoursePreferences().save(hiddenCourses, owner: owner) }
             catch { cacheMessage = "课程显示偏好未能保存，请解锁设备后重试。" }
@@ -65,6 +71,7 @@ final class CampusStore {
     }
 
     private func resetDisplayedData() {
+        serviceSessions = [:]
         teaching = nil; academic = nil; blackboard = nil
         courseDetails = [:]; contentCache = [:]; files = []; hiddenCourses = []
         teachingDate = nil; gradesDate = nil; blackboardDate = nil
@@ -170,7 +177,7 @@ final class CampusStore {
         guard mode == .live, !teachingState.isLoading, !clearing else { return }
         let version = generation
         teachingState = .loading
-        await sessions.connectIfPossible(.teaching)
+        if serviceSessions[.teaching]?.valid != true { await sessions.connectIfPossible(.teaching) }
         let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
@@ -181,11 +188,13 @@ final class CampusStore {
             await retainCookies(http.cookies(), version: version)
             guard version == generation else { return }
             if owner == nil { owner = "web-" + UUID().uuidString }
+            recordSession(.teaching)
             teaching = snapshot; teachingDate = .now
             teachingState = .loaded(teachingDate!, warnings: snapshot.warnings)
             persist()
         } catch {
             guard version == generation else { return }
+            recordSession(.teaching, error: error)
             teachingState = .failed(safeError(error))
         }
     }
@@ -193,7 +202,7 @@ final class CampusStore {
         guard mode == .live, !gradesState.isLoading, !clearing else { return }
         let version = generation
         gradesState = .loading
-        await sessions.connectIfPossible(.teaching)
+        if serviceSessions[.teaching]?.valid != true { await sessions.connectIfPossible(.teaching) }
         let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
@@ -204,16 +213,17 @@ final class CampusStore {
             await retainCookies(http.cookies(), version: version)
             guard version == generation else { return }
             if owner == nil { owner = "web-" + UUID().uuidString }
+            recordSession(.teaching)
             academic = snapshot; gradesDate = .now
             gradesState = .loaded(gradesDate!, warnings: [])
             persist()
-        } catch { guard version == generation else { return }; gradesState = .failed(safeError(error)) }
+        } catch { guard version == generation else { return }; recordSession(.teaching, error: error); gradesState = .failed(safeError(error)) }
     }
     func refreshBlackboard() async {
         guard mode == .live, !blackboardState.isLoading, !clearing else { return }
         let version = generation
         blackboardState = .loading
-        await sessions.connectIfPossible(.blackboard)
+        if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
@@ -226,17 +236,18 @@ final class CampusStore {
             let ids = Set(snapshot.courses.map(\.id))
             courseDetails = courseDetails.filter { ids.contains($0.key) }
             if owner == nil { owner = "web-" + UUID().uuidString }
+            recordSession(.blackboard)
             blackboard = snapshot; blackboardDate = .now
             blackboardState = .loaded(blackboardDate!, warnings: snapshot.warnings)
             persist()
-        } catch { guard version == generation else { return }; blackboardState = .failed(safeError(error)) }
+        } catch { guard version == generation else { return }; recordSession(.blackboard, error: error); blackboardState = .failed(safeError(error)) }
     }
     func refreshCourse(_ course: BlackboardCourse) async {
         guard mode == .live, !clearing, !authenticating, !courseLoading.contains(course.id) else { return }
         let version = generation
         courseLoading.insert(course.id)
         defer { if version == generation { courseLoading.remove(course.id) } }
-        await sessions.connectIfPossible(.blackboard)
+        if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { return }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
@@ -260,7 +271,7 @@ final class CampusStore {
     func contents(course: String, parent: String?) async throws -> [BBContent] {
         guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
         let version = generation
-        await sessions.connectIfPossible(.blackboard)
+        if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
@@ -277,7 +288,7 @@ final class CampusStore {
     func attachments(course: String, content: String) async throws -> [BBAttachment] {
         let version = generation
         guard mode == .live, !clearing, !authenticating else { throw CancellationError() }
-        await sessions.connectIfPossible(.blackboard)
+        if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
@@ -298,7 +309,7 @@ final class CampusStore {
         let version = generation
         downloading.insert(key)
         defer { if generation == version { downloading.remove(key) } }
-        await sessions.connectIfPossible(.blackboard)
+        if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
         let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
@@ -336,6 +347,8 @@ final class CampusStore {
     func clearLocalSession() async {
         guard !clearing, !writing else { return }
         clearing = true; generation += 1
+        let requests = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: requests.filter { $0.identifier.hasPrefix("campus-") }.map(\.identifier))
         resetDisplayedData(); owner = nil; mode = .live
         authenticationMessage = nil; challengeService = nil
         do { try repository.erase(); cacheMessage = nil }
@@ -359,7 +372,7 @@ final class CampusStore {
     }
 
     func serviceHTTP(_ service: CASService) async -> ServiceHTTP {
-        await sessions.connectIfPossible(service)
+        if serviceSessions[service]?.valid != true { await sessions.connectIfPossible(service) }
         let origin: URL
         switch service {
         case .teaching: origin = SchoolService.teaching.portalURL

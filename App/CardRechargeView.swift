@@ -38,6 +38,7 @@ struct CardRechargeView: View {
                 }.disabled(store.mode == .demo)
                 Text("使用系统分享菜单发送链接，再在对应客户端打开。学校页面可能要求企业微信授权；App 内的学校登录不能代替该授权。").font(.caption).foregroundStyle(.secondary)
             }
+            Section { NavigationLink("原生下单接口验证") { NativeRechargeView().id(store.sessionRevision) } }
             Section("到账查询") {
                 Button("刷新余额与近期账单", systemImage: "arrow.clockwise") { Task { await refresh() } }
                     .disabled(busy || store.mode == .demo)
@@ -54,6 +55,7 @@ struct CardRechargeView: View {
                 }
             }
         }
+        .refreshable { await refresh() }
         .navigationTitle("校园卡充值")
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, awaitingReturn {

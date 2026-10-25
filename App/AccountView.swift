@@ -10,26 +10,28 @@ struct AccountView: View {
         List {
             Section {
                 Label("SUSTechMobile", systemImage: "leaf").font(.title2.bold()).foregroundStyle(Color.campusGreen)
-                Text("iPhone 与 iPad · 非官方校园工具\n0.3.1 试用版 · 学校接口需真机核对。")
+                Text("iPhone 与 iPad · 非官方校园工具\n0.4.0 试用版 · 学校接口需真机核对。")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Section("数据模式") {
                 Picker("当前模式", selection: Binding(get: { store.mode }, set: { store.setMode($0) })) {
                     ForEach(DataMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }.disabled(store.clearing || store.authenticating || store.writing)
-                Text("演示数据不会作为学校数据保存。切换模式会清空当前显示的课程与任务，不会代替学校登录。")
+                Text("演示与学校数据隔离")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("连接学校服务") {
-                NativeLoginButton()
-                Button("打开教务登录页面") { portal = .teaching }
-                Button("打开 Blackboard 登录页面") { portal = .blackboard }
-                Text("两项服务分别建立会话。是否已连接，以原生同步结果为准。")
-                    .font(.caption).foregroundStyle(.secondary)
+                HStack { Text("教务"); Spacer(); NativeLoginButton(service: .teaching) }
+                HStack { Text("Blackboard"); Spacer(); NativeLoginButton(service: .blackboard) }
+                Button("检测全部连接") { Task { await store.checkSchoolSessions(force: true) } }
+                DisclosureGroup("网页登录备用") {
+                    Button("教务学校页面") { portal = .teaching }
+                    Button("Blackboard 学校页面") { portal = .blackboard }
+                }
             }
             Section("本机数据") {
                 if let message = store.cacheMessage { Text(message).foregroundStyle(.orange) }
-                Text("原生输入或学校网页均由用户操作，会话由本机保存；原生登录密码不保存；课表、成绩、已同步 BB 内容和下载文件在本机受保护保存，没有聚合服务器或统计 SDK。")
+                DetailNote(title: "存储与隐私", text: "会话和文件保存在本机，不保存登录密码，没有聚合服务器或统计 SDK。退出时清除学校缓存与下载。")
                     .font(.callout).foregroundStyle(.secondary)
                 Button(store.clearing ? "正在清除…" : "清除本机会话、离线数据与下载文件", role: .destructive) { confirmClear = true }
                     .disabled(store.clearing || store.writing)
@@ -41,6 +43,8 @@ struct AccountView: View {
             }
         }
         .navigationTitle("我的")
+        .refreshable { await store.checkSchoolSessions(force: true) }
+        .onChange(of: portal) { _, value in if value == nil { Task { await store.checkSchoolSessions(force: true) } } }
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
         .confirmationDialog("清除本机会话、缓存和下载文件？", isPresented: $confirmClear, titleVisibility: .visible) {
             Button("清除并退出本机会话", role: .destructive) { Task { await store.clearLocalSession() } }

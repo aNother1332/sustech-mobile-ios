@@ -4,6 +4,7 @@ import SwiftUI
 struct SUSTechApp: App {
     @State private var store: CampusStore
     @State private var showLogin = false
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let state = CampusStore()
@@ -17,7 +18,12 @@ struct SUSTechApp: App {
     @ViewBuilder private var launchContent: some View {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("--smoke-recharge") { NavigationStack { CardRechargeView() } }
+        if arguments.contains("--smoke-library") { NavigationStack { LibraryView() } }
+        else if arguments.contains("--smoke-agenda") { NavigationStack { AgendaView() } }
+        else if arguments.contains("--smoke-planner") { NavigationStack { PlannerView() } }
+        else if arguments.contains("--smoke-reviews") { NavigationStack { CourseReviewsView() } }
+        else if arguments.contains("--smoke-degree") { NavigationStack { DegreeProgressView() } }
+        else if arguments.contains("--smoke-recharge") { NavigationStack { CardRechargeView() } }
         else if arguments.contains("--smoke-card") { NavigationStack { CardView() } }
         else if arguments.contains("--smoke-classrooms") { NavigationStack { ClassroomView() } }
         else if arguments.contains("--smoke-printing") { NavigationStack { PrintingView() } }
@@ -35,13 +41,19 @@ struct SUSTechApp: App {
         WindowGroup {
             launchContent
                 .environment(store)
+                .environment(\.defaultMinListRowHeight, 36)
+                .task { await store.checkSchoolSessions() }
+                .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.checkSchoolSessions() } } }
                 .tint(.campusGreen)
                 .onAppear {
                     #if DEBUG
                     if ProcessInfo.processInfo.arguments.contains("--smoke-login") { showLogin = true }
                     #endif
                 }
-                .sheet(isPresented: $showLogin) { NativeLoginView().environment(store) }
+                .sheet(isPresented: $showLogin) { NativeLoginView().environment(store)
+                .environment(\.defaultMinListRowHeight, 36)
+                .task { await store.checkSchoolSessions() }
+                .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.checkSchoolSessions() } } } }
         }
     }
 }

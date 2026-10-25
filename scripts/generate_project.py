@@ -84,7 +84,8 @@ def generate() -> None:
         "TARGETED_DEVICE_FAMILY": "1,2", "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
         "SUPPORTS_MACCATALYST": "NO", "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD": "NO",
         "SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD": "NO", "CODE_SIGN_STYLE": "Automatic",
-        "MARKETING_VERSION": "0.3.1", "CURRENT_PROJECT_VERSION": "6",
+        "MARKETING_VERSION": "0.4.0", "CURRENT_PROJECT_VERSION": "7",
+        "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
         "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
         "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor", "ENABLE_PREVIEWS": "YES",
@@ -106,10 +107,33 @@ def generate() -> None:
                  buildPhases=[source_phase, framework_phase, resource_phase], buildRules=[], dependencies=[],
                  name="SUSTech", productName="SUSTech", productReference=app,
                  productType="com.apple.product-type.application", packageProductDependencies=[core])
+    share_product = add("share-product", "PBXFileReference", explicitFileType="wrapper.app-extension", path="CampusPrintShare.appex", sourceTree="BUILT_PRODUCTS_DIR")
+    objects[products]["children"].append(share_product)
+    share_ref = add("share-source", "PBXFileReference", lastKnownFileType="sourcecode.swift", path="ShareExtension/ShareViewController.swift", sourceTree="SOURCE_ROOT")
+    objects[group]["children"].append(share_ref)
+    share_build = add("share-source-build", "PBXBuildFile", fileRef=share_ref)
+    share_sources = add("share-sources", "PBXSourcesBuildPhase", buildActionMask="2147483647", files=[share_build], runOnlyForDeploymentPostprocessing="0")
+    share_configs = []
+    for configuration in ("Debug", "Release"):
+        share_configs.append(add("share-config:" + configuration, "XCBuildConfiguration", name=configuration, buildSettings={
+            **common, "PRODUCT_NAME": "CampusPrintShare", "PRODUCT_BUNDLE_IDENTIFIER": "cn.sustech.community.daily.printshare",
+            "INFOPLIST_FILE": "Config/Share-Info.plist", "GENERATE_INFOPLIST_FILE": "NO", "SKIP_INSTALL": "YES",
+            "APPLICATION_EXTENSION_API_ONLY": "YES", "TARGETED_DEVICE_FAMILY": "1,2",
+            "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+            "MARKETING_VERSION": "0.4.0", "CURRENT_PROJECT_VERSION": "7", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
+        }))
+    share_config_list = add("share-config-list", "XCConfigurationList", buildConfigurations=share_configs, defaultConfigurationIsVisible="0", defaultConfigurationName="Release")
+    share_target = add("share-target", "PBXNativeTarget", buildConfigurationList=share_config_list, buildPhases=[share_sources], buildRules=[], dependencies=[], name="CampusPrintShare", productName="CampusPrintShare", productReference=share_product, productType="com.apple.product-type.app-extension")
+    proxy = add("share-proxy", "PBXContainerItemProxy", containerPortal=object_id("project"), proxyType="1", remoteGlobalIDString=share_target, remoteInfo="CampusPrintShare")
+    dependency = add("share-dependency", "PBXTargetDependency", target=share_target, targetProxy=proxy)
+    objects[target]["dependencies"].append(dependency)
+    embed_build = add("share-embed-build", "PBXBuildFile", fileRef=share_product, settings={"ATTRIBUTES": ["RemoveHeadersOnCopy"]})
+    embed_phase = add("share-embed", "PBXCopyFilesBuildPhase", buildActionMask="2147483647", dstPath="", dstSubfolderSpec="13", files=[embed_build], name="Embed App Extensions", runOnlyForDeploymentPostprocessing="0")
+    objects[target]["buildPhases"].append(embed_phase)
     project = add("project", "PBXProject", attributes={"LastUpgradeCheck": "2600", "LastSwiftUpdateCheck": "2600"},
                   buildConfigurationList=project_list, compatibilityVersion="Xcode 14.0", developmentRegion="zh_CN",
                   hasScannedForEncodings="0", knownRegions=["zh_CN", "en", "Base"], mainGroup=group,
-                  productRefGroup=products, projectDirPath="", projectRoot="", targets=[target], packageReferences=[package])
+                  productRefGroup=products, projectDirPath="", projectRoot="", targets=[target, share_target], packageReferences=[package])
     output = ROOT / "SUSTech.xcodeproj"
     output.mkdir(exist_ok=True)
     document = {"archiveVersion": "1", "classes": {}, "objectVersion": "56", "objects": objects, "rootObject": project}
