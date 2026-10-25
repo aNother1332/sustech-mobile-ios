@@ -20,10 +20,9 @@ public enum FacultyContactParser {
         let iconMail = HTMLText.captures("(?is)fa-envelope[^>]*>.*?<span[^>]*>(.*?)</span>", in: scoped).first?[1]
         let mailto = HTMLText.captures("(?i)href=[\"']mailto:([^?\"']+)", in: scoped).first?[1]
         let email = [iconMail, mailto].compactMap { $0 }.compactMap { validEmail(HTMLText.plain($0)) }.first
-        let iconOffice = (HTMLText.captures("(?is)fa-(?:map-marker|location-dot)[^>]*>.*?<span[^>]*>(.*?)</span>", in: scoped).first?[1]).map(HTMLText.plain)
         let plain = HTMLText.plain(body)
-        let labeled = HTMLText.captures("(?i)(?:办公室(?:地址|地点)?|办公(?:地址|地点|位置)|Office(?:\\s+(?:Address|Location))?)\\s*[:：]\\s*([^\\n\\r]{2,160})", in: plain).first?[1]
-        let office = [iconOffice, labeled].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }.first { !$0.isEmpty }
+        let labeled = HTMLText.captures("(?im)^\\s*(?:办公室(?:地址|地点)?|办公(?:地址|地点|位置)|Office(?:\\s+(?:Address|Location))?)\\s*[:：]\\s*([^\\n\\r]{2,160})", in: plain).first?[1]
+        let office = [labeled].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }.first { !$0.isEmpty }
         let profile = HTMLText.captures("(?is)<a\\b[^>]*href=[\"']([^\"']+)[\"'][^>]*>\\s*(?:个人主页|Personal\\s+(?:Homepage|Website))\\s*</a>", in: scoped).compactMap { URL(string: HTMLText.decoded($0[1]).trimmingCharacters(in: .whitespacesAndNewlines), relativeTo: base)?.absoluteURL }.first(where: official)
         return FacultyContact(email: email, office: office, profile: profile)
     }
