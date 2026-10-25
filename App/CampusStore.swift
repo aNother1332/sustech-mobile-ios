@@ -73,6 +73,7 @@ final class CampusStore {
     }
 
     private func resetDisplayedData() {
+        CampusWidgetBridge.clear()
         serviceSessions = [:]; serviceProbeTokens = [:]
         teaching = nil; academic = nil; blackboard = nil
         courseDetails = [:]; contentCache = [:]; files = []; hiddenCourses = []

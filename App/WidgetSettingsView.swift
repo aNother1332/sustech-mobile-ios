@@ -5,6 +5,9 @@ import WidgetKit
 enum CampusWidgetBridge {
     static let group = "group.cn.sustech.community.daily"
     static var root: URL? { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) }
+    static func clear() {
+        if let root { try? FileManager.default.removeItem(at: root.appendingPathComponent("CampusWidget.json")) }; WidgetCenter.shared.reloadAllTimelines()
+    }
     static func publish(_ store: CampusStore) {
         guard let root else { return }
         let path = root.appendingPathComponent("CampusWidget.json")

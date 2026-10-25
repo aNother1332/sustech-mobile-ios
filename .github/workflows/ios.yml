@@ -48,11 +48,11 @@ jobs:
           --app DerivedData-device/Build/Products/Release-iphoneos/SUSTech.app
           --output dist/SUSTechMobile-unsigned.ipa
           --commit "$GITHUB_SHA" --without-extensions
-      - name: Package experimental share-extension build
+      - name: Package experimental share and widget extensions
         run: >-
           python3 scripts/package_ipa.py
           --app DerivedData-device/Build/Products/Release-iphoneos/SUSTech.app
-          --output dist/SUSTechMobile-with-share-unsigned.ipa
+          --output dist/SUSTechMobile-with-extensions-unsigned.ipa
           --commit "$GITHUB_SHA"
       - name: Include Windows installation guide
         run: |
@@ -64,6 +64,7 @@ jobs:
           cp docs/RELEASE_0_4.md dist/RELEASE_0_4.md
           cp docs/WRITE_PROTOCOL_AUDIT_0_4.md dist/WRITE_PROTOCOL_AUDIT_0_4.md
           cp docs/RECHARGE_PAYMENT_RESEARCH.md dist/RECHARGE_PAYMENT_RESEARCH.md
+          cp docs/RELEASE_0_5.md dist/RELEASE_0_5.md
       - name: Upload downloadable device package
         uses: actions/upload-artifact@v4
         with:
