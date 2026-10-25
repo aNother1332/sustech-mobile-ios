@@ -24,6 +24,8 @@ struct ICReservationView: View {
     @State private var rooms: [ReservationItem] = []
     @State private var orders: [ReservationItem] = []
     @State private var busy = false
+    @State private var connected = false
+    @State private var needsLogin = false
     @State private var message: String?
     @State private var portal = false
     @State private var cancelling: ReservationItem?
@@ -31,7 +33,7 @@ struct ICReservationView: View {
         List {
             Section {
                 Button("刷新房间与我的预约") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
-                Button("连接学校预约页面") { portal = true }
+                IndependentConnectionStatus(connected: connected, requiresLogin: needsLogin) { portal = true }
                 if busy { ProgressView() }; ServiceMessage(message: message)
                 Text("按学校实时规则预约。多人房间需填写同行成员学号；设备外借等特殊项目请使用学校页面。").font(.caption).foregroundStyle(.secondary)
             }
@@ -54,7 +56,7 @@ struct ICReservationView: View {
                     }
                 }
             }
-        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("IC 研讨间").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal) { SchoolBrowser(service: .rooms) }
+        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("IC 研讨间").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal, onDismiss: { Task { await refresh() } }) { SchoolBrowser(service: .rooms) }
         .confirmationDialog("确认取消这项预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } }), titleVisibility: .visible) {
             if let order = cancelling { Button("取消 \(order.title)", role: .destructive) { Task { await cancel(order) } } }
         }
@@ -65,8 +67,8 @@ struct ICReservationView: View {
     }
     private func refresh() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
-        do { let api = try await client(); rooms = try await api.rooms(); orders = try await api.mine(); message = "读取于 \(Date.now.formatted())" }
-        catch { message = error.localizedDescription }
+        do { let api = try await client(); rooms = try await api.rooms(); orders = try await api.mine(); connected = true; needsLogin = false; message = "读取于 \(Date.now.formatted())" }
+        catch { connected = false; needsLogin = (error as? CampusError) == .signInRequired || error is CASFailure; message = error.localizedDescription }
     }
     private func cancel(_ order: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
@@ -119,6 +121,8 @@ struct CLEReservationView: View {
     @State private var slots: [ReservationItem] = []
     @State private var orders: [ReservationItem] = []
     @State private var busy = false
+    @State private var connected = false
+    @State private var needsLogin = false
     @State private var message: String?
     @State private var note = ""
     @State private var portal = false
@@ -127,7 +131,7 @@ struct CLEReservationView: View {
     var body: some View {
         List {
             Section {
-                Button("连接 CLE 学校页面") { portal = true }
+                IndependentConnectionStatus(connected: connected, requiresLogin: needsLogin) { portal = true }
                 Text("首次请打开学校页面完成连接，之后复用会话。预约与取消条件以语言中心当前规则为准。").font(.caption).foregroundStyle(.secondary)
                 DatePicker("查询日期", selection: $day, displayedComponents: .date)
                 TextField("预约说明（必填，最多 500 字）", text: $note, axis: .vertical)
@@ -150,7 +154,7 @@ struct CLEReservationView: View {
                     }
                 }
             }
-        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("CLE 语言辅导").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal) { SchoolBrowser(service: .cle) }
+        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("CLE 语言辅导").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal, onDismiss: { Task { await refresh() } }) { SchoolBrowser(service: .cle) }
         .onChange(of: day) { _, _ in slots = [] }
         .confirmationDialog("确认预约该辅导？", isPresented: Binding(get: { selected != nil }, set: { if !$0 { selected = nil } }), titleVisibility: .visible) {
             if let slot = selected { Button("提交一次") { Task { await book(slot) } } }
@@ -162,8 +166,8 @@ struct CLEReservationView: View {
     private func client() async -> CLEClient { CLEClient(http: await store.serviceHTTP(origin: CLEClient.index)) }
     private func refresh() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
-        do { let api = await client(); slots = try await api.slots(day: day); orders = try await api.mine(sid: store.sessions.cleID); message = "读取于 \(Date.now.formatted())" }
-        catch { message = error.localizedDescription }
+        do { let api = await client(); slots = try await api.slots(day: day); orders = try await api.mine(sid: store.sessions.cleID); connected = true; needsLogin = false; message = "读取于 \(Date.now.formatted())" }
+        catch { connected = false; needsLogin = (error as? CampusError) == .signInRequired || error is CASFailure; message = error.localizedDescription }
     }
     private func book(_ slot: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }

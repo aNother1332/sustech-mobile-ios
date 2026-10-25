@@ -29,6 +29,8 @@ struct CourtReservationView: View {
     @State private var gyms: [ReservationItem] = []
     @State private var orders: [ReservationItem] = []
     @State private var busy = false
+    @State private var connected = false
+    @State private var needsLogin = false
     @State private var message: String?
     @State private var cancelling: ReservationItem?
     private static var authorization: URL {
@@ -43,15 +45,17 @@ struct CourtReservationView: View {
         List {
             Section("体育场馆授权") {
                 Text("此平台使用企业微信授权，与学校 CAS 不同。授权成功后在本机保留登录态，过期后需重新授权。").font(.caption).foregroundStyle(.secondary)
-                DisclosureGroup("首次授权或授权过期") {
+                Label(connected ? "已连接" : (needsLogin ? "授权已失效或尚未建立" : "连接待验证"), systemImage: connected ? "checkmark.circle.fill" : "person.crop.circle").font(.caption).foregroundStyle(connected ? Color.campusGreen : .secondary)
+                if needsLogin { DisclosureGroup("连接企业微信授权") {
                     if let qr = qrImage() { Image(uiImage: qr).interpolation(.none).resizable().scaledToFit().frame(width: 180, height: 180).accessibilityLabel("学校体育场馆企业微信授权二维码") }
                     ShareLink("分享授权链接到企业微信", item: Self.authorization)
                     Text("用企业微信扫描二维码或打开分享的链接，复制带 code 的回调链接并粘贴到下方。code 为一次性凭据，页面可能已使用它；失效时重新获取，不要将链接发到聊天或 Issue。").font(.caption)
                     SecureField("一次性授权链接或 code", text: $code).textInputAutocapitalization(.never).autocorrectionDisabled()
                     Button("使用此授权连接") { Task { await login() } }.disabled(busy || code.isEmpty || store.mode == .demo)
                 }
+                }
                 Button("刷新全部场馆与我的预约") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
-                Button("退出体育场馆账号", role: .destructive) { client = CourtClient(); CredentialVault.delete("court"); gyms = []; orders = []; message = "已清除本机体育场馆授权。" }.disabled(busy)
+                Button("退出体育场馆账号", role: .destructive) { client = CourtClient(); CredentialVault.delete("court"); gyms = []; orders = []; connected = false; needsLogin = true; message = "已清除本机体育场馆授权。" }.disabled(busy)
                 if busy { ProgressView() }; ServiceMessage(message: message)
             }
             Section("平台返回的全部场馆") {
@@ -84,14 +88,14 @@ struct CourtReservationView: View {
     private func login() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let input = code; code = ""; let version = store.sessionRevision
-        do { try await client.login(codeOrURL: input); try await save(version); gyms = try await client.gyms(); orders = try await client.orders(); message = "场馆授权已连接。" }
-        catch { message = error.localizedDescription }
+        do { try await client.login(codeOrURL: input); try await save(version); gyms = try await client.gyms(); orders = try await client.orders(); connected = true; needsLogin = false; message = "场馆授权已连接。" }
+        catch { connected = false; needsLogin = (error as? CampusError) == .signInRequired; message = error.localizedDescription }
     }
     private func refresh() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision
-        do { gyms = try await client.gyms(); orders = try await client.orders(); try await save(version); message = "读取于 \(Date.now.formatted())" }
-        catch { message = error.localizedDescription }
+        do { gyms = try await client.gyms(); orders = try await client.orders(); try await save(version); connected = true; needsLogin = false; message = "读取于 \(Date.now.formatted())" }
+        catch { connected = false; needsLogin = (error as? CampusError) == .signInRequired; message = error.localizedDescription }
     }
     private func cancel(_ order: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }

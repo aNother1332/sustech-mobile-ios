@@ -83,3 +83,17 @@ struct DetailNote: View {
     let text: String
     var body: some View { DisclosureGroup(title) { Text(text).font(.caption).foregroundStyle(.secondary) }.font(.caption) }
 }
+
+struct IndependentConnectionStatus: View {
+    let connected: Bool
+    let requiresLogin: Bool
+    var open: () -> Void
+    var body: some View {
+        HStack {
+            Label(connected ? "已连接" : (requiresLogin ? "需要连接" : "尚未验证"), systemImage: connected ? "checkmark.circle.fill" : "person.crop.circle")
+                .foregroundStyle(connected ? Color.campusGreen : .secondary)
+            Spacer()
+            Button(requiresLogin ? "连接学校页面" : "学校页面", action: open)
+        }.font(.caption)
+    }
+}

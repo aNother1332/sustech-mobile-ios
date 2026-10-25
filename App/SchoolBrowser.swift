@@ -53,7 +53,11 @@ struct SchoolBrowser: View {
             }
         }
         .interactiveDismissDisabled(store.clearing)
-        .onDisappear { Task { await store.checkSchoolSessions(force: true) } }
+        .onDisappear { Task {
+            if service == .card { await store.checkSession(.card, force: true) }
+            if service == .printing { await store.checkSession(.printing, force: true) }
+            await store.checkSchoolSessions(force: true)
+        } }
     }
 }
 
