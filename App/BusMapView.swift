@@ -92,10 +92,10 @@ struct BusMapView: View {
             }.padding(10).background(Color(uiColor: .secondarySystemGroupedBackground))
         }
         .task(id: store.mode.rawValue + String(includeInactive)) {
-            await load(staticData: routes.isEmpty)
-            while !Task.isCancelled { do { try await Task.sleep(for: .seconds(10)) } catch { return }; if phase == .active, store.mode == .live { await load(staticData: routes.isEmpty) } }
+            await load(staticData: routes.isEmpty || stops.isEmpty)
+            while !Task.isCancelled { do { try await Task.sleep(for: .seconds(10)) } catch { return }; if phase == .active, store.mode == .live { await load(staticData: routes.isEmpty || stops.isEmpty) } }
         }
-        .onChange(of: phase) { _, value in if value == .active, store.mode == .live { Task { await load(staticData: routes.isEmpty) } } }
+        .onChange(of: phase) { _, value in if value == .active, store.mode == .live { Task { await load(staticData: routes.isEmpty || stops.isEmpty) } } }
         .sheet(item: $selectedStop) { stop in NavigationStack {
             if store.mode == .live { BusStopView(stop: stop, client: client).toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { selectedStop = nil } } } }
             else { List { Text(stop.name); Text("示例模式：切换学校服务后查询实际到站信息。") }.navigationTitle("示例站点").toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { selectedStop = nil } } } }
@@ -122,14 +122,18 @@ struct BusMapView: View {
         if store.mode == .demo { loadDemo(); return }
         let all = includeInactive
         do {
+            var warnings: [String] = []
             if staticData {
-                async let a = client.mapRoutes(); async let b = client.stops()
-                let (newRoutes, newStops) = try await (a, b)
-                guard !Task.isCancelled, store.mode == .live else { return }; routes = newRoutes; stops = newStops
+                async let a = try? client.mapRoutes(); async let b = try? client.stops()
+                let (newRoutes, newStops) = await (a, b)
+                guard !Task.isCancelled, store.mode == .live else { return }
+                if let newRoutes { routes = newRoutes } else { warnings.append("线路数据暂不可用") }
+                if let newStops { stops = newStops } else { warnings.append("站点数据暂不可用") }
+                if !routeID.isEmpty, !routes.contains(where: { $0.id == routeID }) { routeID = "" }
             }
             let rows = try await client.vehicles(includeInactive: all)
             guard !Task.isCancelled, store.mode == .live, all == includeInactive else { return }
-            vehicles = rows; fetched = .now; message = nil
+            vehicles = rows; fetched = .now; message = warnings.isEmpty ? nil : warnings.joined(separator: " · ")
         } catch { if !Task.isCancelled { message = "刷新失败，当前保留上次上报位置；请核对时间后重试。" } }
     }
     private func loadDemo() {

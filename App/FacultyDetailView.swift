@@ -50,8 +50,10 @@ struct FacultyDetailView: View {
             let value = try await FacultyContactClient().contact(at: url)
             guard !Task.isCancelled else { return }; contact = value; message = nil
             if let cache {
-                try FileManager.default.createDirectory(at: cache.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try JSONEncoder().encode(value).write(to: cache, options: .atomic)
+                do {
+                    try FileManager.default.createDirectory(at: cache.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try JSONEncoder().encode(value).write(to: cache, options: .atomic)
+                } catch { message = "已读取官方资料，但离线缓存未能保存。" }
             }
         } catch { if !Task.isCancelled { message = contact == nil ? "未能读取官方资料，请重试或打开学校页面。" : "当前显示已缓存资料；刷新失败，请稍后重试。" } }
     }
