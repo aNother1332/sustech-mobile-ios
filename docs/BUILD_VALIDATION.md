@@ -1,3 +1,22 @@
+# 0.3.1（构建 6）验收
+
+- 应用名称 / Bundle ID：SUSTechMobile / `cn.sustech.community.daily`。
+- 编译源码提交：`80cce8872ed853e11e110445ace400f757d41158`。
+- 成功构建：https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40161165150
+- 51 项 Swift 测试、7 项 IPA 打包测试通过；本地 41 个 Swift 语法树与工程一致性检查通过。
+- iOS 模拟器与 arm64 iPhoneOS Release 编译成功；iPhone/iPad 38 张启动及界面截图完成，已人工查看两张新增充值渠道页截图。
+- IPA ZIP 完整性、版本 0.3.1 / 构建 6、iOS 17、设备族 [1,2]、名称、Bundle ID 与 SHA256 对照元数据通过。
+- IPA：`D:/Altstore/App/SUSTechMobile-0.3.1/SUSTechMobile-unsigned.ipa`，1,210,462 字节。
+- SHA256：`c302607ee32e801113444794e34f2e54812e19ac4d22ac3c84dea63a3be86e9a`。
+- 云端日志本地副本：`D:/Altstore/Diagnostics/SUSTechMobile-0.3.1-build.log`。
+- 仅实现原生渠道页、外部入口交接与主动余额/账单查询；无原生充值下单、无自动付款、无已验证订单到账闭环。
+- 未使用真实校园/Apple 账号进行云端验证，未创建充值订单或付款；支付宝/企业微信授权和实际到账仍待真机验收。
+- 包为未签名产物，仍需 Windows 本地重新签名；没有修复或绕过 Apple 证书申请限制。
+
+操作见 [0.3.1 说明](RELEASE_0_3_1.md)，证据见 [充值调研](RECHARGE_PAYMENT_RESEARCH.md)。
+
+---
+
 # 0.3.0（构建 5）最终验收
 
 - 应用名称与 Bundle ID 保持 SUSTechMobile / `cn.sustech.community.daily`。
