@@ -1,5 +1,14 @@
 # 接口来源与当前实现边界
 
+## 0.6.1 当前修正
+
+- 巴士：CRA WGS-84 在 MapKit 国内底图展示层统一转 GCJ-02，线路/站点/车辆/地图中心一致；可关闭国内底图对齐以适配海外图源，原始接口与距离坐标不变。
+- 登录：教务检测改用受保护 POST `/component/querydangqianxnxq`；可在所有非检测状态下手动登录。可选本机钥匙串记住密码，前台确认失效后自动补登；关闭开关立即删除凭据，失败会关闭自动尝试并提示重试。
+- 打印：公开 `/api/client/Station/GetList` 不经过 CAS，也不作为已登录证据；2026-10-25 无 Cookie 读取 26 个有名称站点。
+- 书院场地：`meeting_manager_token` + Authorization；`GetMeetingRoomAll` 和 `GetMeetingByMeetingRoomList` 原生只读，须知/成员/材料/审批提交保留官方页面。
+
+完整边界见 [0.6.1 说明](RELEASE_0_6_1.md)。以下为各版本历史记录；“不保存密码”不包含用户在 0.6.1 主动选择的本机钥匙串保存。
+
 协议参考读取自此前审查的本机仓库副本，固定版本：
 
 - [sustech-mobile 509a6535](https://github.com/dumixthestpd/sustech-mobile/tree/509a65357579f220d69b582956b38fc79d291f6a)

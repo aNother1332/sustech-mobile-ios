@@ -20,6 +20,10 @@ enum CredentialVault {
         } else if status != errSecSuccess { throw ServiceFailure("登录态保存失败，请解锁设备后重试。") }
     }
     static func delete(_ key: String) { SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "cn.sustech.community.daily." + key] as CFDictionary) }
+    static func remove(_ key: String) throws {
+        let status = SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "cn.sustech.community.daily." + key] as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else { throw ServiceFailure("钥匙串凭据未能删除，请解锁设备后重试。") }
+    }
 }
 
 struct CourtReservationView: View {
@@ -47,16 +51,16 @@ struct CourtReservationView: View {
             Section("体育场馆授权") {
                 Text("此平台使用企业微信授权，与学校 CAS 不同。授权成功后在本机保留登录态，过期后需重新授权。").font(.caption).foregroundStyle(.secondary)
                 Label(connected ? "已连接" : (needsLogin ? "授权已失效或尚未建立" : "连接待验证"), systemImage: connected ? "checkmark.circle.fill" : "person.crop.circle").font(.caption).foregroundStyle(connected ? Color.campusGreen : .secondary)
-                if needsLogin {
+                if needsLogin || store.mode == .demo {
                     Button("打开体育场馆授权", systemImage: "arrow.up.forward.app") { openURL(Self.authorization) { accepted in
                         if !accepted { message = "系统未能打开授权链接，请通过下方分享菜单发送至企业微信。" }
-                    } }.buttonStyle(.borderedProminent)
+                    } }.buttonStyle(.borderedProminent).disabled(store.mode == .demo)
                     Text("点击可直接打开授权网址。若学校要求企业微信环境，请使用下方分享入口在企业微信内打开。").font(.caption).foregroundStyle(.secondary)
                     DisclosureGroup("其他授权方式与回调") {
                     DisclosureGroup("显示二维码（跨设备备用）") {
                         if let qr = qrImage() { Image(uiImage: qr).interpolation(.none).resizable().scaledToFit().frame(width: 180, height: 180).accessibilityLabel("学校体育场馆企业微信授权二维码") }
                     }
-                    ShareLink("分享授权链接到企业微信", item: Self.authorization)
+                    ShareLink("分享授权链接到企业微信", item: Self.authorization).disabled(store.mode == .demo)
                     Text("完成授权后，复制带 code 的回调链接并粘贴到下方。code 为一次性凭据，页面可能已使用它；失效时重新获取，不要将链接发到聊天或 Issue。").font(.caption)
                     SecureField("一次性授权链接或 code", text: $code).textInputAutocapitalization(.never).autocorrectionDisabled()
                     Button("使用此授权连接") { Task { await login() } }.disabled(busy || code.isEmpty || store.mode == .demo)

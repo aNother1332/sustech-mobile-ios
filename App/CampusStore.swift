@@ -119,6 +119,7 @@ final class CampusStore {
 
     func signIn(username: String, password: String, remember: Bool = false, automatic: Bool = false) async {
         guard !authenticating, !clearing, !writing, mode == .live else { return }
+        if !automatic, let previous = rememberedUsername, previous != username { forgetSchoolAccount() }
         authenticating = true
         defer { authenticating = false; if Task.isCancelled { authenticationMessage = "登录已取消。" } }
         authenticationMessage = "正在连接学校 CAS…"
@@ -183,17 +184,18 @@ final class CampusStore {
             }
         }
         guard generation == version else { return }
+        var credentialsReady = false
         if authenticated, remember {
-            do { try CredentialVault.save(RememberedSchoolAccount(username: username, password: password), key: "school-auto-login") }
-            catch { results.append("已登录，但账号密码未能存入钥匙串；请解锁设备后重试。") }
+            do { try CredentialVault.save(RememberedSchoolAccount(username: username, password: password), key: "school-auto-login"); credentialsReady = true }
+            catch { stopAutomatic = true; results.append("已登录，但账号密码未能存入钥匙串；自动登录已暂停，请解锁设备后重试。") }
         }
-        if !automatic, !remember { forgetSchoolAccount() }
+        if !automatic, !remember, !forgetSchoolAccount() { results.append("已关闭自动登录；钥匙串中的旧凭据删除失败，请解锁设备后重试。") }
         if stopAutomatic {
             UserDefaults.standard.set(true, forKey: "school-auto-login-paused")
             automaticLoginMessage = "自动登录已暂停，请手动登录核对密码或完成学校验证。"
         } else if authenticated {
-            UserDefaults.standard.removeObject(forKey: "school-auto-login-paused")
-            automaticLoginMessage = remember ? "已保存至本机钥匙串；登录态失效时自动登录。" : nil
+            if credentialsReady { UserDefaults.standard.removeObject(forKey: "school-auto-login-paused") }
+            automaticLoginMessage = credentialsReady ? "已保存至本机钥匙串；登录态失效时自动登录。" : nil
         } else if automatic { automaticLoginMessage = "自动登录未完成，稍后可手动重试。" }
         authenticationMessage = results.joined(separator: "\n")
         persist()
@@ -392,7 +394,7 @@ final class CampusStore {
     func clearLocalSession() async {
         if let root = CampusWidgetBridge.root { try? FileManager.default.removeItem(at: root.appendingPathComponent("CampusWidget.json")) }; WidgetCenter.shared.reloadAllTimelines()
         guard !clearing, !writing else { return }
-        forgetSchoolAccount()
+        let forgotCredentials = forgetSchoolAccount()
         clearing = true; generation += 1
         let requests = await UNUserNotificationCenter.current().pendingNotificationRequests()
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: requests.filter { $0.identifier.hasPrefix("campus-") }.map(\.identifier))
@@ -400,6 +402,7 @@ final class CampusStore {
         authenticationMessage = nil; challengeService = nil
         do { try repository.erase(); cacheMessage = nil }
         catch { cacheMessage = "部分本机文件未能清除，请解锁设备后再次清除。" }
+        if !forgotCredentials { cacheMessage = "自动登录已关闭，但钥匙串凭据未能删除，请解锁设备后重试清除。" }
         await sessions.clear()
         clearing = false
     }
