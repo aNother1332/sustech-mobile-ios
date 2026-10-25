@@ -125,6 +125,7 @@ final class CampusStore {
             gradesState = gradesDate.map { .cached($0) } ?? .idle
             blackboardState = blackboardDate.map { .cached($0) } ?? .idle
             courseLoading = []; downloading = []; serviceProbeTokens = [:]
+            serviceSessions = serviceSessions.mapValues { $0.status == .checking ? ServiceSessionState() : $0 }
         } else {
             resetDisplayedData()
             owner = nil
