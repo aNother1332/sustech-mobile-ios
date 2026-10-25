@@ -1,3 +1,20 @@
+# 0.6.1（构建 10）验收
+
+- 最终包源码：`58b5baf1efd690dd6d8a6f74200696608224276c`。
+- 成功构建：[40191460527](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40191460527)。89 项 Swift 测试与 8 项 Python 打包测试通过；模拟器、arm64 iPhoneOS 主应用及两项扩展编译通过。
+- iPhone/iPad 五个场景（巴士地图、原生登录、体育授权、打印站点、书院目录）实际启动并截图；两次地图自动检查均为 4 条线路、351 个轨迹点、33 个站点、2 辆虚构车辆。已查看关键 iPhone 截图与 iPad 登录截图。
+- 普通 IPA 与扩展 IPA 的 ZIP、SHA256、版本 0.6.1/10、iOS 17、设备族 [1,2]、Bundle ID、显示名和 arm64 iPhoneOS Mach-O 全部核对。文件位于 `D:/Altstore/App/SUSTechMobile-0.6.1`。
+- 公开打印接口无需 Cookie 实测 HTTP 200/code 0，返回 26 个有名称站点。
+- 坐标转换有既定基准测试；实机国内底图对齐、钥匙串重启留存、真实账号自动补登、企业微信授权、书院目录/日程仍需本人设备验证。演示截图不代替校园业务验收。
+- 本轮未执行真实预约、打印上传或支付；书院最终预约提交仍在官方页面。
+- 完整日志：`D:/Altstore/Diagnostics/SUSTechMobile-0.6.1-final-build.log`。每张图库截图来源记录在 `docs/screenshots/SOURCES.json`。
+
+- `SUSTechMobile-unsigned.ipa`：2315776 字节；SHA256 `cfec0e3581a3f0143435dbec3ac4be51779fb140b65e108368bfe69f23db946d`。
+
+- `SUSTechMobile-with-extensions-unsigned.ipa`：2402093 字节；SHA256 `dbc94df13cafd4d2330c069b67b4819c2019a625b58c5ecd1907a6175ff481a9`。
+
+---
+
 # 0.6.0（构建 9）验收
 
 - 最终包源码：`e07485d9c80f56d8e0c9043330e49e4f36ce3d60`，已在 main。

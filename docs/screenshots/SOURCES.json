@@ -36,8 +36,8 @@
     "source": "6f752effaf12d2668485a32f6fc48a2337362040"
   },
   "iPad-court.png": {
-    "run": 40172533665,
-    "source": "6f752effaf12d2668485a32f6fc48a2337362040"
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
   },
   "iPad-degree.png": {
     "run": 40172533665,
@@ -72,8 +72,8 @@
     "source": "6f752effaf12d2668485a32f6fc48a2337362040"
   },
   "iPad-native-login.png": {
-    "run": 40172533665,
-    "source": "6f752effaf12d2668485a32f6fc48a2337362040"
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
   },
   "iPad-planner.png": {
     "run": 40172533665,
@@ -164,8 +164,8 @@
     "source": "6f752effaf12d2668485a32f6fc48a2337362040"
   },
   "iPhone-court.png": {
-    "run": 40172533665,
-    "source": "6f752effaf12d2668485a32f6fc48a2337362040"
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
   },
   "iPhone-degree.png": {
     "run": 40172533665,
@@ -200,8 +200,8 @@
     "source": "6f752effaf12d2668485a32f6fc48a2337362040"
   },
   "iPhone-native-login.png": {
-    "run": 40172533665,
-    "source": "6f752effaf12d2668485a32f6fc48a2337362040"
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
   },
   "iPhone-planner.png": {
     "run": 40172533665,
@@ -264,12 +264,12 @@
     "source": "e37b382"
   },
   "iPhone-bus-map.png": {
-    "run": 40177111042,
-    "source": "c284168a330a1599a121c0fe158227f80dd4163d"
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
   },
   "iPad-bus-map.png": {
-    "run": 40177111042,
-    "source": "c284168a330a1599a121c0fe158227f80dd4163d"
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
   },
   "iPhone-bus-map-dark.png": {
     "run": 40177111042,
@@ -278,5 +278,21 @@
   "iPad-bus-map-dark.png": {
     "run": 40177111042,
     "source": "c284168a330a1599a121c0fe158227f80dd4163d"
+  },
+  "iPad-college.png": {
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
+  },
+  "iPad-print-stations.png": {
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
+  },
+  "iPhone-college.png": {
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
+  },
+  "iPhone-print-stations.png": {
+    "run": 40191460527,
+    "source": "58b5baf1efd690dd6d8a6f74200696608224276c"
   }
 }

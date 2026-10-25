@@ -75,7 +75,7 @@
 
 ## 界面截图
 
-以下为云端 iOS 模拟器实际运行的 **0.5／0.6 版本界面截图（70 张）**，包含 iPhone/iPad、深色外观及大字号。课程、任务、余额等为虚构示例或未连接状态；教师目录为学校已公开资料快照；不含真实学生账号或认证凭据。0.5 基础界面运行 [40172533665](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40172533665)，界面提交 `6f752ef`。最后的校历/小组件过期逻辑、官方项目详情控件与说明修正经[最终构建 40173815553](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40173815553)验证，78 项 Swift 测试与 8 项打包测试通过，重点场景另复查 12 张。每张图的来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。截图不作为真实校园业务验收。
+以下为云端 iOS 模拟器实际运行的 **0.5／0.6／0.6.1 版本界面截图（74 张）**，包含 iPhone/iPad、深色外观及大字号。课程、任务、余额等为虚构示例或未连接状态；教师目录为学校已公开资料快照；不含真实学生账号或认证凭据。0.5 基础界面运行 [40172533665](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40172533665)，界面提交 `6f752ef`。最后的校历/小组件过期逻辑、官方项目详情控件与说明修正经[最终构建 40173815553](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40173815553)验证，78 项 Swift 测试与 8 项打包测试通过，重点场景另复查 12 张。每张图的来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。截图不作为真实校园业务验收。
 
 ### 0.6 校园巴士地图与教师联系方式
 
@@ -256,7 +256,7 @@
 
 ### 原生登录
 
-空白 CAS 登录表单；不在截图中输入真实凭据。
+空白 CAS 登录表单及默认关闭的“记住账号密码并自动登录”选项；不在截图中输入真实凭据。
 
 <table>
   <tr>
@@ -320,7 +320,7 @@
 
 ### 统一预约中心
 
-IC、CLE 和新体育场馆入口，并保留原体育预约平台。
+IC、CLE、体育场馆与书院场地入口；书院目录与日程为原生，最终预定仍使用官方页面。
 
 <table>
   <tr><th>iPhone</th><th>iPad</th></tr>
@@ -364,6 +364,17 @@ IC、CLE 和新体育场馆入口，并保留原体育预约平台。
     <td><img src="docs/screenshots/iPhone-court.png" width="260" alt="iPhone 体育场馆"></td>
     <td><img src="docs/screenshots/iPad-court.png" width="520" alt="iPad 体育场馆"></td>
   </tr>
+</table>
+
+### 0.6.1 打印站点与书院场地
+
+打印站点独立于登录查询；书院场地原生查看目录与当日安排，最终提交在学校页面完成。截图均为明确标注的虚构演示数据，公开打印接口另行实测返回 26 个真实站点。
+
+<table>
+  <tr><th>iPhone 打印站点</th><th>iPad 打印站点</th></tr>
+  <tr><td><img src="docs/screenshots/iPhone-print-stations.png" width="260" alt="iPhone 演示打印站点"></td><td><img src="docs/screenshots/iPad-print-stations.png" width="520" alt="iPad 演示打印站点"></td></tr>
+  <tr><th>iPhone 书院场地</th><th>iPad 书院场地</th></tr>
+  <tr><td><img src="docs/screenshots/iPhone-college.png" width="260" alt="iPhone 演示书院场地"></td><td><img src="docs/screenshots/iPad-college.png" width="520" alt="iPad 演示书院场地"></td></tr>
 </table>
 
 ### BB 课程折叠
