@@ -7,6 +7,11 @@ on:
         required: false
         default: true
         type: boolean
+      smoke_scenes:
+        description: Optional comma-separated scene names; empty captures all
+        required: false
+        default: ''
+        type: string
 permissions:
   contents: read
 concurrency:
@@ -41,6 +46,8 @@ jobs:
           CODE_SIGN_IDENTITY='' build
       - name: Launch iPhone and iPad simulator smoke scenes
         if: ${{ inputs.capture_screenshots }}
+        env:
+          SMOKE_SCENES: ${{ inputs.smoke_scenes }}
         run: python3 scripts/simulator_smoke.py
       - name: Package IPA for local re-signing
         run: >-

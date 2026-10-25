@@ -4,6 +4,7 @@ No real credentials or network login are used. Requires the cloud Debug simulato
 """
 from pathlib import Path
 import json
+import os
 import subprocess
 import time
 
@@ -61,7 +62,13 @@ def main():
                 ("blackboard-folded", ["--smoke-demo", "--smoke-study", "--smoke-blackboard", "--smoke-folded"]),
                 ("today-folded", ["--smoke-demo", "--smoke-folded"]),
             )
+            selected = {item.strip() for item in os.environ.get("SMOKE_SCENES", "").split(",") if item.strip()}
+            if selected - {name for name, _ in scenes}:
+                raise ValueError("Unknown smoke scenes: " + str(selected - {name for name, _ in scenes}))
             for scene, arguments in scenes:
+                if selected and scene not in selected:
+                    continue
+                print(f"Capture: {family} {scene}", flush=True)
                 run("launch", "--terminate-running-process", uid, BUNDLE, *arguments)
                 time.sleep(3)
                 run("io", uid, "screenshot", OUT / f"{family}-{scene}.png")
