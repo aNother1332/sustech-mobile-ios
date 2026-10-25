@@ -24,3 +24,9 @@ Additional protocol reference for manual sports reservations:
 
 Public campus bus data provider: SUSTech CRA, https://buseta.sustcra.com
   No provider website JavaScript is bundled with this application.
+
+0.5 data additions: academic calendar JSON copied from dumixthestpd/sustech-calendar
+commit e5e102c74670eba53c187d3f98b3f97921dbf42a via pinned sustech-mobile assets.
+Faculty directory is the upstream bundled snapshot of official public faculty pages.
+Official identity colours: https://www.sustech.edu.cn/zh/school_logo.html
+Weather: SUSTech CRA; air quality: Open-Meteo, CC BY 4.0.

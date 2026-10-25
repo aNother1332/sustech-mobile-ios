@@ -24,6 +24,11 @@ struct SUSTechApp: App {
         else if arguments.contains("--smoke-reviews") { NavigationStack { CourseReviewsView() } }
         else if arguments.contains("--smoke-degree") { NavigationStack { DegreeProgressView() } }
         else if arguments.contains("--smoke-recharge") { NavigationStack { CardRechargeView() } }
+        else if arguments.contains("--smoke-faculty") { NavigationStack { FacultyDirectoryView() } }
+        else if arguments.contains("--smoke-calendar") { NavigationStack { AcademicCalendarView() } }
+        else if arguments.contains("--smoke-code") { NavigationStack { CampusCodeView() } }
+        else if arguments.contains("--smoke-exchange") { NavigationStack { ExchangeProgramsView() } }
+        else if arguments.contains("--smoke-widgets") { NavigationStack { WidgetSettingsView() } }
         else if arguments.contains("--smoke-card") { NavigationStack { CardView() } }
         else if arguments.contains("--smoke-classrooms") { NavigationStack { ClassroomView() } }
         else if arguments.contains("--smoke-printing") { NavigationStack { PrintingView() } }
@@ -41,6 +46,7 @@ struct SUSTechApp: App {
         WindowGroup {
             launchContent
                 .environment(store)
+                .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("--smoke-dark") ? .dark : nil)
                 .environment(\.defaultMinListRowHeight, 36)
                 .task { await store.checkSchoolSessions() }
                 .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.checkSchoolSessions() } } }

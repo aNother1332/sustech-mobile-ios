@@ -38,6 +38,8 @@ struct CardView: View {
                 if busy { ProgressView() }
                 if let synced { Text("读取于 \(synced.formatted())").font(.caption) }
                 ServiceMessage(message: message)
+                NavigationLink { CampusCodeView().id(store.sessionRevision) } label: { Label("出示校园码 / 身份码", systemImage: "qrcode") }
+                CardBalancePreference(balance: account?.balance)
                 NavigationLink { CardRechargeView() } label: { Label("校园卡充值", systemImage: "plus.circle") }
                 Text("充值由支付宝或学校微信页面完成，返回后可刷新余额与账单。").font(.caption).foregroundStyle(.secondary)
             }
@@ -87,6 +89,8 @@ struct CardView: View {
 }
 
 struct BusView: View {
+    @State private var location = CampusLocation()
+    private var orderedStops: [BusStop] { stops.sorted { (location.distance($0) ?? .greatestFiniteMagnitude) < (location.distance($1) ?? .greatestFiniteMagnitude) } }
     @State private var stops: [BusStop] = []
     @State private var query = ""
     @State private var message: String?
@@ -95,14 +99,16 @@ struct BusView: View {
     var body: some View {
         List {
             Section {
+                Button("按距离查找附近站点", systemImage: "location.fill") { location.request() }
+                if let note = location.message { Text(note).font(.caption).foregroundStyle(.secondary) }
                 Text("数据来源：SUSTech CRA · buseta.sustcra.com").font(.caption)
                 Text("到站时间为预测，方向请以站点标识为准。").font(.caption).foregroundStyle(.secondary)
                 Button("刷新站点") { Task { await load() } }.disabled(busy)
                 if busy { ProgressView() }; ServiceMessage(message: message)
             }
-            ForEach(stops.filter { query.isEmpty || ($0.name + $0.directions).localizedCaseInsensitiveContains(query) }) { stop in
+            ForEach(orderedStops.filter { query.isEmpty || ($0.name + $0.directions).localizedCaseInsensitiveContains(query) }) { stop in
                 NavigationLink { BusStopView(stop: stop, client: client) } label: {
-                    VStack(alignment: .leading) { Text(stop.name); Text(stop.directions).font(.caption).foregroundStyle(.secondary) }
+                    VStack(alignment: .leading) { Text(stop.name); Text(stop.directions).font(.caption).foregroundStyle(.secondary); if let metres = location.distance(stop) { Text("距你约 \(Int(metres)) 米").font(.caption).foregroundStyle(Color.campusGreen) } }
                 }
             }
         }.refreshable { await load() }.navigationTitle("校车查询").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "站点、线路或方向").task { await load() }
@@ -113,6 +119,7 @@ struct BusView: View {
     }
 }
 private struct BusStopView: View {
+    @Environment(\.scenePhase) private var phase
     let stop: BusStop; let client: BusClient
     @State private var arrivals: [BusArrival] = []
     @State private var message: String?
@@ -122,9 +129,11 @@ private struct BusStopView: View {
         List {
             Section {
                 Text(stop.directions)
+                LabeledContent("站点 ID", value: stop.id).font(.caption).textSelection(.enabled)
+                ShareLink("复制／分享站点 ID", item: stop.id).font(.caption)
                 Button("刷新预计到站") { Task { await load() } }.disabled(busy)
                 if busy { ProgressView() }
-                if let synced { Text("读取于 \(synced.formatted())，非持续实时更新").font(.caption) }
+                if let synced { Text("读取于 \(synced.formatted()) · 前台每 30 秒刷新").font(.caption) }
                 ServiceMessage(message: message)
             }
             ForEach(arrivals) { item in
@@ -132,13 +141,15 @@ private struct BusStopView: View {
                     Text(item.route + " · " + item.direction).font(.headline)
                     if let minutes = item.minutes { Text("预计 \(minutes) 分钟").foregroundStyle(Color.campusGreen) }
                     else { Text("暂无法预测") }
+                    if let metres = item.metres, metres >= 0 { Label("距离站点 \(metres) 米", systemImage: "location") .font(.caption) }
+                    if let count = item.stopsAway, count >= 0 { Text("还有 \(count) 站").font(.caption.bold()) }
                     if !item.planned.isEmpty { Text("计划时间：" + item.planned).font(.caption) }
                     if !item.reason.isEmpty { Text(item.reason).font(.caption) }
-                    Text("来源：" + item.source).font(.caption).foregroundStyle(.secondary)
+                    Text("来源：" + (item.source == "planned" ? "计划班次" : item.source)).font(.caption).foregroundStyle(.secondary)
                 }
             }
             if arrivals.isEmpty, synced != nil { Text("本次未返回到站预测，请核对运营时间。") }
-        }.refreshable { await load() }.navigationTitle(stop.name).task { await load() }
+        }.refreshable { await load() }.navigationTitle(stop.name).task { await load(); while !Task.isCancelled { do { try await Task.sleep(for: .seconds(30)) } catch { return }; if phase == .active { await load() } } }
     }
     private func load() async {
         guard !busy else { return }; busy = true; defer { busy = false }

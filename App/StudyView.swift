@@ -7,6 +7,7 @@ struct StudyView: View {
     @State private var section = Section.timetable
     @State private var portal: SchoolService?
     @State private var selectedWeek = 1
+    @State private var grid = true
     @State private var selectedTerm = "全部学期"
 
     init() {
@@ -22,6 +23,7 @@ struct StudyView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
+                CampusHero(eyebrow: "LEARNING", title: "学习工作台", subtitle: "课程 · 考试 · 成绩 · Blackboard", symbol: "books.vertical.fill")
                 ModeNotice()
                 HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision) }; Spacer(); NavigationLink("排课") { PlannerView() }; NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision) } }.font(.caption)
                 if let message = store.cacheMessage { Text(message).font(.caption).foregroundStyle(.orange) }
@@ -57,6 +59,7 @@ struct StudyView: View {
             }
             if section == .timetable {
                 if let snapshot = store.teaching {
+                    HStack { Toggle("网格课表", isOn: $grid); NavigationLink("本学期课程") { EnrolledCoursesView() } }.font(.caption)
                     if snapshot.fullSemester {
                         Stepper("第 \(selectedWeek) 教学周", value: $selectedWeek, in: 1...max(30, snapshot.meetings.flatMap { $0.weeks ?? [] }.max() ?? 30))
                         if snapshot.week != nil { Button("返回当前教学周") { selectedWeek = snapshot.week ?? selectedWeek } }
@@ -66,7 +69,8 @@ struct StudyView: View {
                         ContentUnavailableView("本次课表中该周没有已确认安排", systemImage: "calendar.badge.questionmark",
                             description: Text("请核对同步状态和学校临时通知。"))
                     }
-                    ForEach(1...7, id: \.self) { day in
+                    if grid { WeeklyGridView(meetings: snapshot.meetings, week: selectedWeek) }
+                    else { ForEach(1...7, id: \.self) { day in
                         let meetings = rows.filter { $0.weekday == day }
                         if !meetings.isEmpty {
                             HStack(alignment: .top, spacing: 10) {
@@ -74,6 +78,7 @@ struct StudyView: View {
                                 CampusCard { ForEach(meetings) { MeetingRow(meeting: $0) } }
                             }
                         }
+                    }
                     }
                     if snapshot.fullSemester {
                         let unknown = snapshot.meetings.filter { $0.weeks == nil }

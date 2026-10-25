@@ -8,6 +8,7 @@ struct TodayView: View {
     private var todayMeetings: [CourseMeeting] {
         let day = Calendar(identifier: .gregorian).component(.weekday, from: .now)
         let mondayBased = (day + 5) % 7 + 1
+        if let term = AcademicData.term(), store.teaching?.fullSemester == true { return store.teaching?.meetings.filter { AcademicData.dates($0, term: term).contains { CampusClock.format($0) == CampusClock.format(.now) } } ?? [] }
         return store.teaching?.meetings.filter { $0.weekday == mondayBased && (store.teaching?.fullSemester != true || $0.weeks?.contains(store.teaching?.week ?? -1) == true) } ?? []
     }
 
@@ -21,11 +22,12 @@ struct TodayView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(Date.now, format: .dateTime.month(.wide).day().weekday(.wide))
-                        .font(.subheadline).foregroundStyle(.secondary)
-                }.padding(.vertical, 8)
-
+                CampusHero(eyebrow: "SUSTECH MOBILE", title: Date.now.formatted(.dateTime.month().day().weekday(.wide)), subtitle: "校园生活，一目了然", symbol: "sun.max.fill")
+                TodaySummaryView()
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 145))], spacing: 10) {
+                    ServiceTile(title: "校园码", detail: "校园码 / 身份核验", symbol: "qrcode", color: .campusOrange) { CampusCodeView().id(store.sessionRevision) }
+                    ServiceTile(title: "附近校车", detail: "站点与预计到站", symbol: "bus.fill", color: .campusGreen) { BusView() }
+                }
                 ModeNotice()
                 SessionBadge()
                 HStack { NavigationLink("我的日程") { AgendaView().id(store.sessionRevision) }; Spacer(); NavigationLink("图书馆") { LibraryView().id(store.sessionRevision) }; NavigationLink("排课") { PlannerView() } }.font(.subheadline)
@@ -63,7 +65,7 @@ struct TodayView: View {
                     }
                 }
 
-                CampusCard {
+                CampusCard(accent: .campusOrange) {
                     Label("近期截止日期", systemImage: "clock").font(.headline)
                     Text("已同步课程 · 折叠课程不参与提醒")
                         .font(.caption).foregroundStyle(.secondary)

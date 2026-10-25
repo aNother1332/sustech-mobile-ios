@@ -45,8 +45,8 @@ def generate() -> None:
         relative = path.relative_to(ROOT).as_posix()
         if path.suffix == ".swift":
             file_type, phase = "sourcecode.swift", sources
-        elif path.suffix in {".txt", ".xcprivacy"}:
-            file_type, phase = "text" if path.suffix == ".txt" else "text.xml", resources
+        elif path.suffix in {".txt", ".xcprivacy", ".json"}:
+            file_type, phase = "text.xml" if path.suffix == ".xcprivacy" else "text", resources
         else:
             continue
         reference = add(relative, "PBXFileReference", lastKnownFileType=file_type,
@@ -84,7 +84,7 @@ def generate() -> None:
         "TARGETED_DEVICE_FAMILY": "1,2", "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
         "SUPPORTS_MACCATALYST": "NO", "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD": "NO",
         "SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD": "NO", "CODE_SIGN_STYLE": "Automatic",
-        "MARKETING_VERSION": "0.4.0", "CURRENT_PROJECT_VERSION": "7",
+        "MARKETING_VERSION": "0.5.0", "CURRENT_PROJECT_VERSION": "8",
         "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
         "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
@@ -120,7 +120,7 @@ def generate() -> None:
             "INFOPLIST_FILE": "Config/Share-Info.plist", "GENERATE_INFOPLIST_FILE": "NO", "SKIP_INSTALL": "YES",
             "APPLICATION_EXTENSION_API_ONLY": "YES", "TARGETED_DEVICE_FAMILY": "1,2",
             "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
-            "MARKETING_VERSION": "0.4.0", "CURRENT_PROJECT_VERSION": "7", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
+            "MARKETING_VERSION": "0.5.0", "CURRENT_PROJECT_VERSION": "8", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         }))
     share_config_list = add("share-config-list", "XCConfigurationList", buildConfigurations=share_configs, defaultConfigurationIsVisible="0", defaultConfigurationName="Release")
     share_target = add("share-target", "PBXNativeTarget", buildConfigurationList=share_config_list, buildPhases=[share_sources], buildRules=[], dependencies=[], name="CampusPrintShare", productName="CampusPrintShare", productReference=share_product, productType="com.apple.product-type.app-extension")
@@ -130,10 +130,32 @@ def generate() -> None:
     embed_build = add("share-embed-build", "PBXBuildFile", fileRef=share_product, settings={"ATTRIBUTES": ["RemoveHeadersOnCopy"]})
     embed_phase = add("share-embed", "PBXCopyFilesBuildPhase", buildActionMask="2147483647", dstPath="", dstSubfolderSpec="13", files=[embed_build], name="Embed App Extensions", runOnlyForDeploymentPostprocessing="0")
     objects[target]["buildPhases"].append(embed_phase)
+    widget_product = add("widget-product", "PBXFileReference", explicitFileType="wrapper.app-extension", path="CampusWidgets.appex", sourceTree="BUILT_PRODUCTS_DIR")
+    objects[products]["children"].append(widget_product)
+    widget_ref = add("widget-source", "PBXFileReference", lastKnownFileType="sourcecode.swift", path="WidgetExtension/CampusWidgets.swift", sourceTree="SOURCE_ROOT")
+    objects[group]["children"].append(widget_ref)
+    widget_source = add("widget-source-build", "PBXBuildFile", fileRef=widget_ref)
+    widget_phase = add("widget-sources", "PBXSourcesBuildPhase", buildActionMask="2147483647", files=[widget_source], runOnlyForDeploymentPostprocessing="0")
+    widget_configs = []
+    for configuration in ("Debug", "Release"):
+        widget_configs.append(add("widget-config:" + configuration, "XCBuildConfiguration", name=configuration, buildSettings={
+            **common, "PRODUCT_NAME": "CampusWidgets", "PRODUCT_BUNDLE_IDENTIFIER": "cn.sustech.community.daily.widgets",
+            "INFOPLIST_FILE": "Config/Widget-Info.plist", "GENERATE_INFOPLIST_FILE": "NO", "SKIP_INSTALL": "YES",
+            "APPLICATION_EXTENSION_API_ONLY": "YES", "TARGETED_DEVICE_FAMILY": "1,2",
+            "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+            "MARKETING_VERSION": "0.5.0", "CURRENT_PROJECT_VERSION": "8", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
+        }))
+    widget_config_list = add("widget-config-list", "XCConfigurationList", buildConfigurations=widget_configs, defaultConfigurationIsVisible="0", defaultConfigurationName="Release")
+    widget_target = add("widget-target", "PBXNativeTarget", buildConfigurationList=widget_config_list, buildPhases=[widget_phase], buildRules=[], dependencies=[], name="CampusWidgets", productName="CampusWidgets", productReference=widget_product, productType="com.apple.product-type.app-extension")
+    widget_proxy = add("widget-proxy", "PBXContainerItemProxy", containerPortal=object_id("project"), proxyType="1", remoteGlobalIDString=widget_target, remoteInfo="CampusWidgets")
+    widget_dependency = add("widget-dependency", "PBXTargetDependency", target=widget_target, targetProxy=widget_proxy)
+    objects[target]["dependencies"].append(widget_dependency)
+    widget_embed = add("widget-embed-build", "PBXBuildFile", fileRef=widget_product, settings={"ATTRIBUTES": ["RemoveHeadersOnCopy"]})
+    objects[embed_phase]["files"].append(widget_embed)
     project = add("project", "PBXProject", attributes={"LastUpgradeCheck": "2600", "LastSwiftUpdateCheck": "2600"},
                   buildConfigurationList=project_list, compatibilityVersion="Xcode 14.0", developmentRegion="zh_CN",
                   hasScannedForEncodings="0", knownRegions=["zh_CN", "en", "Base"], mainGroup=group,
-                  productRefGroup=products, projectDirPath="", projectRoot="", targets=[target, share_target], packageReferences=[package])
+                  productRefGroup=products, projectDirPath="", projectRoot="", targets=[target, share_target, widget_target], packageReferences=[package])
     output = ROOT / "SUSTech.xcodeproj"
     output.mkdir(exist_ok=True)
     document = {"archiveVersion": "1", "classes": {}, "objectVersion": "56", "objects": objects, "rootObject": project}

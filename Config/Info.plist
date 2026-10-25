@@ -44,5 +44,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>仅在你选择附近校车站点时，使用当前位置按距离排列站点。</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>cn.sustech.community.daily</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>sustechmobile</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

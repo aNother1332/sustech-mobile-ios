@@ -2,17 +2,23 @@ import CampusCore
 import SwiftUI
 
 extension Color {
-    static let campusGreen = Color(red: 0.12, green: 0.40, blue: 0.31)
+    static let campusGreen = Color(uiColor: UIColor { traits in traits.userInterfaceStyle == .dark ? UIColor(red: 0.35, green: 0.85, blue: 0.81, alpha: 1) : UIColor(red: 0, green: 63.0/255, blue: 67.0/255, alpha: 1) })
+    static let campusOrange = Color(red: 237.0/255, green: 108.0/255, blue: 0)
+    static let campusCyan = Color(red: 43.0/255, green: 188.0/255, blue: 179.0/255)
+    static let campusInk = Color(red: 0, green: 63.0/255, blue: 67.0/255)
 }
 
 struct CampusCard<Content: View>: View {
+    var accent: Color = .campusCyan
     @ViewBuilder var content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) { content }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+            .padding(14)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
+            .overlay(alignment: .leading) { RoundedRectangle(cornerRadius: 2).fill(accent).frame(width: 3).padding(.vertical, 16) }
+            .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(accent.opacity(0.13), lineWidth: 1) }
     }
 }
 

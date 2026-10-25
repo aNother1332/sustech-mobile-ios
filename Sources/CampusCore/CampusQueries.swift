@@ -2,10 +2,12 @@ import Foundation
 
 public struct BusStop: Identifiable, Sendable {
     public let id: String; public let name: String; public let directions: String
+    public var latitude: Double? = nil; public var longitude: Double? = nil
 }
 public struct BusArrival: Identifiable, Sendable {
     public let id: String; public let route: String; public let direction: String
     public let minutes: Int?; public let planned: String; public let reason: String; public let source: String
+    public var metres: Int? = nil; public var stopsAway: Int? = nil
 }
 public struct BusClient: Sendable {
     public let http: ServiceHTTP
@@ -17,17 +19,27 @@ public struct BusClient: Sendable {
             guard !row["id"].text.isEmpty else { return nil }
             let name = [Self.localized(row, "group_name"), Self.localized(row, "name")].filter { !$0.isEmpty }.joined(separator: " · ")
             return BusStop(id: row["id"].text, name: name,
-                directions: row["directions"].rows.map { Self.localized($0, "route_name") + " " + Self.localized($0, "direction_name") }.joined(separator: " / "))
+                directions: row["directions"].rows.map { Self.localized($0, "route_name") + " " + Self.localized($0, "direction_name") }.joined(separator: " / "), latitude: Double(row["latitude"].text), longitude: Double(row["longitude"].text))
         }
     }
     public func arrivals(_ stop: String) async throws -> [BusArrival] {
         guard stop.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil else { throw CampusError.unsafeURL }
         let value = try await http.json("/arrivals/\(stop)")
         guard case .array = value["arrivals"] else { throw CampusError.invalidResponse("校车到站") }
+        // Position enrichment is optional: never infer remaining stops from ETA alone.
+        async let routesResult = try? http.json("/routes")
+        async let vehiclesResult = try? http.json("/vehicles")
+        let routes = await routesResult
+        let vehicles = await vehiclesResult
         return value["arrivals"].rows.enumerated().map { index, row in
+            let direction = routes?.rows.flatMap { $0["directions"].rows }.first { $0["id"].text == row["route_direction_id"].text }
+            let here = direction?["stops"].rows.firstIndex { $0["id"].text == stop }
+            let vehicle = vehicles?.rows.first { !$0["trip_id"].text.isEmpty && $0["trip_id"].text == row["trip_id"].text }
+            let remaining = here.flatMap { index in vehicle?["current_position"]["next_stop_num"].int.map { index + 1 - $0 } }
+            return
             BusArrival(id: "\(index)", route: Self.localized(row, "route_name"), direction: Self.localized(row, "direction_name"),
                 minutes: row["eta_minutes"].int, planned: row["planned_arrival_at"].text,
-                reason: row["unavailable_reason"].text, source: row["source"].text)
+                reason: row["unavailable_reason"].text, source: row["source"].text, metres: row["distance"].int, stopsAway: remaining)
         }
     }
     private static func localized(_ row: WireValue, _ key: String) -> String {

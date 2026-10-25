@@ -12,6 +12,7 @@ struct PrintExtrasView: View {
     @State private var pages = 1
     @State private var message: String?
     @State private var busy = false
+    @State private var deleting: WireValue?
     var body: some View {
         List {
             Section {
@@ -39,12 +40,29 @@ struct PrintExtrasView: View {
                         let cents = (row["dwUsedCardMoney"].int ?? 0) + (row["dwUsedFreeMoney"].int ?? 0) + (row["dwUsedMoney"].int ?? 0)
                         Text("¥\((Double(cents) / 100).formatted(.number.precision(.fractionLength(2))))").font(.caption)
                     }
+                }.swipeActions {
+                    if tab == 1, row["dwJobId"].int != nil { Button("删除", role: .destructive) { deleting = row }.disabled(busy || store.writing) }
                 }
             }
             if tab == 2 && page < pages { Button("下一页 · \(page)/\(pages)") { Task { page += 1; await load() } }.disabled(busy) }
             if tab == 1 { DetailNote(text: "此处读取扫描任务元数据。下载地址尚未验证，领取原文件请使用学校打印页面。") }
         }.navigationTitle("打印站点与用量").navigationBarTitleDisplayMode(.inline).refreshable { page = 1; await load() }
         .task { await load() }.onChange(of: tab) { _, _ in rows = []; page = 1; Task { await load() } }
+        .confirmationDialog("删除此扫描文件？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+            Button("从学校服务器删除", role: .destructive) { if let item = deleting { deleting = nil; Task { await remove(item) } } }
+        } message: { Text("将删除学校打印系统中的扫描文件，无法在应用中恢复。") }
+    }
+    private func remove(_ row: WireValue) async {
+        guard !busy, let id = row["dwJobId"].int, store.beginWrite() else { return }
+        busy = true; defer { busy = false; store.endWrite() }
+        let version = store.sessionRevision; let http = await store.serviceHTTP(.printing)
+        do {
+            let reply = try await http.json("/api/client/Scan/Del", payload: .object(["dwJobId": .integer(Int64(id))]))
+            guard version == store.sessionRevision else { return }
+            guard reply["code"].int == 0 else { throw ServiceFailure(reply["message"].text.isEmpty ? "学校未确认删除成功。" : reply["message"].text) }
+            rows.removeAll { $0["dwJobId"].int == id }; message = "扫描任务已删除。"; store.recordSession(.printing)
+        } catch { guard version == store.sessionRevision else { return }; message = "未确认删除结果，请刷新任务列表核对；不会自动重试。"; store.recordSession(.printing, error: error) }
+        await store.absorb(http, revision: version)
     }
     private func load() async {
         guard !busy, store.mode == .live, begin <= end else { return }; busy = true; defer { busy = false }

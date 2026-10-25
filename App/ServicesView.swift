@@ -11,20 +11,30 @@ struct ServicesView: View {
     }
 
     var body: some View {
-        List {
-            Section("原生校园服务") {
-                if matches("图书馆 借阅 续借 馆藏 人数") { NavigationLink { LibraryView().id(store.sessionRevision) } label: { Label("图书馆 · 馆藏与借阅", systemImage: "books.vertical") } }
-                if matches("日程 日历 提醒") { NavigationLink { AgendaView().id(store.sessionRevision) } label: { Label("我的日程与提醒", systemImage: "calendar") } }
-                if matches("课程 评价 NCES") { NavigationLink { CourseReviewsView() } label: { Label("课程评价", systemImage: "star.bubble") } }
-                if matches("排课 选课 方案") { NavigationLink { PlannerView() } label: { Label("排课工作台", systemImage: "rectangle.3.group") } }
-                if matches("学业 修读 学分 培养方案") { NavigationLink { DegreeProgressView().id(store.sessionRevision) } label: { Label("学业修读进度", systemImage: "chart.bar.doc.horizontal") } }
-                if matches("校园卡 余额 账单 消费 曲线") { NavigationLink { CardView().id(store.sessionRevision) } label: { Label("校园卡与消费曲线", systemImage: "creditcard") } }
-                if matches("空教室 教学楼 自习") { NavigationLink { ClassroomView().id(store.sessionRevision) } label: { Label("空教室查询", systemImage: "building.2") } }
-                if matches("校车 站点 到站 线路") { NavigationLink { BusView() } label: { Label("校车查询", systemImage: "bus") } }
-                if matches("打印 PDF 队列") { NavigationLink { PrintingView().id(store.sessionRevision) } label: { Label("校园打印", systemImage: "printer") } }
-                if matches("预约 IC CLE 体育 场馆 研讨间") { NavigationLink { ReservationCenterView().id(store.sessionRevision) } label: { Label("预约中心 · IC / CLE / 体育", systemImage: "calendar.badge.plus") } }
-            }
-            Section("学校网页备用入口") {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                CampusHero(eyebrow: "CAMPUS SERVICES", title: "校园办事", subtitle: "常用事务，原生直达", symbol: "square.grid.2x2.fill")
+                Text("常用服务").font(.headline)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150))], spacing: 12) {
+                    if matches("校园码 身份码 扫码") { ServiceTile(title: "校园码", detail: "动态码 / 身份核验", symbol: "qrcode", color: .campusOrange) { CampusCodeView().id(store.sessionRevision) } }
+                    if matches("校园卡 余额 账单 消费") { ServiceTile(title: "校园卡", detail: "余额 · 账单 · 消费曲线", symbol: "creditcard.fill", color: .campusOrange) { CardView().id(store.sessionRevision) } }
+                    if matches("校车 站点 线路") { ServiceTile(title: "校车", detail: "附近站点 · 预计到站", symbol: "bus.fill", color: .campusGreen) { BusView() } }
+                    if matches("空教室 自习") { ServiceTile(title: "空教室", detail: "找教室 · 查占用", symbol: "building.2.fill", color: .blue) { ClassroomView().id(store.sessionRevision) } }
+                    if matches("打印 PDF 扫描") { ServiceTile(title: "校园打印", detail: "上传 · 队列 · 扫描", symbol: "printer.fill", color: .campusGreen) { PrintingView().id(store.sessionRevision) } }
+                    if matches("预约 IC CLE 体育") { ServiceTile(title: "预约中心", detail: "IC · CLE · 体育场馆", symbol: "calendar.badge.plus", color: .purple) { ReservationCenterView().id(store.sessionRevision) } }
+                    if matches("图书馆 借阅 馆藏 续借") { ServiceTile(title: "图书馆", detail: "馆藏 · 借阅 · 座位", symbol: "books.vertical.fill", color: .campusGreen) { LibraryView().id(store.sessionRevision) } }
+                    if matches("日程 提醒") { ServiceTile(title: "我的日程", detail: "课程 · 考试 · 截止日期", symbol: "calendar", color: .campusOrange) { AgendaView().id(store.sessionRevision) } }
+                    if matches("校历 调休 放假") { ServiceTile(title: "教学日历", detail: "教学周 · 放假 · 补课", symbol: "calendar.circle.fill", color: .campusCyan) { AcademicCalendarView() } }
+                    if matches("教师 目录 院系") { ServiceTile(title: "教师目录", detail: "姓名 · 院系 · 官方主页", symbol: "person.2.fill", color: .blue) { FacultyDirectoryView() } }
+                    if matches("交换 留学 国际 项目") { ServiceTile(title: "交换项目", detail: "学校 · 申请时间 · 状态", symbol: "globe.asia.australia.fill", color: .purple) { ExchangeProgramsView().id(store.sessionRevision) } }
+                    if matches("排课 选课 方案") { ServiceTile(title: "排课工作台", detail: "候选课程 · 冲突检查", symbol: "rectangle.3.group.fill", color: .blue) { PlannerView() } }
+                    if matches("课程 评价 NCES") { ServiceTile(title: "课程评价", detail: "搜索 · 社区评价 · 收藏", symbol: "star.bubble.fill", color: .campusOrange) { CourseReviewsView() } }
+                    if matches("学业 修读 学分") { ServiceTile(title: "修读进度", detail: "学校培养方案与学分", symbol: "chart.bar.fill", color: .campusGreen) { DegreeProgressView().id(store.sessionRevision) } }
+                    if matches("网络 连接 诊断") { ServiceTile(title: "网络诊断", detail: "学校服务可达性", symbol: "network", color: .blue) { DiagnosticsView() } }
+                    if matches("软件 更新 版本") { ServiceTile(title: "软件更新", detail: "发布说明 · 安装指引", symbol: "arrow.down.app.fill", color: .campusGreen) { AppUpdatesView() } }
+                }
+                DisclosureGroup("学校网页备用入口") {
+
                 ForEach(services) { service in
                     NavigationLink {
                         VStack(spacing: 20) {
@@ -47,7 +57,8 @@ struct ServicesView: View {
                     }
                 }
             }
-        }
+            }.padding(14).frame(maxWidth: 1100).frame(maxWidth: .infinity)
+        }.background(Color(uiColor: .systemGroupedBackground))
         .searchable(text: $query, prompt: "搜索校园服务")
         .refreshable { await store.checkSchoolSessions(force: true) }
         .navigationTitle("办事").navigationBarTitleDisplayMode(.inline)

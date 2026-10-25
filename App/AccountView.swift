@@ -9,8 +9,8 @@ struct AccountView: View {
     var body: some View {
         List {
             Section {
-                Label("SUSTechMobile", systemImage: "leaf").font(.title2.bold()).foregroundStyle(Color.campusGreen)
-                Text("iPhone 与 iPad · 非官方校园工具\n0.4.0 试用版 · 学校接口需真机核对。")
+                CampusHero(eyebrow: "MY CAMPUS", title: "SUSTechMobile", subtitle: "账户与偏好", symbol: "person.crop.circle.fill")
+                Text("iPhone 与 iPad · 非官方校园工具\n0.5.0 试用版 · 学校接口需真机核对。")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Section("数据模式") {
@@ -35,6 +35,12 @@ struct AccountView: View {
                     .font(.callout).foregroundStyle(.secondary)
                 Button(store.clearing ? "正在清除…" : "清除本机会话、离线数据与下载文件", role: .destructive) { confirmClear = true }
                     .disabled(store.clearing || store.writing)
+            }
+            Section("工具与偏好") {
+                NavigationLink("网络与服务诊断") { DiagnosticsView() }
+                NavigationLink("检查软件更新") { AppUpdatesView() }
+                NavigationLink("教学日历与培养层次") { AcademicCalendarView() }
+                NavigationLink("桌面小组件设置") { WidgetSettingsView() }
             }
             Section("关于与来源") {
                 NavigationLink("上游许可与来源") { NoticesView() }

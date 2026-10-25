@@ -3,6 +3,7 @@ import Foundation
 import Observation
 import WebKit
 import UserNotifications
+import WidgetKit
 
 enum DataMode: String, CaseIterable { case live = "学校服务", demo = "演示模式" }
 enum ConnectionState {
@@ -92,6 +93,7 @@ final class CampusStore {
         if let date = blackboardDate, blackboard != nil { blackboardState = .cached(date) }
     }
     private func persist() {
+        CampusWidgetBridge.publish(self)
         guard mode == .live, let owner, !clearing else { return }
         var archive = LocalArchive(owner: owner)
         archive.teaching = teaching; archive.teachingDate = teachingDate
@@ -369,6 +371,7 @@ final class CampusStore {
         } catch { cacheMessage = "文件删除失败，请解锁设备后重试。" }
     }
     func clearLocalSession() async {
+        if let root = CampusWidgetBridge.root { try? FileManager.default.removeItem(at: root.appendingPathComponent("CampusWidget.json")) }; WidgetCenter.shared.reloadAllTimelines()
         guard !clearing, !writing else { return }
         clearing = true; generation += 1
         let requests = await UNUserNotificationCenter.current().pendingNotificationRequests()
