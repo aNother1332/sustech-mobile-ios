@@ -119,14 +119,22 @@ final class CampusStore {
         challengeService = nil
         generation += 1
         let version = generation
-        resetDisplayedData()
-        owner = nil
-        do { try repository.erase() } catch {
-            authenticationMessage = "无法清除旧账号缓存，请先解锁设备后重试。"; return
+        let sameAccount = owner == LocalRepository.identity(username)
+        if sameAccount {
+            teachingState = teachingDate.map { .cached($0) } ?? .idle
+            gradesState = gradesDate.map { .cached($0) } ?? .idle
+            blackboardState = blackboardDate.map { .cached($0) } ?? .idle
+            courseLoading = []; downloading = []; serviceProbeTokens = [:]
+        } else {
+            resetDisplayedData()
+            owner = nil
+            do { try repository.erase() } catch {
+                authenticationMessage = "无法清除旧账号缓存，请先解锁设备后重试。"; return
+            }
+            let oldReminders = await UNUserNotificationCenter.current().pendingNotificationRequests()
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: oldReminders.filter { $0.identifier.hasPrefix("campus-") }.map(\.identifier))
+            await sessions.clear()
         }
-        let oldReminders = await UNUserNotificationCenter.current().pendingNotificationRequests()
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: oldReminders.filter { $0.identifier.hasPrefix("campus-") }.map(\.identifier))
-        await sessions.clear()
         guard generation == version, !Task.isCancelled else { return }
         let client = CASClient()
         var results: [String] = []

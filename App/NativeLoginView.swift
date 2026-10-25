@@ -53,7 +53,7 @@ struct NativeLoginView: View {
                     }.disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || store.authenticating || store.clearing || store.writing)
                 }
                 Section {
-                    Text("账号密码由本机通过 HTTPS 直接发送给学校 CAS。本版不保存密码，也不会自动反复登录。登录时会清除旧账号的缓存和会话。")
+                    Text("账号密码由本机通过 HTTPS 直接发送给学校 CAS。本版不保存密码，也不会自动反复登录。同账号重新认证保留已有会话；换号时清除旧账号数据。")
                         .font(.footnote).foregroundStyle(.secondary)
                     if let message = store.authenticationMessage { Text(message).textSelection(.enabled) }
                     if store.authenticating { Button("取消登录", role: .cancel) { loginTask?.cancel() } }

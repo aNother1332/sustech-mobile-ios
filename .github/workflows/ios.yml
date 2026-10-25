@@ -1,6 +1,12 @@
 name: Build iPhone and iPad IPA
 on:
   workflow_dispatch:
+    inputs:
+      capture_screenshots:
+        description: Capture simulator UI scenes (disable only when UI was already verified)
+        required: false
+        default: true
+        type: boolean
 permissions:
   contents: read
 concurrency:
@@ -34,6 +40,7 @@ jobs:
           CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
           CODE_SIGN_IDENTITY='' build
       - name: Launch iPhone and iPad simulator smoke scenes
+        if: ${{ inputs.capture_screenshots }}
         run: python3 scripts/simulator_smoke.py
       - name: Package IPA for local re-signing
         run: >-
