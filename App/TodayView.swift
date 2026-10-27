@@ -50,7 +50,7 @@ struct TodayView: View {
             }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
         }.background(Color.campusPaper)
             .refreshable { await store.refreshHomeBalance(); await store.refreshTeaching(); await store.refreshBlackboard() }
-            .task(id: "\(store.mode.rawValue)-\(store.sessionRevision)") { await store.refreshHomeBalance() }
+            .task(id: "\(store.mode.rawValue)-\(store.sessionRevision)-\(store.authenticating)") { await store.refreshHomeBalance() }
             .onChange(of: phase) { _, value in if value == .active { Task { await store.refreshHomeBalance() } } }
             .navigationTitle("今天").navigationBarTitleDisplayMode(.inline)
             .task {
