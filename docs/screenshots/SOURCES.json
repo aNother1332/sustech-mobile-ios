@@ -450,5 +450,145 @@
     "run": 40210109524,
     "source": "d39516493d045adccc731bed692bdb5cc5ca5d93",
     "version": "0.7.0"
+  },
+  "v08-iPad-account.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-court.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-home.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-learning-home.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-navigation-glass.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-navigation-material.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-recharge.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-services.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-today-agenda.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPad-today.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-account.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-court.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-home.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-learning-home.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-navigation-glass.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-navigation-material.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-recharge.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-services.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-today-agenda.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
+  },
+  "v08-iPhone-today.png": {
+    "data": "demo",
+    "os": "iOS 26.2",
+    "run": 40527017735,
+    "source": "e03feadc743151a17f50f0a0cfd56c994ff31aa2",
+    "version": "0.8.0"
   }
 }

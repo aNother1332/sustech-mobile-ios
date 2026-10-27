@@ -73,7 +73,24 @@
 
 ## 界面截图
 
-**0.7.0 橙白新版实际界面**：以下截图来自相同源码 `d395164` 的 [iPhone/iPad 模拟器运行 40210109524](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40210109524)，共 26 张（12 组页面及两张桌面）。个人资料、课程、余额、车辆与到站均为演示数据；路线与站点来自公开快照。底栏使用 iOS 26 原生玻璃材质。截图仅验证界面，不代替校园业务实测。
+**0.8.0 当前界面**：截图来自 [iOS 26.2 模拟器运行 40527017735](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40527017735)，界面源码 `e03fead`，共 20 张。原生玻璃与强制半透明两条路径均验证四次切换后底栏实例保持一个。最终包 `fd0a668` 另补上学校预约正常目录和自动登录结束后的余额重读，并通过完整测试及编译。图片为演示资料，真实余额、企业微信及充值仍需设备核对。
+
+| 页面 | iPhone | iPad |
+| --- | --- | --- |
+| 校徽页头与首页 | <img src="docs/screenshots/v08-iPhone-today.png" width="230" alt="iPhone 校徽页头与首页"> | <img src="docs/screenshots/v08-iPad-today.png" width="420" alt="iPad 校徽页头与首页"> |
+| 直接展示待办 | <img src="docs/screenshots/v08-iPhone-today-agenda.png" width="230" alt="iPhone 直接展示待办"> | <img src="docs/screenshots/v08-iPad-today-agenda.png" width="420" alt="iPad 直接展示待办"> |
+| 学习 | <img src="docs/screenshots/v08-iPhone-learning-home.png" width="230" alt="iPhone 学习"> | <img src="docs/screenshots/v08-iPad-learning-home.png" width="420" alt="iPad 学习"> |
+| 个人资料与材质状态 | <img src="docs/screenshots/v08-iPhone-account.png" width="230" alt="iPhone 个人资料与材质状态"> | <img src="docs/screenshots/v08-iPad-account.png" width="420" alt="iPad 个人资料与材质状态"> |
+| 精简后的办事 | <img src="docs/screenshots/v08-iPhone-services.png" width="230" alt="iPhone 精简后的办事"> | <img src="docs/screenshots/v08-iPad-services.png" width="420" alt="iPad 精简后的办事"> |
+| 体育授权 | <img src="docs/screenshots/v08-iPhone-court.png" width="230" alt="iPhone 体育授权"> | <img src="docs/screenshots/v08-iPad-court.png" width="420" alt="iPad 体育授权"> |
+| 充值渠道 | <img src="docs/screenshots/v08-iPhone-recharge.png" width="230" alt="iPhone 充值渠道"> | <img src="docs/screenshots/v08-iPad-recharge.png" width="420" alt="iPad 充值渠道"> |
+| 原生玻璃底栏 | <img src="docs/screenshots/v08-iPhone-navigation-glass.png" width="230" alt="iPhone 原生玻璃底栏"> | <img src="docs/screenshots/v08-iPad-navigation-glass.png" width="420" alt="iPad 原生玻璃底栏"> |
+| 半透明回退底栏 | <img src="docs/screenshots/v08-iPhone-navigation-material.png" width="230" alt="iPhone 半透明回退底栏"> | <img src="docs/screenshots/v08-iPad-navigation-material.png" width="420" alt="iPad 半透明回退底栏"> |
+
+<details>
+<summary>0.7.0 与更早版本的历史截图（含已移除功能）</summary>
+
+**0.7.0 橙白新版实际界面**：以下截图来自相同源码 `d395164` 的 [iPhone/iPad 模拟器运行 40210109524](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40210109524)，共 26 张（12 组页面及两张桌面）。个人资料、课程、余额、车辆与到站均为演示数据；路线与站点来自公开快照。该轮截图实际为旧系统半透明回退材质；0.8.0 已改为优先使用最新运行时并断言原生材质分支。截图仅验证界面，不代替校园业务实测。
 
 | 页面 | iPhone | iPad |
 | --- | --- | --- |
@@ -419,6 +436,10 @@ IC、CLE、体育场馆与书院场地入口；书院目录与日程为原生，
   </tr>
 </table>
 
+
+</details>
+</details>
+
 ## 构建与安装
 
 ### 下载已构建安装包
@@ -513,5 +534,3 @@ docs/                      截图、功能规划、协议证据与验收记录
 ```
 
 维护流程见 [版本交付与本地清理](docs/RELEASE_WORKFLOW.md)。部分文档保留早期开发、个人安装路径与历史构建记录，请以 README 的当前状态为准。
-
-</details>

@@ -1,3 +1,16 @@
+# 0.8.0（构建 12）验收
+
+- 最终安装包源码：`fd0a66856f831a9d5ac50342d36542fd7cacc5b4`。
+- 最终成功构建：[40528876679](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40528876679)。97 项 Swift 测试、8 项 Python 打包测试通过；模拟器、arm64 iPhoneOS 主应用与两项扩展编译通过。
+- 最新界面运行：[40527017735](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40527017735)，源码 `e03feadc743151a17f50f0a0cfd56c994ff31aa2`。iPhone 17 Pro 与 iPad Pro 13-inch M5，实际系统 iOS 26.2。9 组界面与桌面共 20 张；人工查看首页校名水印、待办、个人信息/材质、办事、体育授权及 iPad 待办。最终两个小修正不改变已拍摄布局。
+- 原生玻璃与强制 material 两种模式，在两类设备均完成四次栏目切换：`instances=1, updates=5`。记录同时包含实际系统版本和渲染分支。该检查证明底栏身份连续，不代替真实触控/弹簧手感测试。
+- 初轮 [40522856682](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40522856682) 选择了旧运行时，仅覆盖回退材质；不把其最初的 native-glass 标签当作原生验证。后续脚本选择最新系统并断言实际分支，修正校名水印裁切。
+- 普通 IPA 2,464,505 字节，SHA256 `84d7be41dede4dd50593f7ed3f6062c7a651e7dad4012d2b7e83ac3bd21d7136`；扩展 IPA 2,550,824 字节，SHA256 `b0b1774c93006636e76996784c84a296b65f3dcc3686db516c59ccbf087ff4fe`。已验证 ZIP、0.8.0/12、Bundle ID、设备族 [1,2]、最低 iOS 17 和全部 Mach-O 真机 arm64。
+- 安装包位于 `D:/Altstore/App/SUSTechMobile-0.8.0`；截图精确来源见 `docs/screenshots/SOURCES.json`。未在用户 iOS 27 实机运行，未执行真人预约、充值或付款。
+- 原生充值仍只实现授权核对与金额草稿，正式下单关闭；自定义金额服务端支持、单笔订单查询与支付跳转未验证，不能将金额格式测试视为充值成功。详见 [充值研究](RECHARGE_PAYMENT_RESEARCH.md) 与 [体育授权](WECOM_AUTH_0_8.md)。
+
+---
+
 # 0.7.0（构建 11）验收
 
 - 安装包源码：`d39516493d045adccc731bed692bdb5cc5ca5d93`。
