@@ -71,8 +71,11 @@ private struct CampusGlass: ViewModifier {
     static var transitions = 0
     static func record(identity: UUID) {
         identities.insert(identity); transitions += 1
+        let material: String
+        if #available(iOS 26.0, *), !ProcessInfo.processInfo.arguments.contains("--smoke-force-material") { material = "native-glass" }
+        else { material = "material" }
         let record: [String: Any] = ["instances": identities.count, "updates": transitions,
-            "material": ProcessInfo.processInfo.arguments.contains("--smoke-force-material") ? "material" : "native-glass"]
+            "material": material, "os": ProcessInfo.processInfo.operatingSystemVersionString]
         if let data = try? JSONSerialization.data(withJSONObject: record), let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             try? data.write(to: documents.appendingPathComponent("smoke-navigation.json"), options: .atomic)
         }

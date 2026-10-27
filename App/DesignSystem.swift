@@ -129,9 +129,9 @@ struct CampusHeaderBackground: View {
                 CampusPalette.header
                 Circle().stroke(.white.opacity(0.10), lineWidth: 30).frame(width: 220, height: 220).offset(x: 95, y: 30)
                 Image("SchoolWordmark").renderingMode(.template).resizable().scaledToFit()
-                    .foregroundStyle(.white).opacity(0.13).frame(width: min(proxy.size.width * 0.78, 360))
-                    .rotationEffect(.degrees(-10)).offset(x: 44, y: 15)
-            }
+                    .foregroundStyle(.white).opacity(0.17).frame(width: min(proxy.size.width * 0.70, 320))
+                    .rotationEffect(.degrees(-10)).offset(x: 22, y: 0)
+            }.frame(width: proxy.size.width, height: proxy.size.height)
         }.allowsHitTesting(false).accessibilityHidden(true)
     }
 }

@@ -10,6 +10,7 @@ struct TodayView: View {
         return "\(store.deadlines.filter { ($0.submission == .pending || $0.submission == .draft) && ($0.due ?? .distantPast) > .now }.count) 项"
     }
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -38,7 +39,7 @@ struct TodayView: View {
                     Button("体验演示模式") { store.setMode(.demo) }.font(.caption)
                 }
                 LearningOverviewView()
-                HomeAgendaView()
+                HomeAgendaView().id("home-agenda")
                 CampusFold(title: "校园天气", symbol: "cloud.sun") { TodaySummaryView(weatherOnly: true) }
                 CampusFold(title: "同步与连接", symbol: "arrow.triangle.2.circlepath") {
                     SessionBadge()
@@ -52,6 +53,14 @@ struct TodayView: View {
             .task(id: "\(store.mode.rawValue)-\(store.sessionRevision)") { await store.refreshHomeBalance() }
             .onChange(of: phase) { _, value in if value == .active { Task { await store.refreshHomeBalance() } } }
             .navigationTitle("今天").navigationBarTitleDisplayMode(.inline)
+            .task {
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--smoke-home-agenda") {
+                    try? await Task.sleep(for: .milliseconds(300)); proxy.scrollTo("home-agenda", anchor: .top)
+                }
+                #endif
+            }
+        }
     }
     private func quick<D: View>(_ title: String, _ symbol: String, @ViewBuilder destination: @escaping () -> D) -> some View {
         NavigationLink { destination().toolbar(.visible, for: .navigationBar) } label: {

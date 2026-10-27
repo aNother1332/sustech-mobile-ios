@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import time
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "dist" / "simulator-smoke"
@@ -19,11 +20,12 @@ def run(*args):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     devices = json.loads(run("list", "devices", "available", "--json"))["devices"]
-    available = [device for group in devices.values() for device in group]
+    runtimes = sorted(((runtime, group) for runtime, group in devices.items() if ".iOS-" in runtime), key=lambda row: tuple(int(n) for n in re.findall(r"[0-9]+", row[0])), reverse=True)
+    available = [(runtime, device) for runtime, group in runtimes for device in group]
     for family in ("iPhone", "iPad"):
-        device = next(device for device in available if device["name"].startswith(family))
+        runtime, device = next((runtime, device) for runtime, device in available if device["name"].startswith(family))
         uid = device["udid"]
-        print(f"Smoke test: {device['name']}", flush=True)
+        print(f"Smoke test: {device['name']} on {runtime}", flush=True)
         if device["state"] != "Booted":
             run("boot", uid)
         run("bootstatus", uid, "-b")
@@ -31,6 +33,7 @@ def main():
             run("install", uid, APP)
             scenes = (
                 ("today", ["--smoke-demo"]),
+                ("today-agenda", ["--smoke-demo", "--smoke-home-agenda"]),
                 ("navigation-glass", ["--smoke-demo", "--smoke-tab-cycle"]),
                 ("navigation-material", ["--smoke-demo", "--smoke-tab-cycle", "--smoke-force-material"]),
                 ("learning-home", ["--smoke-demo", "--smoke-study"]),
@@ -85,6 +88,8 @@ def main():
                     container = Path(run("get_app_container", uid, BUNDLE, "data").strip())
                     check = json.loads((container / "Documents/smoke-navigation.json").read_text())
                     assert check["instances"] == 1 and check["updates"] >= 5, check
+                    if "--smoke-force-material" not in arguments:
+                        assert check["material"] == "native-glass", "Native glass requires an iOS 26+ simulator: " + str(check)
                     print("Navigation continuity: " + json.dumps(check), flush=True)
                 if "--smoke-bus" in arguments:
                     container = Path(run("get_app_container", uid, BUNDLE, "data").strip())
