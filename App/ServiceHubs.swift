@@ -33,21 +33,6 @@ struct PrintingView: View {
     }
 }
 
-struct LibraryView: View {
-    @Environment(CampusStore.self) private var store
-    var body: some View {
-        CampusHub(title: "图书馆", symbol: "books.vertical") {
-            CampusSectionTitle(title: "我的图书馆")
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ServiceTile(title: "我的借阅", detail: "", symbol: "books.vertical", color: .campusOrange) { LibraryLoansView().id(store.sessionRevision) }
-                ServiceTile(title: "馆藏与人数", detail: "", symbol: "magnifyingglass", color: .campusOrange) { LibrarySearchView() }
-                ServiceTile(title: "IC研讨间", detail: "", symbol: "door.left.hand.open", color: .campusOrange) { ICReservationView().id(store.sessionRevision) }
-                ServiceTile(title: "书院场地", detail: "", symbol: "building.2", color: .campusOrange) { CollegeBookingView().id(store.sessionRevision) }
-            }
-        }
-    }
-}
-
 struct CardView: View {
     @Environment(CampusStore.self) private var store
     @State private var balance: String?

@@ -18,7 +18,7 @@ struct AgendaView: View {
     @State private var personalTitle = ""
     @State private var personalDate = Date.now.addingTimeInterval(3600)
     @State private var personalData = "[]"
-    private struct Personal: Codable { var id: String; var title: String; var start: Date }
+    private typealias Personal = PersonalAgendaItem
     private var personal: [Personal] { (try? JSONDecoder().decode([Personal].self, from: Data(personalData.utf8))) ?? [] }
     private var entries: [AgendaEntry] {
         var result = extras + personal.map { AgendaEntry(id: $0.id, title: $0.title, source: "个人事项", start: $0.start, end: $0.start.addingTimeInterval(3600)) }
@@ -108,12 +108,8 @@ struct AgendaView: View {
                 }
             } catch { failures.append("CLE：" + error.localizedDescription) }
         }
-        if let token = CredentialVault.load(String.self, key: "library-token") {
-            do { let items = try await LibraryClient(http: await store.serviceHTTP(origin: LibraryClient.origin)).loans(token: token)
-                collected += items.compactMap { loan in guard let date = CampusClock.date(String(loan.due.prefix(10))) else { return nil }; return AgendaEntry(id: "loan-" + loan.id, title: "归还：" + loan.title, source: "图书馆", start: date, end: date.addingTimeInterval(3600)) }
-            } catch { failures.append("借阅：" + error.localizedDescription) }
-        }
-        guard version == store.sessionRevision else { return }; extras = collected; warnings = failures
+
+        guard version == store.sessionRevision else { return }; extras = collected; store.agendaExtras = collected; warnings = failures
     }
 }
 

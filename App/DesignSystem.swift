@@ -14,7 +14,7 @@ struct CampusHero: View {
             Spacer(minLength: 0)
             Image(systemName: symbol.replacingOccurrences(of: ".fill", with: "")).font(.title2).symbolRenderingMode(.hierarchical)
         }.foregroundStyle(.white).padding(20).frame(maxWidth: .infinity, alignment: .leading)
-            .background(CampusPalette.header, in: RoundedRectangle(cornerRadius: 20))
+            .background { CampusHeaderBackground().clipShape(RoundedRectangle(cornerRadius: 20)) }
     }
 }
 
@@ -118,5 +118,20 @@ private struct CampusConfirmActionStyle: PrimitiveButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         Button(role: configuration.role) { configuration.trigger(); dismiss() } label: { configuration.label.frame(maxWidth: .infinity) }
             .buttonStyle(.borderedProminent).tint(configuration.role == .destructive ? .red : .campusOrange)
+    }
+}
+
+/// Unmodified official school wordmark; template tint is applied only at render time.
+struct CampusHeaderBackground: View {
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .trailing) {
+                CampusPalette.header
+                Circle().stroke(.white.opacity(0.10), lineWidth: 30).frame(width: 220, height: 220).offset(x: 95, y: 30)
+                Image("SchoolWordmark").renderingMode(.template).resizable().scaledToFit()
+                    .foregroundStyle(.white).opacity(0.13).frame(width: min(proxy.size.width * 0.78, 360))
+                    .rotationEffect(.degrees(-10)).offset(x: 44, y: 15)
+            }
+        }.allowsHitTesting(false).accessibilityHidden(true)
     }
 }

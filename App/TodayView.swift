@@ -3,6 +3,7 @@ import SwiftUI
 
 struct TodayView: View {
     @Environment(CampusStore.self) private var store
+    @Environment(\.scenePhase) private var phase
     private var pendingCount: String {
         guard let snapshot = store.blackboard else { return "—" }
         if store.mode == .live, store.courseDetails.isEmpty, !snapshot.courses.isEmpty { return "—" }
@@ -22,8 +23,9 @@ struct TodayView: View {
                 }.padding(.vertical, 7)
                 HStack(spacing: 12) {
                     CampusCard {
-                        Text("校园卡余额").font(.caption).foregroundStyle(.secondary)
+                        HStack { Text("校园卡余额").font(.caption).foregroundStyle(.secondary); if store.cardBalanceLoading { ProgressView().controlSize(.mini) } }
                         Text(store.mode == .demo ? "¥126.80" : store.cardBalance ?? "—").font(.title2.bold()).monospacedDigit()
+                        if let message = store.cardBalanceMessage { NavigationLink(message) { CardView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }.font(.caption2) }
                     }
                     CampusCard {
                         Text("已同步待办").font(.caption).foregroundStyle(.secondary)
@@ -36,8 +38,7 @@ struct TodayView: View {
                     Button("体验演示模式") { store.setMode(.demo) }.font(.caption)
                 }
                 LearningOverviewView()
-                CampusSectionTitle(title: "日程与服务")
-                HStack { NavigationLink("我的日程") { AgendaView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }; Spacer(); NavigationLink("图书馆") { LibraryView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }; Spacer(); NavigationLink("排课") { PlannerView().toolbar(.visible, for: .navigationBar) } }.font(.subheadline)
+                HomeAgendaView()
                 CampusFold(title: "校园天气", symbol: "cloud.sun") { TodaySummaryView(weatherOnly: true) }
                 CampusFold(title: "同步与连接", symbol: "arrow.triangle.2.circlepath") {
                     SessionBadge()
@@ -47,7 +48,9 @@ struct TodayView: View {
                 }
             }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
         }.background(Color.campusPaper)
-            .refreshable { await store.refreshTeaching(); await store.refreshBlackboard() }
+            .refreshable { await store.refreshHomeBalance(); await store.refreshTeaching(); await store.refreshBlackboard() }
+            .task(id: "\(store.mode.rawValue)-\(store.sessionRevision)") { await store.refreshHomeBalance() }
+            .onChange(of: phase) { _, value in if value == .active { Task { await store.refreshHomeBalance() } } }
             .navigationTitle("今天").navigationBarTitleDisplayMode(.inline)
     }
     private func quick<D: View>(_ title: String, _ symbol: String, @ViewBuilder destination: @escaping () -> D) -> some View {

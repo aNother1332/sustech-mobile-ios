@@ -3,9 +3,14 @@ import SwiftUI
 
 struct AccountView: View {
     @Environment(CampusStore.self) private var store
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var portal: SchoolService?
     @State private var confirmClear = false
 
+    private var glassName: String {
+        if #available(iOS 26.0, *) { return "Liquid Glass" }
+        return "半透明材质"
+    }
     var body: some View {
         List {
             Section {
@@ -24,7 +29,7 @@ struct AccountView: View {
                         let fields = [profile.major, profile.department, profile.college].filter { !$0.isEmpty }
                         if !fields.isEmpty { Text(fields.joined(separator: " · ")).font(.subheadline).textSelection(.enabled) }
                     }
-                }.foregroundStyle(.white).padding(20).frame(maxWidth: .infinity, alignment: .leading).background(CampusPalette.header, in: RoundedRectangle(cornerRadius: 21))
+                }.foregroundStyle(.white).padding(20).frame(maxWidth: .infinity, alignment: .leading).background { CampusHeaderBackground().clipShape(RoundedRectangle(cornerRadius: 21)) }
                 if let message = store.profileMessage { Text(message).font(.caption).foregroundStyle(.secondary) }
             }.listRowSeparator(.hidden)
             Section("数据模式") {
@@ -54,6 +59,7 @@ struct AccountView: View {
                     .disabled(store.clearing || store.writing)
             }
             Section("工具与偏好") {
+                LabeledContent("底栏材质", value: reduceTransparency ? "实色 · 系统减少透明度" : glassName)
                 NavigationLink("网络与服务诊断") { DiagnosticsView().toolbar(.visible, for: .navigationBar) }
                 NavigationLink("检查软件更新") { AppUpdatesView().toolbar(.visible, for: .navigationBar) }
                 NavigationLink("教学日历与培养层次") { AcademicCalendarView().toolbar(.visible, for: .navigationBar) }

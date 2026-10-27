@@ -102,3 +102,16 @@ Real-device checks remain necessary on both iPhone and iPad: provider installed/
 `App/CardRechargeView.swift` provides a native channel selection screen, opens the exact supplied Alipay HTTPS link via iOS, and offers sharing/copying of the exact supplied school link into the supported WeChat/WeCom environment. HTTPS opening may show the Alipay landing page before handing off; automatic handoff is not yet device-verified. No undocumented schemes, guessed amount/callback parameters, merchant credentials, native order creation or automatic payment were added.
 
 The screen supports an explicit read-only refresh of current balance and recent bills using the existing card client. Opening a link or returning from another app never marks an order paid. Account/session changes clear displayed query data. Demo mode disables provider opening/sharing and real queries. An added simulator scene captures this screen without invoking providers. Real authorization, payment, beneficiary identity and crediting remain untested.
+
+
+## 2026-10-27 follow-up / 0.8.0
+
+重新 GET 同一官方公开 bundle，SHA256 仍为 `31f494cb18fae9d67e1e5b4f38810d6133fd0cedbd7ac2d93c364477a346e790`。用户在企业微信确认充值只能选固定金额；源码 `columns/columnsNew` 同样为固定列表，`isCustom` 未在充值输入中提供实际自定义处理。不能据此承诺任意金额。
+
+当前 `commitNew` 用 `parseFloat(couponSelected).toFixed(2)` 设置 `je`，调用 `/api/newCardDeposit/{cardId}`，返回后使用 `response.data` 作为跳转地址。旧 `/cardDeposit` 分支仍存在，不能混用。未调用任一 POST。
+
+`WxLogin.vue` 从 `$route.query.user` 和 `$route.query.access_token` 建立 Session 后跳回首页，可能从地址栏移除凭据。新增的原生导入仅接受本人主动粘贴的第一方回调或本人导出的 JSON，核对本人卡身份后才显示；普通充值主页链接不含这些参数，不能据此获得授权。iOS 不能读取企业微信自己的 sessionStorage。
+
+`PayResult.vue` 将 query.data 的 Base64 JSON 解释为 orderdate/orderno/amount/jylsh；未找到经认证回查单笔订单的有效契约。可自行拼造的返回参数不能当作到账证据。原生下单关闭；金额格式工具仅为本机草稿，以 Decimal 校验、规范化两位小数，避免浮点金额误差。本机 0.01–500 范围是本项目草稿限制，不是已证实的学校规则。
+
+下一步必须由真实授权环境核对：第一方令牌交接是否可持续取得；服务端是否接受自定义 `je`（如 3.00）；新下单响应的精确格式、订单号和支付域；取消/超时后的原订单查询与到账确认。验证前不提供会让用户误以为已付款的原生确认按钮。

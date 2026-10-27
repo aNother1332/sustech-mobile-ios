@@ -18,7 +18,7 @@ enum CampusPage: String, CaseIterable, Identifiable {
 }
 
 struct RootView: View {
-    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selection: CampusPage = .today
     @State private var route: String?
 
@@ -34,14 +34,27 @@ struct RootView: View {
 
     var body: some View {
         NavigationStack {
-            destination(selection)
-                .id(selection)
+            ZStack {
+                destination(selection).id(selection).transition(.opacity)
+            }
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: selection)
                 .toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .bottom, spacing: 0) { CampusNavigation(selection: $selection) }
                 .toolbarBackground(Color.campusOrange, for: .navigationBar)
                 .toolbarColorScheme(.light, for: .navigationBar)
-        }        .onOpenURL { url in
-            guard url.scheme == "sustechmobile", let host = url.host, ["today", "study", "code", "card", "bus", "printing", "reservations", "library"].contains(host) else { return }
+        }
+        .task {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--smoke-tab-cycle") {
+                for page in [CampusPage.study, .services, .account, .today] {
+                    try? await Task.sleep(for: .seconds(1))
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.36, dampingFraction: 0.76)) { selection = page }
+                }
+            }
+            #endif
+        }
+        .onOpenURL { url in
+            guard url.scheme == "sustechmobile", let host = url.host, ["today", "study", "code", "card", "bus", "printing", "reservations"].contains(host) else { return }
             if host == "today" { selection = .today } else if host == "study" { selection = .study } else { route = host }
         }.sheet(item: Binding(get: { route.map(CampusRoute.init) }, set: { route = $0?.id })) { value in
             NavigationStack { Group { switch value.id {
@@ -50,7 +63,7 @@ struct RootView: View {
             case "bus": BusView()
             case "printing": PrintingView()
             case "reservations": ReservationCenterView()
-            default: LibraryView()
+            default: TodayView()
             } }.toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { route = nil } } } }
         }
     }

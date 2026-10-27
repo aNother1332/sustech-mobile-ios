@@ -19,6 +19,10 @@ final class CampusStore {
     private(set) var mode = DataMode.live
     var loginAccount: String?
     var cardBalance: String?
+    var cardBalanceLoading = false
+    var cardBalanceMessage: String?
+    var cardBalanceRequest: UUID?
+    var agendaExtras: [AgendaEntry] = []
     var profile: StudentProfile?
     var profileMessage: String?
     private(set) var teaching: TeachingSnapshot?
@@ -82,6 +86,7 @@ final class CampusStore {
     private func resetDisplayedData() {
         CampusWidgetBridge.clear()
         serviceSessions = [:]; serviceProbeTokens = [:]
+        cardBalanceRequest = nil; cardBalanceLoading = false; cardBalanceMessage = nil; agendaExtras = []
         loginAccount = nil; cardBalance = nil; profile = nil; profileMessage = nil
         teaching = nil; academic = nil; blackboard = nil
         courseDetails = [:]; contentCache = [:]; files = []; hiddenCourses = []

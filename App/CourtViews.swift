@@ -2,6 +2,7 @@ import CampusCore
 import CoreImage.CIFilterBuiltins
 import Security
 import SwiftUI
+import UIKit
 
 enum CredentialVault {
     static func load<T: Decodable>(_ type: T.Type, key: String) -> T? {
@@ -49,22 +50,23 @@ struct CourtReservationView: View {
     var body: some View {
         List {
             Section("体育场馆授权") {
-                Text("此平台使用企业微信授权，与学校 CAS 不同。授权成功后在本机保留登录态，过期后需重新授权。").font(.caption).foregroundStyle(.secondary)
-                Label(connected ? "已连接" : (needsLogin ? "授权已失效或尚未建立" : "连接待验证"), systemImage: connected ? "checkmark.circle.fill" : "person.crop.circle").font(.caption).foregroundStyle(connected ? Color.campusGreen : .secondary)
-                if needsLogin || store.mode == .demo {
-                    Button("打开体育场馆授权", systemImage: "arrow.up.forward.app") { openURL(Self.authorization) { accepted in
-                        if !accepted { message = "系统未能打开授权链接，请通过下方分享菜单发送至企业微信。" }
-                    } }.buttonStyle(.borderedProminent).disabled(store.mode == .demo)
-                    Text("点击可直接打开授权网址。若学校要求企业微信环境，请使用下方分享入口在企业微信内打开。").font(.caption).foregroundStyle(.secondary)
-                    DisclosureGroup("其他授权方式与回调") {
-                    DisclosureGroup("显示二维码（跨设备备用）") {
-                        if let qr = qrImage() { Image(uiImage: qr).interpolation(.none).resizable().scaledToFit().frame(width: 180, height: 180).accessibilityLabel("学校体育场馆企业微信授权二维码") }
+                Label(connected ? "已连接" : "需要企业微信授权", systemImage: connected ? "checkmark.circle.fill" : "person.crop.circle").font(.subheadline).foregroundStyle(connected ? Color.campusGreen : .secondary)
+                if needsLogin || !connected {
+                    Button("复制授权链接并打开企业微信", systemImage: "arrow.up.forward.app") { openWeCom() }
+                        .buttonStyle(.borderedProminent).disabled(store.mode == .demo)
+                    HStack {
+                        PasteButton(payloadType: String.self) { values in if let value = values.first { code = value; Task { await login() } } }
+                            .disabled(busy || store.mode == .demo)
+                        ShareLink("分享授权链接", item: Self.authorization).disabled(store.mode == .demo)
                     }
-                    ShareLink("分享授权链接到企业微信", item: Self.authorization).disabled(store.mode == .demo)
-                    Text("完成授权后，复制带 code 的回调链接并粘贴到下方。code 为一次性凭据，页面可能已使用它；失效时重新获取，不要将链接发到聊天或 Issue。").font(.caption)
-                    SecureField("一次性授权链接或 code", text: $code).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    Button("使用此授权连接") { Task { await login() } }.disabled(busy || code.isEmpty || store.mode == .demo)
-                }
+                    Text("在企业微信中粘贴打开 → 右上角复制链接 → 返回这里粘贴连接").font(.caption).foregroundStyle(.secondary)
+                    DisclosureGroup("手动输入") {
+                        SecureField("授权链接、code 或本机登录密钥", text: $code).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        Button("连接") { Task { await login() } }.disabled(busy || code.isEmpty || store.mode == .demo)
+                    }
+                } else {
+                    Button("复制本机登录密钥", systemImage: "doc.on.doc") { Task { await copyCredentials() } }
+                    Button("在企业微信打开学校预约", systemImage: "arrow.up.forward.app") { openWeCom() }
                 }
                 Button("刷新全部场馆与我的预约") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
                 Button("退出体育场馆账号", role: .destructive) { client = CourtClient(); CredentialVault.delete("court"); gyms = []; orders = []; connected = false; needsLogin = true; message = "已清除本机体育场馆授权。" }.disabled(busy)
@@ -88,10 +90,16 @@ struct CourtReservationView: View {
             if let order = cancelling { Button("取消 \(order.title)", role: .destructive) { Task { await cancel(order) } } }
         }
     }
-    private func qrImage() -> UIImage? {
-        let filter = CIFilter.qrCodeGenerator(); filter.message = Data(Self.authorization.absoluteString.utf8)
-        guard let output = filter.outputImage, let image = CIContext().createCGImage(output, from: output.extent) else { return nil }
-        return UIImage(cgImage: image)
+    private func openWeCom() {
+        UIPasteboard.general.url = Self.authorization
+        UIApplication.shared.open(URL(string: "wxwork://")!, options: [:]) { opened in
+            message = opened ? "链接已复制，请在企业微信中粘贴打开。" : "链接已复制，请手动打开企业微信。"
+        }
+    }
+    private func copyCredentials() async {
+        guard connected, let value = await client.currentCredentials(), let data = try? JSONEncoder().encode(value), let text = String(data: data, encoding: .utf8) else { return }
+        UIPasteboard.general.setItems([["public.utf8-plain-text": text]], options: [.localOnly: true, .expirationDate: Date.now.addingTimeInterval(60)])
+        message = "已复制登录密钥，剪贴板 60 秒后失效。"
     }
     private func save(_ revision: Int) async throws {
         guard revision == store.sessionRevision else { throw CancellationError() }
@@ -100,13 +108,23 @@ struct CourtReservationView: View {
     private func login() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let input = code; code = ""; let version = store.sessionRevision
-        do { try await client.login(codeOrURL: input); try await save(version); gyms = try await client.gyms(); orders = try await client.orders(); connected = true; needsLogin = false; message = "场馆授权已连接。" }
+        do {
+            if let credentials = try? CourtCredentials.imported(input) { client = CourtClient(credentials: credentials); _ = try await client.user() }
+            else { try await client.login(codeOrURL: input) }
+            let list = try await client.gyms(); let mine = try await client.orders()
+            guard version == store.sessionRevision, store.mode == .live else { return }
+            try await save(version); gyms = list; orders = mine; connected = true; needsLogin = false; message = nil
+        }
         catch { connected = false; needsLogin = (error as? CampusError) == .signInRequired; message = error.localizedDescription }
     }
     private func refresh() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision
-        do { gyms = try await client.gyms(); orders = try await client.orders(); try await save(version); connected = true; needsLogin = false; message = "读取于 \(Date.now.formatted())" }
+        do {
+            let list = try await client.gyms(); let mine = try await client.orders()
+            guard version == store.sessionRevision, store.mode == .live else { return }
+            try await save(version); gyms = list; orders = mine; connected = true; needsLogin = false; message = nil
+        }
         catch { connected = false; needsLogin = (error as? CampusError) == .signInRequired; message = error.localizedDescription }
     }
     private func cancel(_ order: ReservationItem) async {

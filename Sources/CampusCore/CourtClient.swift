@@ -3,6 +3,13 @@ import Foundation
 public struct CourtCredentials: Codable, Sendable {
     public let userID: String; public let token: String
     public init(userID: String, token: String) { self.userID = userID; self.token = token }
+    public static func imported(_ text: String) throws -> CourtCredentials {
+        guard text.utf8.count < 8192, let data = text.data(using: .utf8), let value = try? JSONDecoder().decode(CourtCredentials.self, from: data),
+              value.userID.range(of: "^[A-Za-z0-9_-]{1,256}$", options: .regularExpression) != nil,
+              !value.token.isEmpty, value.token.utf8.count < 4096,
+              value.token.unicodeScalars.allSatisfy({ !CharacterSet.controlCharacters.contains($0) }) else { throw ServiceFailure("登录密钥格式不正确。") }
+        return value
+    }
 }
 public struct CourtSlot: Identifiable, Sendable {
     public let day: String; public let start: String; public let end: String; public let status: String

@@ -31,6 +31,12 @@ struct CardRechargeView: View {
                 Text("链接指向预选南方科技大学的支付宝小程序。请在支付宝内核对充值对象和收款方；金额在小程序中填写。").font(.caption).foregroundStyle(.secondary)
             }
             Section("微信 / 企业微信") {
+                Button("复制链接并打开企业微信", systemImage: "arrow.up.forward.app") {
+                    UIPasteboard.general.url = schoolURL
+                    UIApplication.shared.open(URL(string: "wxwork://")!, options: [:]) { opened in
+                        message = opened ? "链接已复制，请在企业微信粘贴打开。" : "链接已复制，请手动打开企业微信。"
+                    }
+                }.disabled(store.mode == .demo)
                 ShareLink("分享至微信或企业微信", item: schoolURL).disabled(store.mode == .demo)
                 Button("复制学校充值链接", systemImage: "doc.on.doc") {
                     UIPasteboard.general.url = schoolURL
@@ -60,7 +66,8 @@ struct CardRechargeView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, awaitingReturn {
                 awaitingReturn = false
-                message = "已返回 App，支付与到账结果尚未核实。可刷新余额与账单，或到支付平台查询原订单。"
+                message = "正在刷新到账记录…"
+                Task { await refresh() }
             }
         }
         .onChange(of: store.sessionRevision) { _, _ in
@@ -90,7 +97,7 @@ struct CardRechargeView: View {
         do {
             let balance = try await client.account()
             guard version == store.sessionRevision else { return }
-            account = balance
+            account = balance; store.cardBalance = balance.balance; store.recordSession(.card)
             let records = try await client.bills()
             guard version == store.sessionRevision else { return }
             bills = records; synced = .now

@@ -28,7 +28,7 @@ struct StudyView: View {
                 CampusHero(eyebrow: "", title: "学习", subtitle: "", symbol: "books.vertical")
                 LearningOverviewView()
                 ModeNotice()
-                HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }; Spacer(); NavigationLink("排课") { PlannerView().toolbar(.visible, for: .navigationBar) }; NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) } }.font(.caption)
+                HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }; Spacer(); NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) } }.font(.caption)
                 if let message = store.cacheMessage { Text(message).font(.caption).foregroundStyle(.orange) }
                 CampusFold(title: "课表", symbol: "calendar") { teachingContentFor(.timetable) }
                 CampusFold(title: "考试", symbol: "pencil.and.list.clipboard") { teachingContentFor(.exams) }

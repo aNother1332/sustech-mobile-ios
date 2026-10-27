@@ -31,6 +31,8 @@ def main():
             run("install", uid, APP)
             scenes = (
                 ("today", ["--smoke-demo"]),
+                ("navigation-glass", ["--smoke-demo", "--smoke-tab-cycle"]),
+                ("navigation-material", ["--smoke-demo", "--smoke-tab-cycle", "--smoke-force-material"]),
                 ("learning-home", ["--smoke-demo", "--smoke-study"]),
                 ("bus-timetable", ["--smoke-demo", "--smoke-bus", "--smoke-bus-drawer"]),
                 ("bus-stop", ["--smoke-demo", "--smoke-bus", "--smoke-bus-stop"]),
@@ -55,9 +57,7 @@ def main():
                 ("native-login", ["--smoke-login"]),
                 ("card", ["--smoke-demo", "--smoke-card"]),
                 ("recharge", ["--smoke-demo", "--smoke-recharge"]),
-                ("library", ["--smoke-demo", "--smoke-library"]),
                 ("agenda", ["--smoke-demo", "--smoke-agenda"]),
-                ("planner", ["--smoke-demo", "--smoke-planner"]),
                 ("reviews", ["--smoke-demo", "--smoke-reviews"]),
                 ("degree", ["--smoke-demo", "--smoke-degree"]),
                 ("classrooms", ["--smoke-demo", "--smoke-classrooms"]),
@@ -80,7 +80,12 @@ def main():
                 print(f"Capture: {family} {scene}", flush=True)
                 launched_at = time.time()
                 run("launch", "--terminate-running-process", uid, BUNDLE, *arguments)
-                time.sleep(3)
+                time.sleep(6 if "--smoke-tab-cycle" in arguments else 3)
+                if "--smoke-tab-cycle" in arguments:
+                    container = Path(run("get_app_container", uid, BUNDLE, "data").strip())
+                    check = json.loads((container / "Documents/smoke-navigation.json").read_text())
+                    assert check["instances"] == 1 and check["updates"] >= 5, check
+                    print("Navigation continuity: " + json.dumps(check), flush=True)
                 if "--smoke-bus" in arguments:
                     container = Path(run("get_app_container", uid, BUNDLE, "data").strip())
                     check = json.loads((container / "Documents/smoke-bus-map.json").read_text())
