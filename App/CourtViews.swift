@@ -66,7 +66,7 @@ struct CourtReservationView: View {
                     }
                 } else {
                     Button("复制本机登录密钥", systemImage: "doc.on.doc") { Task { await copyCredentials() } }
-                    Button("在企业微信打开学校预约", systemImage: "arrow.up.forward.app") { openWeCom() }
+                    Button("在企业微信打开学校预约", systemImage: "arrow.up.forward.app") { openWeCom(booking: true) }
                 }
                 Button("刷新全部场馆与我的预约") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
                 Button("退出体育场馆账号", role: .destructive) { client = CourtClient(); CredentialVault.delete("court"); gyms = []; orders = []; connected = false; needsLogin = true; message = "已清除本机体育场馆授权。" }.disabled(busy)
@@ -90,8 +90,15 @@ struct CourtReservationView: View {
             if let order = cancelling { Button("取消 \(order.title)", role: .destructive) { Task { await cancel(order) } } }
         }
     }
-    private func openWeCom() {
-        UIPasteboard.general.url = Self.authorization
+    private func openWeCom(booking: Bool = false) {
+        var target = Self.authorization
+        if booking, var parts = URLComponents(url: target, resolvingAgainstBaseURL: false) {
+            parts.queryItems = (parts.queryItems ?? []).map { item in
+                item.name == "redirect_uri" ? URLQueryItem(name: "redirect_uri", value: "https://reservation.sustech.edu.cn/clientMobile.html#/reservation/gym") : item
+            }
+            if let url = parts.url { target = url }
+        }
+        UIPasteboard.general.url = target
         UIApplication.shared.open(URL(string: "wxwork://")!, options: [:]) { opened in
             message = opened ? "链接已复制，请在企业微信中粘贴打开。" : "链接已复制，请手动打开企业微信。"
         }
