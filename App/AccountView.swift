@@ -3,82 +3,77 @@ import SwiftUI
 
 struct AccountView: View {
     @Environment(CampusStore.self) private var store
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @State private var portal: SchoolService?
-    @State private var confirmClear = false
-
-    private var glassName: String {
-        if #available(iOS 26.0, *) { return "Liquid Glass" }
-        return "半透明材质"
-    }
     var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 14) {
-                        Image(systemName: "person.crop.circle").font(.system(size: 48, weight: .light)).foregroundStyle(.white)
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(store.profile?.name.isEmpty == false ? store.profile!.name : "我的").font(.title2.bold())
-                            if let id = store.profile?.studentID, !id.isEmpty { Text(id).font(.subheadline).textSelection(.enabled) }
-                            else if let account = store.loginAccount ?? store.rememberedUsername { Text("账号 " + account).font(.subheadline).textSelection(.enabled) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 24) {
+                    HStack(alignment: .top, spacing: 16) {
+                        ZStack {
+                            Circle().fill(.white.opacity(0.18)).frame(width: 78, height: 78)
+                            Image(systemName: "person.crop.circle").font(.system(size: 59, weight: .ultraLight))
+                        }
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(store.profile?.name.isEmpty == false ? store.profile!.name : "我的").font(.largeTitle.bold())
+                            if let number = store.profile?.studentID, !number.isEmpty { Text(number).font(.headline.monospacedDigit()) }
                         }
                         Spacer()
-                        Button { Task { await store.refreshProfile() } } label: { Image(systemName: "arrow.clockwise") }.accessibilityLabel("刷新个人信息")
+                        NavigationLink { SettingsView().toolbar(.visible, for: .navigationBar) } label: { Image(systemName: "gearshape").font(.title2).padding(10).background(.white.opacity(0.15), in: Circle()) }.accessibilityLabel("设置")
                     }
                     if let profile = store.profile {
-                        let fields = [profile.major, profile.department, profile.college].filter { !$0.isEmpty }
-                        if !fields.isEmpty { Text(fields.joined(separator: " · ")).font(.subheadline).textSelection(.enabled) }
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 18) {
+                            field("专业", profile.major); field("院系", profile.department); field("书院", profile.college)
+                        }
                     }
-                }.foregroundStyle(.white).padding(20).frame(maxWidth: .infinity, alignment: .leading).background { CampusHeaderBackground().clipShape(RoundedRectangle(cornerRadius: 21)) }
-                if let message = store.profileMessage { Text(message).font(.caption).foregroundStyle(.secondary) }
-            }.listRowSeparator(.hidden)
-            Section("数据模式") {
-                Picker("当前模式", selection: Binding(get: { store.mode }, set: { store.setMode($0) })) {
-                    ForEach(DataMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.disabled(store.clearing || store.authenticating || store.writing)
-            }
-            Section("连接学校服务") {
-                HStack { Text("教务"); Spacer(); NativeLoginButton(service: .teaching) }
-                HStack { Text("Blackboard"); Spacer(); NativeLoginButton(service: .blackboard) }
-                if let username = store.rememberedUsername {
-                    LabeledContent("已记住账号", value: username)
-                    Button("关闭自动登录并删除记住的密码", role: .destructive) { store.forgetSchoolAccount() }.disabled(store.authenticating)
+                }.foregroundStyle(.white).padding(24).frame(maxWidth: .infinity, minHeight: 240, alignment: .topLeading)
+                    .background { CampusHeaderBackground().clipShape(RoundedRectangle(cornerRadius: 28)) }
+                NativeLoginButton()
+                ServiceMessage(message: store.profileMessage)
+                CampusSectionTitle(title: "常用")
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    ServiceTile(title: "我的预约", detail: "", symbol: "calendar.badge.clock", color: .blue) { ReservationCenterView().toolbar(.visible, for: .navigationBar) }
+                    ServiceTile(title: "下载文件", detail: "", symbol: "folder", color: .campusOrange) { OfflineDownloadsView().toolbar(.visible, for: .navigationBar) }
+                    ServiceTile(title: "日程提醒", detail: "", symbol: "bell", color: .campusGreen) { AgendaView().toolbar(.visible, for: .navigationBar) }
+                    ServiceTile(title: "设置", detail: "", symbol: "gearshape", color: .secondary) { SettingsView().toolbar(.visible, for: .navigationBar) }
                 }
-                if let message = store.automaticLoginMessage { Text(message).font(.caption).foregroundStyle(.secondary) }
-                Button("检测全部连接") { Task { await store.checkSchoolSessions(force: true) } }
-                DisclosureGroup("网页登录备用") {
-                    Button("教务学校页面") { portal = .teaching }
-                    Button("Blackboard 学校页面") { portal = .blackboard }
-                }
+            }.padding(16).frame(maxWidth: 900).frame(maxWidth: .infinity)
+        }.background(Color(uiColor: .systemGroupedBackground))
+            .task(id: store.sessionRevision) { await store.refreshProfile() }
+            .refreshable { await store.refreshProfile() }
+    }
+    @ViewBuilder private func field(_ title: String, _ value: String) -> some View {
+        if !value.isEmpty { VStack(alignment: .leading, spacing: 5) { Text(title).font(.caption).foregroundStyle(.white.opacity(0.75)); Text(value).font(.subheadline.weight(.semibold)) } }
+    }
+}
+
+struct SettingsView: View {
+    @Environment(CampusStore.self) private var store
+    @State private var login = false
+    @State private var confirmClear = false
+    var body: some View {
+        List {
+            Section("账号") {
+                Button("账号与登录", systemImage: "person.crop.circle") { login = true }
+                if store.remembersSchoolAccount { Button("关闭自动登录") { store.forgetSchoolAccount() } }
+                Button("退出登录", role: .destructive) { confirmClear = true }
             }
-            Section("本机数据") {
-                if let message = store.cacheMessage { Text(message).foregroundStyle(.orange) }
-                DetailNote(title: "存储与隐私", text: "会话和文件保存在本机，账号密码仅在你选择记住时存入本机钥匙串，没有聚合服务器或统计 SDK。退出时清除学校缓存与下载。")
-                    .font(.callout).foregroundStyle(.secondary)
-                Button(store.clearing ? "正在清除…" : "清除本机会话、离线数据与下载文件", role: .destructive) { confirmClear = true }
-                    .disabled(store.clearing || store.writing)
+            Section("偏好") {
+                NavigationLink("教学日历", destination: AcademicCalendarView())
+                NavigationLink("桌面小组件", destination: WidgetSettingsView())
             }
-            Section("工具与偏好") {
-                LabeledContent("底栏材质", value: reduceTransparency ? "实色 · 系统减少透明度" : glassName)
-                NavigationLink("网络与服务诊断") { DiagnosticsView().toolbar(.visible, for: .navigationBar) }
-                NavigationLink("检查软件更新") { AppUpdatesView().toolbar(.visible, for: .navigationBar) }
-                NavigationLink("教学日历与培养层次") { AcademicCalendarView().toolbar(.visible, for: .navigationBar) }
-                NavigationLink("桌面小组件设置") { WidgetSettingsView().toolbar(.visible, for: .navigationBar) }
+            Section("存储") {
+                NavigationLink("下载文件", destination: OfflineDownloadsView())
+                Button("清除缓存与下载", role: .destructive) { confirmClear = true }
             }
-            Section("关于与来源") {
-                NavigationLink("上游许可与来源") { NoticesView().toolbar(.visible, for: .navigationBar) }
-                Text("本应用不代表南方科技大学。学校页面、规则和记录为准。")
-                    .font(.caption).foregroundStyle(.secondary)
+            Section("应用") {
+                NavigationLink("检查更新", destination: AppUpdatesView())
+                NavigationLink("网络诊断", destination: DiagnosticsView())
+                NavigationLink("关于与来源", destination: NoticesView())
             }
-        }
-        .navigationTitle("我的").navigationBarTitleDisplayMode(.inline)
-        .task(id: store.mode.rawValue) { await store.refreshProfile() }
-        .refreshable { await store.refreshProfile(); await store.checkSchoolSessions(force: true) }
-        .onChange(of: portal) { _, value in if value == nil { Task { await store.checkSchoolSessions(force: true) } } }
-        .sheet(item: $portal) { SchoolBrowser(service: $0) }
-        .campusConfirmation("清除本机会话、缓存和下载文件？", isPresented: $confirmClear, titleVisibility: .visible) {
-            Button("清除并退出本机会话", role: .destructive) { Task { await store.clearLocalSession() } }
-        } message: { Text("已下载课件也会移除。记住的账号密码也会删除。之后需要重新登录；此操作不撤销学校服务器上的会话。") }
+        }.navigationTitle("设置").navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $login) { NativeLoginView() }
+            .campusConfirmation("退出并清除本机缓存与下载？", isPresented: $confirmClear) {
+                Button("确认清除", role: .destructive) { Task { await store.clearLocalSession() } }
+            }
     }
 }
 

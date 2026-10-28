@@ -5,6 +5,8 @@ import WebKit
 struct SchoolBrowser: View {
     let service: SchoolService
     var initialURL: URL? = nil
+    var ephemeral = false
+    @State private var transientStore = WKWebsiteDataStore.nonPersistent()
     private var entryURL: URL { initialURL ?? service.portalURL }
     @Environment(CampusStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -21,7 +23,7 @@ struct SchoolBrowser: View {
                     Text(failure).font(.callout).foregroundStyle(.orange).padding()
                 }
                 if ready {
-                    BrowserWebView(url: entryURL, dataStore: store.websiteDataStore, state: browserState, sessions: store.sessions)
+                    BrowserWebView(url: entryURL, dataStore: ephemeral ? transientStore : store.websiteDataStore, state: browserState, sessions: store.sessions)
                 } else if preparing { ProgressView("正在准备学校页面…").frame(maxWidth: .infinity, maxHeight: .infinity) }
                 else { ContentUnavailableView("暂时无法打开登录页面", systemImage: "lock", description: Text("请解锁设备，关闭页面后重新打开。")) }
             }
@@ -49,7 +51,9 @@ struct SchoolBrowser: View {
                     .frame(maxWidth: .infinity).padding().background(.regularMaterial)
             }
             .task {
-                ready = await store.prepareSchoolBrowser(service)
+                let prepared = await store.prepareSchoolBrowser(service)
+                if ephemeral { for cookie in await store.sessions.cookies() { await transientStore.httpCookieStore.setCookie(cookie) } }
+                ready = prepared
                 preparing = false
                 if !ready { browserState.failure = store.cacheMessage ?? "其他会话操作尚未结束，请稍后重试。" }
             }

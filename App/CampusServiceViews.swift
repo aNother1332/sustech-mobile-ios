@@ -6,7 +6,8 @@ import PDFKit
 
 struct ServiceMessage: View {
     let message: String?
-    var body: some View { if let message { Text(message).font(.callout).foregroundStyle(.secondary).textSelection(.enabled) } }
+    var body: some View { InlineFailure(message: message ?? "") }
+
 }
 
 struct CardAccountView: View {

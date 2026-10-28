@@ -92,9 +92,6 @@ struct AgendaView: View {
         guard version == store.sessionRevision else { return }
         var collected: [AgendaEntry] = []; var failures: [String] = []
         do { try await store.sessions.connectIC(); let http = await store.serviceHTTP(origin: SchoolService.rooms.portalURL); let mine = try await ICClient(http: http).mine(); collected += mine.filter { ReservationAgendaPolicy.activeIC($0.raw) }.compactMap { reservation($0, source: "IC", begin: "resvBeginTime", end: "resvEndTime") } } catch { failures.append("IC：" + error.localizedDescription) }
-        if let credentials = CredentialVault.load(CourtCredentials.self, key: "court") {
-            do { let items = try await CourtClient(credentials: credentials).orders(); collected += items.filter { ReservationAgendaPolicy.activeCourt($0.raw) }.compactMap { reservation($0, source: "体育", begin: "startTime", end: "endTime") } } catch { failures.append("体育：" + error.localizedDescription) }
-        }
         if !store.sessions.cleID.isEmpty {
             do {
                 let client = CLEClient(http: await store.serviceHTTP(origin: CLEClient.index))

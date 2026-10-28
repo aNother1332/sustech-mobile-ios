@@ -48,7 +48,7 @@ public struct ICClient: Sendable {
             let lending = lab["roomInfos"].rows.count == 1 && room["devName"].text == lab["labName"].text
             result[id] = ReservationItem(id: id, title: room["devName"].text,
                 detail: lab["labName"].text + " · 当前已有安排 \(room["resvInfos"].rows.count) 项" + (lending ? " · 设备外借请使用学校页面" : ""),
-                raw: room.replacing(["nativeBookable": .bool(!lending)]))
+                raw: room.replacing(["nativeBookable": .bool(!lending), "labId": lab["labId"]]))
         } } }
         return result.values.sorted { $0.title < $1.title }
     }

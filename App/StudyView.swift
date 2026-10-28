@@ -46,15 +46,6 @@ struct StudyView: View {
 
     private func teachingContentFor(_ section: Section) -> some View {
         VStack(spacing: 10) {
-            CampusCard {
-                Label(store.teaching?.semester.name ?? "连接教务系统", systemImage: "graduationcap").font(.headline)
-                if store.mode == .live {
-                    PortalActions(service: .teaching) { portal = .teaching }
-                    Button("同步全学期课表与考试") { Task { await store.refreshTeaching() } }
-                        .disabled(store.teachingState.isLoading || store.clearing || store.authenticating)
-                    ConnectionNotice(state: store.teachingState).font(.caption)
-                }
-            }
             if section == .timetable {
                 if let snapshot = store.teaching {
                     HStack { Toggle("网格课表", isOn: $grid); NavigationLink("本学期课程") { EnrolledCoursesView().toolbar(.visible, for: .navigationBar) } }.font(.caption)

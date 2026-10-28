@@ -36,7 +36,6 @@ struct TodayView: View {
                 if store.mode == .demo { ModeNotice() }
                 if store.mode == .live, store.teaching == nil, store.blackboard == nil {
                     HStack { Text("连接学校账号").font(.headline); Spacer(); NativeLoginButton() }
-                    Button("体验演示模式") { store.setMode(.demo) }.font(.caption)
                 }
                 LearningOverviewView()
                 HomeAgendaView().id("home-agenda")

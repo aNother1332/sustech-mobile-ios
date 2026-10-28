@@ -68,40 +68,21 @@ extension CampusStore {
 }
 
 struct SessionBadge: View {
-    @Environment(CampusStore.self) private var store
     var service: CASService = .teaching
-    var body: some View {
-        if store.mode == .live {
-            let value = store.serviceSessions[service] ?? ServiceSessionState()
-            HStack(spacing: 6) {
-                Image(systemName: value.valid ? "checkmark.circle.fill" : "person.crop.circle")
-                Text(value.label)
-                if let checked = value.checked { Text(checked, style: .time).foregroundStyle(.secondary) }
-                Spacer(minLength: 4)
-                NativeLoginButton(service: service)
-            }.font(.caption).foregroundStyle(value.valid ? Color.campusGreen : .secondary)
-            .task { await store.checkSession(service) }
-            if value.status == .unavailable, !value.note.isEmpty { Text(value.note).font(.caption2).foregroundStyle(.secondary) }
-        }
-    }
+    var body: some View { NativeLoginButton(service: service) }
 }
-
 struct DetailNote: View {
     var title = "说明"
     let text: String
-    var body: some View { DisclosureGroup(title) { Text(text).font(.caption).foregroundStyle(.secondary) }.font(.caption) }
+    var body: some View { EmptyView() }
 }
-
 struct IndependentConnectionStatus: View {
     let connected: Bool
     let requiresLogin: Bool
     var open: () -> Void
     var body: some View {
-        HStack {
-            Label(connected ? "已连接" : (requiresLogin ? "需要连接" : "尚未验证"), systemImage: connected ? "checkmark.circle.fill" : "person.crop.circle")
-                .foregroundStyle(connected ? Color.campusGreen : .secondary)
-            Spacer()
-            Button(requiresLogin ? "连接学校页面" : "学校页面", action: open)
-        }.font(.caption)
+        if !connected && requiresLogin {
+            Button(action: open) { Label("未登录", systemImage: "person.crop.circle.badge.exclamationmark").font(.subheadline.weight(.medium)).foregroundStyle(.red) }.buttonStyle(.plain)
+        }
     }
 }

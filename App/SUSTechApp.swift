@@ -37,7 +37,6 @@ struct SUSTechApp: App {
         else if arguments.contains("--smoke-reservations") { NavigationStack { ReservationCenterView() } }
         else if arguments.contains("--smoke-ic") { NavigationStack { ICReservationView() } }
         else if arguments.contains("--smoke-cle") { NavigationStack { CLEReservationView() } }
-        else if arguments.contains("--smoke-court") { NavigationStack { CourtReservationView() } }
         else { RootView() }
         #else
         RootView()
@@ -54,8 +53,9 @@ struct SUSTechApp: App {
                 .task { await store.resumeSchoolConnections() }
                 .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await store.resumeSchoolConnections() } } }
                 .font(.system(.body, design: .default))
+                .background { DisplayCapabilityReader().frame(width: 0, height: 0).allowsHitTesting(false) }
                 .tint(.campusOrange)
-                .listStyle(.plain)
+                .listStyle(.insetGrouped)
                 .scrollContentBackground(.hidden)
                 .onAppear {
                     #if DEBUG

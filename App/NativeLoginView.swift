@@ -10,13 +10,9 @@ struct NativeLoginButton: View {
     var body: some View {
         let status = store.serviceSessions[service] ?? ServiceSessionState()
         Group {
-            if store.mode == .demo { Text("演示模式").font(.caption).foregroundStyle(.secondary) }
-            else {
-                Button { choices = true } label: {
-                    Label(status.valid ? "已登录" : (status.status == .expired ? "登录学校账号" : status.label), systemImage: status.valid ? "checkmark.circle.fill" : "person.badge.key").font(.caption)
-                }
-
-            }
+            if store.mode == .live, status.status == .expired {
+                Button { presented = true } label: { Label("未登录", systemImage: "person.crop.circle.badge.exclamationmark").foregroundStyle(.red).font(.subheadline.weight(.medium)) }
+            } else if store.mode == .live, status.status == .unavailable { InlineFailure(message: "网络或学校服务暂不可用") }
         }
         .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
         .task { await store.checkSession(service) }
@@ -61,21 +57,15 @@ struct NativeLoginView: View {
                     }.disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || store.authenticating || store.clearing || store.writing)
                 }
                 Section {
-                    Text("账号密码由本机通过 HTTPS 直接发送给学校 CAS。开启后，账号密码仅保存于本机 iOS 钥匙串，不上传到开发者服务器。打开 App 时优先复用登录态，确认失效后自动登录；遇到验证码或密码错误会暂停，需手动处理。关闭选项会删除已记住的密码。")
-                        .font(.footnote).foregroundStyle(.secondary)
                     if let message = store.authenticationMessage { Text(message).textSelection(.enabled) }
                     if store.authenticating { Button("取消登录", role: .cancel) { loginTask?.cancel() } }
                 }
-                Section("学校网页登录备用") {
-                    Text("验证码或其他交互验证需要在学校页面完成。网页登录保留当前会话；完成后自动检测连接。切换账号请先退出。")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    Button("教务完整网页登录") { portal = .teaching }
-                    Button("Blackboard 完整网页登录") { portal = .blackboard }
-                }.disabled(store.authenticating || store.clearing || store.writing)
+
             }
             .navigationTitle("学校账号").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() }.disabled(store.authenticating) } }
             .sheet(item: $portal) { SchoolBrowser(service: $0) }
+            .onChange(of: store.challengeService) { _, service in if let service { portal = service } }
         }
         .interactiveDismissDisabled(store.authenticating)
         .onAppear { username = store.rememberedUsername ?? ""; remember = store.remembersSchoolAccount }

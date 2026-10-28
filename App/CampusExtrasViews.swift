@@ -91,44 +91,74 @@ struct ExchangeProgramsView: View {
     @State private var message: String?
     @State private var query = ""
     @State private var onlyOpen = false
-    @State private var portal = false
-    @State private var detail: ExchangeProgram?
     var body: some View {
-        List {
-            Section {
-                Toggle("仅看可申请项目", isOn: $onlyOpen)
-                Button("官方交换平台") { portal = true }
-                ServiceMessage(message: message); if busy { ProgressView() }
-            }
-            if store.mode == .demo {
-                Section("虚构示例 · 不代表真实开放项目") {
-                    ForEach(["暑期交流项目", "学期交换项目"], id: \.self) { name in
-                        VStack(alignment: .leading, spacing: 6) { Text("示例 · " + name).font(.subheadline.bold()); Text("示例地区 · 示例合作学校").font(.caption).foregroundStyle(.secondary); Label("示例：申请窗口内", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Color.campusGreen); Text("真实项目时间、资格与申请以官方平台为准").font(.caption).foregroundStyle(.secondary) }
-                    }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 14) {
+                BusinessHeader(title: "交换项目", symbol: "airplane.departure", color: .blue)
+                HStack {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    TextField("学校、地区、项目", text: $query)
+                    Toggle("可申请", isOn: $onlyOpen).labelsHidden().accessibilityLabel("仅看可申请项目")
+                }.padding(14).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 14))
+                ServiceMessage(message: message)
+                ForEach(items.filter { (!onlyOpen || $0.available) && (query.isEmpty || ($0.name + $0.location).localizedCaseInsensitiveContains(query)) }) { item in
+                    NavigationLink { ExchangeDetailView(item: item).toolbar(.visible, for: .navigationBar) } label: {
+                        HStack(spacing: 14) {
+                            if let image = item.imageURL { EphemeralImage(url: image).frame(width: 105, height: 125).clipShape(RoundedRectangle(cornerRadius: 12)) }
+                            else { Image(systemName: "globe.asia.australia").font(.system(size: 37, weight: .ultraLight)).foregroundStyle(.blue).frame(width: 70, height: 110).background(.blue.opacity(0.06), in: RoundedRectangle(cornerRadius: 12)) }
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(item.name).font(.subheadline.weight(.semibold)).foregroundStyle(.primary).multilineTextAlignment(.leading)
+                                Text(item.location).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                                if !item.status.isEmpty { Text(item.status).font(.caption2.weight(.medium)).foregroundStyle(item.available ? Color.campusGreen : .secondary).padding(.horizontal, 8).padding(.vertical, 4).background((item.available ? Color.green : Color.gray).opacity(0.08), in: Capsule()) }
+                            }
+                            Spacer(minLength: 0)
+                        }.padding(12).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(CampusPressStyle())
                 }
-            }
-            ForEach(items.filter { (!onlyOpen || $0.available) && (query.isEmpty || ($0.name + $0.location).localizedCaseInsensitiveContains(query)) }) { item in
-                Button { detail = item } label: { VStack(alignment: .leading, spacing: 6) {
-                    Text(item.name).font(.subheadline.bold()).foregroundStyle(.primary)
-                    Text(item.location).font(.caption).foregroundStyle(.secondary)
-                    Label(item.status.isEmpty ? (item.available ? "可申请" : "请核对申请状态") : item.status, systemImage: item.available ? "checkmark.circle.fill" : "clock").font(.caption).foregroundStyle(item.available ? Color.campusGreen : .secondary)
-                    Text(item.range).font(.caption).foregroundStyle(.secondary)
-                } }
-            }
-            if items.count < total { Button("加载更多 · \(items.count)/\(total)") { Task { await load(reset: false) } }.disabled(busy) }
-        }.navigationTitle("交换项目").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "在已加载项目中搜索学校、地区")
+                if busy { ProgressView().frame(maxWidth: .infinity) }
+                if items.count < total { Button("加载更多") { Task { await load(reset: false) } }.disabled(busy).frame(maxWidth: .infinity).buttonStyle(.bordered) }
+            }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
+        }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("交换项目").navigationBarTitleDisplayMode(.inline)
             .task { await load(reset: true) }.refreshable { await load(reset: true) }
-            .sheet(isPresented: $portal, onDismiss: { Task { await load(reset: true) } }) { SchoolBrowser(service: .exchange) }
-            .sheet(item: $detail) { item in SchoolBrowser(service: .exchange, initialURL: item.url) }
     }
     private func load(reset: Bool) async {
+        #if DEBUG
+        if store.mode == .demo {
+            let data = Data(#"{"DataList":[{"ID":"demo-one","Name":"暑期交流项目（示例）","RegionName":"示例地区","ProjectSchoolName":"示例合作学校","ProjectDescription":"项目介绍与课程安排","ApplyCondition":"示例申请条件","ProjectTypeText":"暑期交流"},{"ID":"demo-two","Name":"学期交换项目（示例）","RegionName":"示例地区","ProjectSchoolName":"示例大学","ProjectTypeText":"学期交换"}]}"#.utf8)
+            if let value = try? JSONDecoder().decode(WireValue.self, from: data) { items = (try? ExchangeClient.parsePrograms(value).items) ?? [] }; return
+        }
+        #endif
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let origin = URL(string: "https://ws.sustech.edu.cn")!
         do {
             try await store.sessions.connect(entry: URL(string: "https://cas.sustech.edu.cn/cas/login?service=https%3A%2F%2Fws.sustech.edu.cn%2FSUSTechHome.aspx")!, finalHost: origin.host)
             let http = await store.serviceHTTP(origin: origin)
-            do { let next = reset ? 1 : page + 1; let value = try await ExchangeClient(http: http).programs(page: next); guard version == store.sessionRevision else { return }; items = reset ? value.items : items + value.items.filter { row in !items.contains { $0.id == row.id } }; total = value.total; page = next; message = items.isEmpty ? "未返回项目" : nil } catch { await store.absorb(http, revision: version); throw error }
+            do {
+                let next = reset ? 1 : page + 1; let value = try await ExchangeClient(http: http).programs(page: next)
+                guard version == store.sessionRevision else { return }
+                items = reset ? value.items : items + value.items.filter { row in !items.contains { $0.id == row.id } }; total = value.total; page = next; message = nil
+            } catch { await store.absorb(http, revision: version); throw error }
             await store.absorb(http, revision: version)
         } catch { guard version == store.sessionRevision else { return }; message = error.localizedDescription }
+    }
+}
+private struct ExchangeDetailView: View {
+    let item: ExchangeProgram
+    @State private var apply = false
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                if let image = item.imageURL { EphemeralImage(url: image).frame(height: 210).clipShape(RoundedRectangle(cornerRadius: 20)) }
+                Text(item.name).font(.title2.bold())
+                Text(item.location).font(.subheadline).foregroundStyle(.secondary)
+                if !item.applicationDates.isEmpty { Label(item.applicationDates, systemImage: "calendar").font(.caption) }
+                content("项目介绍", item.description); content("申请条件", item.requirements); content("费用", item.fee); content("申请范围", item.range)
+                Button("查看官方申请") { apply = true }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
+            }.padding(16).frame(maxWidth: 900).frame(maxWidth: .infinity)
+        }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("项目详情").navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $apply) { SchoolBrowser(service: .exchange, initialURL: item.url, ephemeral: true) }
+    }
+    @ViewBuilder private func content(_ title: String, _ value: String) -> some View {
+        if !value.isEmpty { CampusCard { Text(title).font(.headline); Text(value).font(.subheadline).lineSpacing(5).textSelection(.enabled) } }
     }
 }

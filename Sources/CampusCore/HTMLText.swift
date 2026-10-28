@@ -4,23 +4,21 @@ import Foundation
 public enum HTMLText {
     public static func decoded(_ value: String) -> String {
         var text = value
-        let matches = captures("&#(x[0-9a-fA-F]+|[0-9]+);", in: text)
-        for match in matches {
-            let raw = match[1]
-            let number = raw.hasPrefix("x") ? UInt32(raw.dropFirst(), radix: 16) : UInt32(raw)
-            if let number, let scalar = UnicodeScalar(number) {
-                text = text.replacingOccurrences(of: match[0], with: String(scalar))
+        for _ in 0..<4 {
+            let previous = text
+            for (entity, character) in [("&quot;", "\""), ("&#39;", "'"), ("&apos;", "'"), ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " "), ("&amp;", "&")] { text = text.replacingOccurrences(of: entity, with: character) }
+            for match in captures("&#([xX][0-9a-fA-F]+|[0-9]+);?", in: text) {
+                let raw = match[1]
+                let number = raw.lowercased().hasPrefix("x") ? UInt32(raw.dropFirst(), radix: 16) : UInt32(raw)
+                if let number, let scalar = UnicodeScalar(number) { text = text.replacingOccurrences(of: match[0], with: String(scalar)) }
             }
-        }
-        for (entity, character) in [("&quot;", "\""), ("&#39;", "'"), ("&apos;", "'"),
-                                     ("&lt;", "<"), ("&gt;", ">"), ("&nbsp;", " "), ("&amp;", "&")] {
-            text = text.replacingOccurrences(of: entity, with: character)
+            if text == previous { break }
         }
         return text
     }
 
     public static func plain(_ html: String) -> String {
-        let noScript = html.replacingOccurrences(of: "(?is)<(script|style)\\b[^>]*>.*?</\\1>", with: "", options: .regularExpression)
+        let noScript = decoded(html).replacingOccurrences(of: "(?is)<(script|style)\\b[^>]*>.*?</\\1>", with: "", options: .regularExpression)
         let lines = noScript.replacingOccurrences(of: "(?i)<(?:br\\s*/?|/p|/div|/li)>", with: "\n", options: .regularExpression)
         let stripped = lines.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
         return decoded(stripped).replacingOccurrences(of: "[ \\t]+", with: " ", options: .regularExpression)

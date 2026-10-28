@@ -22,6 +22,11 @@ public struct ExchangeProgram: Identifiable, Sendable {
     public let range: String
     public let status: String
     public let available: Bool
+    public let imageURL: URL?
+    public let description: String
+    public let requirements: String
+    public let fee: String
+    public let applicationDates: String
     public let url: URL
 }
 public struct ExchangeClient: Sendable {
@@ -32,13 +37,24 @@ public struct ExchangeClient: Sendable {
             .replacingOccurrences(of: "\\/", with: "/").replacingOccurrences(of: "&amp;", with: "&")
         guard let match = HTMLText.captures("StudentExchange_2247/ProjectList[0-9]*\\.do\\?[^\"']*?ts=([0-9]+)[^\"']*?userToken=([0-9A-Fa-f]+)", in: raw).first else { throw ServiceFailure("交换平台未返回项目会话，请先打开官方平台完成认证。") }
         let value = try await http.json("/StudentExchange_2247/GetShortProjectListForStudent.do", query: ["pageSize": "24", "currentPageIndex": String(page), "ts": match[1], "userToken": match[2]])
+        return try Self.parsePrograms(value)
+    }
+    public static func parsePrograms(_ value: WireValue) throws -> (items: [ExchangeProgram], total: Int) {
         guard case .array = value["DataList"] else { throw CampusError.invalidResponse("交换项目列表") }
         let items = value["DataList"].rows.compactMap { row -> ExchangeProgram? in
             guard !row["ID"].text.isEmpty, !row["Name"].text.isEmpty else { return nil }
             var parts = URLComponents(string: "https://ws.sustech.edu.cn/StudentExchange_2247/ProjectDetail2247.do")!
             parts.queryItems = [URLQueryItem(name: "ID", value: row["ID"].text), URLQueryItem(name: "Code", value: row["Code"].text), URLQueryItem(name: "token", value: row["TokenKey"].text)]
             guard let url = parts.url else { return nil }
-            return ExchangeProgram(id: row["ID"].text, name: HTMLText.plain(row["Name"].text), location: [row["RegionName"].text, row["ProjectSchoolName"].text, row["ProjectTypeText"].text].filter { !$0.isEmpty }.joined(separator: " · "), range: HTMLText.plain(row["ApplyRangeText"].text), status: HTMLText.plain(row["StudentExchangeProjectStatusIDText"].text), available: (row["IsAppliable"].int ?? 0) > 0, url: url)
+            let image = row["ProjectImageUrl"].text.isEmpty ? nil : URL(string: HTMLText.decoded(row["ProjectImageUrl"].text), relativeTo: URL(string: "https://ws.sustech.edu.cn")!)?.absoluteURL
+            let safeImage = image.flatMap { url in url.scheme == "https" && url.host == "ws.sustech.edu.cn" && url.user == nil && url.password == nil ? url : nil }
+            let location = [row["RegionName"].text, row["ProjectSchoolName"].text.isEmpty ? row["ProjectAgencyName"].text : row["ProjectSchoolName"].text, row["ProjectTypeText"].text].map(HTMLText.plain).filter { !$0.isEmpty }.joined(separator: " · ")
+            return ExchangeProgram(id: row["ID"].text, name: HTMLText.plain(row["Name"].text), location: location,
+                range: HTMLText.plain(row["ApplyRangeText"].text), status: HTMLText.plain(row["StudentExchangeProjectStatusIDText"].text.isEmpty ? row["IsValidTextByEndDate"].text : row["StudentExchangeProjectStatusIDText"].text),
+                available: (row["IsAppliable"].int ?? 0) > 0, imageURL: safeImage,
+                description: HTMLText.plain(row["ProjectDescription"].text), requirements: HTMLText.plain(row["ApplyCondition"].text), fee: HTMLText.plain(row["FeeDescript"].text),
+                applicationDates: [row["ApplyBeginDate"].text, row["ApplyEndDate"].text].map(HTMLText.plain).filter { !$0.isEmpty }.joined(separator: " – "), url: url)
+
         }
         return (items, value["RecordCount"].int ?? items.count)
     }

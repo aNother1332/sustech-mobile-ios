@@ -38,31 +38,8 @@ struct ConnectionNotice: View {
     let state: ConnectionState
 
     var body: some View {
-        switch state {
-        case .idle:
-            Label("尚未同步学校数据", systemImage: "circle.dashed").foregroundStyle(.secondary)
-        case .loading:
-            ProgressView("正在读取学校服务…")
-        case .failed(let message):
-            Label(message, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.orange)
-        case .cached(let date):
-            VStack(alignment: .leading, spacing: 4) {
-                Label("本机缓存 · 尚未验证当前会话", systemImage: "externaldrive").foregroundStyle(.secondary)
-                Text("最近同步：\(date.formatted(date: .abbreviated, time: .shortened))").foregroundStyle(.secondary)
-            }
-        case .loaded(let date, let warnings):
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: warnings.isEmpty ? "checkmark.circle" : "exclamationmark.circle")
-                    Text(warnings.isEmpty ? "已读取" : "部分数据未能读取")
-                    Text(date, style: .time)
-                }.foregroundStyle(warnings.isEmpty ? Color.campusGreen : .orange)
-                ForEach(Array(warnings.enumerated()), id: \.offset) { _, warning in
-                    Text(warning).foregroundStyle(.secondary)
-                }
-            }
-        }
+        if case .failed(let message) = state { InlineFailure(message: message) }
+
     }
 }
 

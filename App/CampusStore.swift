@@ -123,6 +123,9 @@ final class CampusStore {
         catch { cacheMessage = "数据已读取，但本机缓存保存失败；请在解锁设备后重试。" }
     }
     func setMode(_ mode: DataMode) {
+        #if !DEBUG
+        guard mode == .live else { return }
+        #endif
         guard !clearing, !authenticating, !writing else { return }
         generation += 1
         self.mode = mode
@@ -210,7 +213,7 @@ final class CampusStore {
             automaticLoginMessage = "自动登录已暂停，请手动登录核对密码或完成学校验证。"
         } else if authenticated {
             if credentialsReady { UserDefaults.standard.removeObject(forKey: "school-auto-login-paused") }
-            automaticLoginMessage = credentialsReady ? "已保存至本机钥匙串；登录态失效时自动登录。" : nil
+            automaticLoginMessage = nil
         } else if automatic { automaticLoginMessage = "自动登录未完成，稍后可手动重试。" }
         authenticationMessage = results.joined(separator: "\n")
         if authenticated { await refreshProfile() }
@@ -223,7 +226,9 @@ final class CampusStore {
         let version = generation
         let http = await serviceHTTP(.teaching)
         do {
-            let value = StudentProfile.parse(try await http.json("/user/me"))
+            let base = StudentProfile.parse(try await http.json("/user/me"))
+            let details = try? await http.json("/UserManager/queryxsxx", form: [:], headers: ["RoleCode": "01"])
+            let value = details.map { base.merging(StudentProfile.parse($0)) } ?? base
             guard version == generation else { return }
             if !value.isEmpty { profile = value; profileMessage = nil; persist() }
             else { profileMessage = "暂未读取到个人资料" }

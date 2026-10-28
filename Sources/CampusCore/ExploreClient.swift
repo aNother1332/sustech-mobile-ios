@@ -7,6 +7,14 @@ public struct ReviewCourse: Identifiable, Codable, Sendable {
     public let teachers: String
     public let count: Int
     public let rating: String
+    public var difficulty: Int? = nil
+    public var homework: Int? = nil
+    public var grading: Int? = nil
+    public var gain: Int? = nil
+}
+public struct ReviewSearchPage: Sendable {
+    public let items: [ReviewCourse]; public let page: Int; public let pages: Int; public let total: Int
+    public var hasMore: Bool { page < pages }
 }
 public struct CourseReview: Identifiable, Sendable {
     public let id: String
@@ -21,22 +29,31 @@ public struct ReviewClient: Sendable {
         guard case .array = value["courses"]["items"] else { throw CampusError.invalidResponse("课程评价搜索") }
         return try value["courses"]["items"].rows.map { row in
             guard !row["id"].text.isEmpty else { throw CampusError.invalidResponse("课程 ID") }
-            return ReviewCourse(id: row["id"].text, name: row["name"].text, code: row["course_code"].text, teachers: row["teacher_names"].text, count: row["review_count"].int ?? 0, rating: row["rate_average"].text)
+            return ReviewCourse(id: row["id"].text, name: row["name"].text, code: row["course_code"].text, teachers: row["teacher_names"].text, count: row["review_count"].int ?? 0, rating: row["rate_average"].text, difficulty: row["difficulty_score"].int, homework: row["homework_score"].int, grading: row["grading_score"].int, gain: row["gain_score"].int)
         }
     }
-    public func search(_ query: String, page: Int = 1) async throws -> [ReviewCourse] {
-        try Self.courses(await http.json("/api/v1/search", query: ["q": query, "type": "course", "page": String(page), "per_page": "20"]))
+    public func searchPage(_ query: String, page: Int = 1) async throws -> ReviewSearchPage {
+        let value = try await http.json("/api/v1/search", query: ["q": query, "type": "course", "page": String(page), "per_page": "20"])
+        let meta = value["courses"]
+        return ReviewSearchPage(items: try Self.courses(value), page: meta["page"].int ?? page, pages: meta["pages"].int ?? page, total: meta["total"].int ?? 0)
     }
-    public func reviews(_ course: ReviewCourse, page: Int) async throws -> [CourseReview] {
+    public func search(_ query: String, page: Int = 1) async throws -> [ReviewCourse] {
+        try await searchPage(query, page: page).items
+    }
+    public func reviewPage(_ course: ReviewCourse, page: Int) async throws -> (items: [CourseReview], hasMore: Bool) {
         guard Int64(course.id) != nil else { throw CampusError.unsafeURL }
         let response = try await http.json("/api/v1/course/\(course.id)/reviews", query: ["page": String(page), "per_page": "20", "sort_by": "pubtime_desc"])
         let value = response["items"] == .null ? response["reviews"]["items"] : response["items"]
         guard case .array = value else { throw CampusError.invalidResponse("课程评价") }
-        return value.rows.enumerated().compactMap { i, row in
+        let items: [CourseReview] = value.rows.enumerated().compactMap { i, row in
             guard row["only_visible_to_student"] != .bool(true), row["is_hidden"] != .bool(true), row["is_blocked"] != .bool(true) else { return nil }
             return CourseReview(id: row["id"].text.isEmpty ? "\(page)-\(i)" : row["id"].text, term: row["term_display"].text.isEmpty ? row["term"].text : row["term_display"].text, rating: row["rate"].text, content: HTMLText.plain(row["content"].text))
         }
+        let meta = response["reviews"] == .null ? response : response["reviews"]
+        return (items, page < (meta["pages"].int ?? page))
     }
+    public func reviews(_ course: ReviewCourse, page: Int) async throws -> [CourseReview] { try await reviewPage(course, page: page).items }
+
 }
 
 public struct DegreeSection: Identifiable, Sendable {
