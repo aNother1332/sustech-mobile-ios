@@ -132,7 +132,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         try await ensureBusiness("ic", force: true) { try await self.exchangeIC() }
     }
     func renewPrinting(action: @escaping @MainActor () async throws -> Void) async throws {
-        try await ensureBusiness("printing", action: action)
+        try await ensureBusiness("printing", force: true, action: action)
     }
     private func exchangeIC() async throws {
         let existing = await cookies()
