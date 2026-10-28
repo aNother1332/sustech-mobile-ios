@@ -81,7 +81,7 @@ struct IndependentConnectionStatus: View {
     let requiresLogin: Bool
     var open: () -> Void
     var body: some View {
-        if !connected && requiresLogin {
+        if requiresLogin {
             Button(action: open) { Label("未登录", systemImage: "person.crop.circle.badge.exclamationmark").font(.subheadline.weight(.medium)).foregroundStyle(.red) }.buttonStyle(.plain)
         }
     }
