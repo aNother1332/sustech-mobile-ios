@@ -53,7 +53,6 @@ struct CardRechargeView: View {
                 EmptyView()
                 if busy { ProgressView() }
                 if let account { LabeledContent("当前余额", value: account.balance) }
-                if let synced { EmptyView() }
                 ServiceMessage(message: message)
                 DetailNote(text: "返回 App、支付页面提示或余额变化均不单独作为本次充值成功凭证。请核对平台订单和校园卡到账记录；未确认结果时先查原订单，避免重复付款。")
                 ForEach(bills.prefix(10)) { bill in

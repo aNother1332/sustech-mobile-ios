@@ -34,10 +34,8 @@ struct FacultyDetailView: View {
             Section("官方资料") {
                 Link("学校教师页面", destination: url)
                 if let profile = contact?.profile { Link("教师个人主页", destination: profile) }
-                if let date = contact?.fetched { EmptyView() }
                 EmptyView()
                 if busy { ProgressView() }; ServiceMessage(message: message)
-                Text("仅显示官方页面明确公开的邮箱和办公地点；暂未提供时不推测。已读取资料可离线查看。").font(.caption).foregroundStyle(.secondary)
             }
         }.navigationTitle("教师信息").navigationBarTitleDisplayMode(.inline).task { await load(force: false) }.refreshable { await load(force: true) }
     }

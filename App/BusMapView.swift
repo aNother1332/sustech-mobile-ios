@@ -267,7 +267,6 @@ struct BusMapView: View {
             Button("选择站台") { showSettings = false; showStops = true }
             EmptyView()
             Link("数据与来源 · SUSTech CRA", destination: URL(string: "https://sustech.online/transport/bustimer.html")!)
-            if let fetched { EmptyView() }
         }.padding(22).frame(maxWidth: 440).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 24)).padding(18)
     }
     private func centerOnUser() {

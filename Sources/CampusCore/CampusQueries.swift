@@ -51,6 +51,9 @@ public struct BusClient: Sendable {
 
 public struct Classroom: Identifiable, Sendable {
     public let id: String; public let name: String; public let capacity: String
+    public init(id: String, name: String, capacity: String) {
+        self.id = id; self.name = name; self.capacity = capacity
+    }
 }
 public struct RoomOccupancy: Identifiable, Sendable {
     public let id: String; public let weekday: Int; public let period: Int; public let lastPeriod: Int; public let weeks: Set<Int>?

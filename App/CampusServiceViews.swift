@@ -39,7 +39,6 @@ struct CardAccountView: View {
                 } else { Text("余额尚未读取") }
                 EmptyView()
                 if busy { ProgressView() }
-                if let synced { EmptyView() }
                 ServiceMessage(message: message)
                 NavigationLink { CampusCodeView().id(store.sessionRevision) } label: { Label("出示校园码 / 身份码", systemImage: "qrcode") }
                 CardBalancePreference(balance: account?.balance)
@@ -136,7 +135,6 @@ struct BusStopView: View {
                 ShareLink("复制／分享站点 ID", item: stop.id).font(.caption)
                 EmptyView()
                 if busy { ProgressView() }
-                if let synced { EmptyView() }
                 ServiceMessage(message: message)
             }
             ForEach(arrivals) { item in

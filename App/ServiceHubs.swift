@@ -59,7 +59,7 @@ struct CardView: View {
             let value = try await CardClient(http: http).account()
             guard version == store.sessionRevision, store.mode == .live else { return }
             balance = value.balance; store.cardBalance = value.balance; message = nil; store.recordSession(.card)
-        } catch { if version == store.sessionRevision { message = "余额未读取，进入余额与账单刷新"; store.recordSession(.card, error: error) } }
+        } catch { if version == store.sessionRevision { message = error.localizedDescription; store.recordSession(.card, error: error) } }
         await store.absorb(http, revision: version)
     }
 }

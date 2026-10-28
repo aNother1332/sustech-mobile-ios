@@ -57,8 +57,7 @@ struct StudyView: View {
                     }
                     let rows = snapshot.meetings.filter { !snapshot.fullSemester || $0.weeks?.contains(selectedWeek) == true }
                     if rows.isEmpty && (store.academicTerm == nil || (1...7).allSatisfy { meetings(on: $0, fallback: rows).isEmpty }) {
-                        ContentUnavailableView("本次课表中该周没有已确认安排", systemImage: "calendar.badge.questionmark",
-                            description: Text("请核对同步状态和学校临时通知。"))
+                        ContentUnavailableView("本周暂无课程", systemImage: "calendar")
                     }
                     if grid && !isLargeText { WeeklyGridView(meetings: snapshot.meetings, week: selectedWeek) }
                     else { ForEach(1...7, id: \.self) { day in
@@ -76,17 +75,16 @@ struct StudyView: View {
                         if !unknown.isEmpty {
                             CampusCard {
                                 Text("周次待核对").font(.headline)
-                                Text("这些课程没有可靠周次，不自动排入每一周。").font(.caption).foregroundStyle(.secondary)
                                 ForEach(unknown) { MeetingRow(meeting: $0) }
                             }
                         }
                     }
                 } else {
-                    ContentUnavailableView("课表尚未同步", systemImage: "calendar", description: Text("先登录学校账号，再同步教务。"))
+                    ContentUnavailableView("暂无课表", systemImage: "calendar")
                 }
             } else {
                 if let snapshot = store.teaching {
-                    if snapshot.exams.isEmpty { Text("本次未读取到考试安排，请核对同步状态和学校页面。").foregroundStyle(.secondary) }
+                    if snapshot.exams.isEmpty { Text("暂无考试安排").foregroundStyle(.secondary) }
                     ForEach(snapshot.exams) { exam in
                         CampusCard {
                             Text(exam.course).font(.headline)

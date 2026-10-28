@@ -48,7 +48,7 @@ extension CampusStore {
             serviceSessions[service] = ServiceSessionState(status: .valid, checked: .now)
         } catch {
             guard version == sessionRevision, serviceProbeTokens[service] == probe else { return }
-            let expired = (error as? CampusError) == .signInRequired || (error as? CampusError) == .unexpectedHTML
+            let expired = LoginRequirement.confirmed(error)
             serviceSessions[service] = ServiceSessionState(status: expired ? .expired : .unavailable, checked: .now, note: error.localizedDescription)
         }
         await absorb(http, revision: version)
@@ -61,7 +61,7 @@ extension CampusStore {
         serviceProbeTokens[service] = nil
         if let error {
             if serviceSessions[service]?.valid == true, error is ServiceFailure { return }
-            let expired = (error as? CampusError) == .signInRequired || (error as? CampusError) == .unexpectedHTML
+            let expired = LoginRequirement.confirmed(error)
             serviceSessions[service] = ServiceSessionState(status: expired ? .expired : .unavailable, checked: .now, note: error.localizedDescription)
         } else { serviceSessions[service] = ServiceSessionState(status: .valid, checked: .now) }
     }

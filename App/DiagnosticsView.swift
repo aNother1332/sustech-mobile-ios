@@ -7,9 +7,9 @@ struct DiagnosticsView: View {
     @State private var busy = false
     var body: some View {
         List {
-            Section { Text("检测服务可达性，不将网络故障视为登录失效。").font(.caption).foregroundStyle(.secondary); EmptyView(); if busy { ProgressView() } }
+            Section { BusinessHeader(title: "网络诊断", symbol: "network", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+            if busy { ProgressView() }
             ForEach(Array(values.enumerated()), id: \.offset) { _, row in LabeledContent(row.0, value: row.1) }
-            Section { EmptyView() }
         }.navigationTitle("网络与服务诊断").navigationBarTitleDisplayMode(.inline).task { await load() }.refreshable { await load() }
     }
     private func load() async {
@@ -26,7 +26,7 @@ struct DiagnosticsView: View {
 }
 
 struct AppUpdatesView: View {
-    @State private var message = "点击检查 GitHub 发布版本"
+    @State private var message = ""
     @State private var busy = false
     @State private var releaseURL: URL?
     var body: some View {

@@ -76,7 +76,7 @@ struct ICReservationView: View {
                 while busy { do { try await Task.sleep(for: .milliseconds(100)) } catch { return } }
                 guard !Task.isCancelled else { return }; await refresh()
             }.refreshable { await refresh() }.onChange(of: day) { _, _ in schedules = [:] }
-            .sheet(isPresented: $portal, onDismiss: { Task { await refresh() } }) { SchoolBrowser(service: .rooms) }
+            .sheet(isPresented: $portal, onDismiss: { Task { await refresh() } }) { NativeLoginView() }
             .sheet(item: $selected, onDismiss: { Task { await refresh() } }) { value in NavigationStack { ICBookingForm(room: value.room, initialBegin: value.start, initialEnd: value.end).toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { selected = nil } } } } }
             .campusConfirmation("取消这项预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } })) {
                 if let order = cancelling { Button("取消预约", role: .destructive) { Task { await cancel(order) } } }
@@ -116,7 +116,7 @@ struct ICReservationView: View {
             let api = try await client(); let list = try await api.rooms(); let availability = try await api.schedules(rooms: list, day: date); let mine = try await api.mine()
             guard revision == store.sessionRevision, CampusClock.format(date) == CampusClock.format(day) else { return }
             rooms = list; schedules = availability; orders = mine; connected = true; needsLogin = false; message = nil
-        } catch { guard revision == store.sessionRevision else { return }; needsLogin = LoginRequirement.confirmed(error); message = error.localizedDescription }
+        } catch { guard revision == store.sessionRevision else { return }; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }
     }
     private func cancel(_ order: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }

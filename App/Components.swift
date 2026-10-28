@@ -83,9 +83,6 @@ struct DeadlineRow: View {
             }
             Label(deadline.submission.label, systemImage: deadline.submission == .submitted ? "checkmark.circle" : "questionmark.circle")
                 .font(.caption).foregroundStyle(.secondary)
-            if let date = store.courseDetails[deadline.courseID]?.tasksUpdated {
-                EmptyView()
-            }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 5)
     }
 }

@@ -205,7 +205,7 @@ final class CampusStore {
         var credentialsReady = false
         if authenticated, remember {
             do { try CredentialVault.save(RememberedSchoolAccount(username: username, password: password), key: "school-auto-login"); credentialsReady = true }
-            catch { stopAutomatic = true; results.append("已登录，但账号密码未能存入钥匙串；自动登录已暂停，请解锁设备后重试。") }
+            catch { stopAutomatic = true; results.append("自动登录未启用，请解锁设备后重试") }
         }
         if !automatic, !remember, !forgetSchoolAccount() { results.append("已关闭自动登录；钥匙串中的旧凭据删除失败，请解锁设备后重试。") }
         if stopAutomatic {
