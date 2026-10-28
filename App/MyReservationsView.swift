@@ -40,8 +40,8 @@ struct MyReservationsView: View {
         let revision = store.sessionRevision; let selected = type
         do {
             let result: [ReservationItem]
-            if selected == 0 { try await store.sessions.connectIC(); result = try await ICClient(http: await store.serviceHTTP(origin: SchoolService.rooms.portalURL)).mine() }
-            else { guard !store.sessions.cleID.isEmpty else { throw CampusError.signInRequired }; result = try await CLEClient(http: await store.serviceHTTP(origin: CLEClient.index)).mine(sid: store.sessions.cleID) }
+            if selected == 0 { try await store.prepareBusiness(.rooms); result = try await ICClient(http: await store.serviceHTTP(origin: SchoolService.rooms.portalURL)).mine() }
+            else { try await store.prepareBusiness(.cle); result = try await CLEClient(http: await store.serviceHTTP(origin: CLEClient.index)).mine(sid: store.sessions.cleID) }
             guard revision == store.sessionRevision, selected == type else { return }; items = result; needsLogin = false; message = nil
         } catch { guard revision == store.sessionRevision, selected == type, !Task.isCancelled else { return }; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }
     }

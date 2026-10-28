@@ -16,9 +16,13 @@ final class RedirectBlocker: NSObject, URLSessionTaskDelegate {
 public struct CampusHTTPClient: Sendable {
     private let session: URLSession
     public let origin: URL
+    private let recovery: SessionRecovery?
+    private let startingCookies: [HTTPCookie]
 
-    public init(origin: URL, cookies: [HTTPCookie] = [], configuration: URLSessionConfiguration = .ephemeral) {
+    public init(origin: URL, cookies: [HTTPCookie] = [], configuration: URLSessionConfiguration = .ephemeral, recovery: SessionRecovery? = nil) {
         self.origin = origin
+        self.recovery = recovery
+        self.startingCookies = cookies
         configuration.timeoutIntervalForRequest = 25
         configuration.timeoutIntervalForResource = 60
         configuration.urlCache = nil
@@ -32,10 +36,21 @@ public struct CampusHTTPClient: Sendable {
     public func cookies() -> [HTTPCookie] {
         session.configuration.httpCookieStorage?.cookies ?? []
     }
+    public func changedCookies() -> [HTTPCookie] { CookieChanges.changed(from: startingCookies, to: cookies()) }
 
     /// Download to a temporary file, checking redirects one at a time. The caller
     /// owns deletion/moving. HTML login responses never become offline documents.
     public func download(path: String) async throws -> URL {
+        do { return try await downloadOnce(path: path) }
+        catch {
+            guard (error as? CampusError) == .signInRequired, let recovery else { throw error }
+            let renewed = try await recovery()
+            for old in session.configuration.httpCookieStorage?.cookies ?? [] { session.configuration.httpCookieStorage?.deleteCookie(old) }
+            for cookie in renewed.cookies { session.configuration.httpCookieStorage?.setCookie(cookie) }
+            return try await downloadOnce(path: path)
+        }
+    }
+    private func downloadOnce(path: String) async throws -> URL {
         var next = try Self.resolve(path: path, origin: origin)
         var visited = Set<URL>()
         for _ in 0..<6 {
@@ -50,6 +65,9 @@ public struct CampusHTTPClient: Sendable {
             }
             do {
                 if (300..<400).contains(response.statusCode) {
+                    if let location = response.value(forHTTPHeaderField: "Location"), let target = URL(string: location, relativeTo: next), target.host == CASPolicy.login.host {
+                        throw CampusError.signInRequired
+                    }
                     guard let location = response.value(forHTTPHeaderField: "Location"),
                           let target = URL(string: location, relativeTo: next)?.absoluteURL,
                           target.scheme == origin.scheme, target.host == origin.host,
@@ -61,6 +79,7 @@ public struct CampusHTTPClient: Sendable {
                 let file = try FileHandle(forReadingFrom: temporary)
                 let prefix = try file.read(upToCount: 512) ?? Data()
                 try file.close()
+                if SessionReadPolicy.expired(status: response.statusCode, data: prefix) { throw CampusError.signInRequired }
                 try Self.validate(status: response.statusCode, data: prefix)
                 let size = (try FileManager.default.attributesOfItem(atPath: temporary.path)[.size] as? NSNumber)?.int64Value ?? 0
                 guard size > 0, size <= 200 * 1024 * 1024 else { throw CampusError.invalidResponse("文件大小（单文件上限 200 MB）") }
@@ -94,12 +113,23 @@ public struct CampusHTTPClient: Sendable {
             request.httpBody = json
         }
         try Task.checkCancellation()
+        for attempt in 0...1 {
         let (data, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse else {
             throw CampusError.invalidResponse("学校服务")
         }
+        let expired = SessionReadPolicy.expired(status: response.statusCode, data: data)
+        if attempt == 0, expired, SessionReadPolicy.canReplay(method: request.httpMethod ?? "GET", path: url.path + (url.query.map { "?" + $0 } ?? "")), let recovery {
+            let renewed = try await recovery()
+            for old in session.configuration.httpCookieStorage?.cookies ?? [] { session.configuration.httpCookieStorage?.deleteCookie(old) }
+            for cookie in renewed.cookies { session.configuration.httpCookieStorage?.setCookie(cookie) }
+            continue
+        }
+        if expired { throw CampusError.signInRequired }
         try Self.validate(status: response.statusCode, data: data)
         return data
+        }
+        throw CampusError.signInRequired
     }
 
     public static func resolve(path: String, origin: URL) throws -> URL {

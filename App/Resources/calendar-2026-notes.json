@@ -1,0 +1,432 @@
+[
+  {
+    "month": 1,
+    "category": "holiday",
+    "text": "1月1日元旦"
+  },
+  {
+    "month": 2,
+    "category": "holiday",
+    "text": "2月17日春节"
+  },
+  {
+    "month": 4,
+    "category": "holiday",
+    "text": "4月5日清明节"
+  },
+  {
+    "month": 5,
+    "category": "holiday",
+    "text": "5月1日劳动节"
+  },
+  {
+    "month": 6,
+    "category": "holiday",
+    "text": "6月19日端午节"
+  },
+  {
+    "month": 9,
+    "category": "holiday",
+    "text": "9月25日中秋节"
+  },
+  {
+    "month": 10,
+    "category": "holiday",
+    "text": "10月1日国庆节"
+  },
+  {
+    "month": 3,
+    "category": "activity",
+    "text": "3月1日春季战略规划发展研讨会"
+  },
+  {
+    "month": 3,
+    "category": "activity",
+    "text": "3月5日安全工作会议"
+  },
+  {
+    "month": 4,
+    "category": "activity",
+    "text": "4月4日第七届春季运动会"
+  },
+  {
+    "month": 4,
+    "category": "activity",
+    "text": "4月12日校园开放日"
+  },
+  {
+    "month": 5,
+    "category": "activity",
+    "text": "5月8日校学位评定委员会第一次会议"
+  },
+  {
+    "month": 5,
+    "category": "activity",
+    "text": "5月12日学术委员会第一次长聘与晋升评估会议"
+  },
+  {
+    "month": 5,
+    "category": "activity",
+    "text": "5月29日研究系列分会-教学科研辅助序列（科学研究类）晋升评估会议"
+  },
+  {
+    "month": 6,
+    "category": "activity",
+    "text": "6月4日教学工作委员会-教学系列及教学科研辅助序列（实验教学类）晋升评估会议"
+  },
+  {
+    "month": 6,
+    "category": "activity",
+    "text": "6月17日校学位评定委员会第二次会议"
+  },
+  {
+    "month": 6,
+    "category": "activity",
+    "text": "6月30日校学位评定委员会第三次会议"
+  },
+  {
+    "month": 7,
+    "category": "activity",
+    "text": "7月1日“七一”表彰会"
+  },
+  {
+    "month": 7,
+    "category": "activity",
+    "text": "7月1日2026年度全面从严治党工作会议"
+  },
+  {
+    "month": 7,
+    "category": "activity",
+    "text": "7月2日毕业典礼"
+  },
+  {
+    "month": 8,
+    "category": "activity",
+    "text": "8月17日本科生新生报到"
+  },
+  {
+    "month": 8,
+    "category": "activity",
+    "text": "8月17日-8月30日本科生新生军训"
+  },
+  {
+    "month": 8,
+    "category": "activity",
+    "text": "8月27日研究生新生报到"
+  },
+  {
+    "month": 8,
+    "category": "activity",
+    "text": "8月28日秋季战略规划发展研讨会"
+  },
+  {
+    "month": 9,
+    "category": "activity",
+    "text": "9月3日开学典礼"
+  },
+  {
+    "month": 9,
+    "category": "activity",
+    "text": "9月10日全校教师大会暨教师表彰大会"
+  },
+  {
+    "month": 9,
+    "category": "activity",
+    "text": "9月23日本科招生工作会议"
+  },
+  {
+    "month": 10,
+    "category": "activity",
+    "text": "10月1日国庆升旗仪式"
+  },
+  {
+    "month": 11,
+    "category": "activity",
+    "text": "11月3日学术委员会第二次长聘与晋升评估会议"
+  },
+  {
+    "month": 11,
+    "category": "activity",
+    "text": "11月8日-11月10日2026年国际咨询顾问委员会会议"
+  },
+  {
+    "month": 11,
+    "category": "activity",
+    "text": "11月13日校学位评定委员会第四次会议"
+  },
+  {
+    "month": 11,
+    "category": "activity",
+    "text": "11月20日-21日第十二届秋季运动会"
+  },
+  {
+    "month": 12,
+    "category": "activity",
+    "text": "12月4日第六届校园公益文化周"
+  },
+  {
+    "month": 12,
+    "category": "activity",
+    "text": "12月5日科研工作会议"
+  },
+  {
+    "month": 12,
+    "category": "activity",
+    "text": "12月17日校学位评定委员会第五次会议"
+  },
+  {
+    "month": 12,
+    "category": "activity",
+    "text": "12月26日校友会理事会会议、第八届校友年会"
+  },
+  {
+    "month": 12,
+    "category": "undergraduate",
+    "text": "12月29日-1月9日本科生期末复习考试周"
+  },
+  {
+    "month": 1,
+    "category": "undergraduate",
+    "text": "1月12日-2月23日本科生寒假"
+  },
+  {
+    "month": 1,
+    "category": "undergraduate",
+    "text": "1月12日-2月23日本科生春季学期积分选课"
+  },
+  {
+    "month": 1,
+    "category": "undergraduate",
+    "text": "1月12日-2月23日教职工集中轮休"
+  },
+  {
+    "month": 2,
+    "category": "undergraduate",
+    "text": "2月24日教职工返校"
+  },
+  {
+    "month": 2,
+    "category": "undergraduate",
+    "text": "2月24日在校本科生返校"
+  },
+  {
+    "month": 2,
+    "category": "undergraduate",
+    "text": "2月25日本科生上课"
+  },
+  {
+    "month": 2,
+    "category": "undergraduate",
+    "text": "2月25日-3月13日本科生春季学期退补选课暨导师指导周（1-3周）"
+  },
+  {
+    "month": 2,
+    "category": "undergraduate",
+    "text": "2月28日上单周周一的课"
+  },
+  {
+    "month": 4,
+    "category": "undergraduate",
+    "text": "4月13日-26日本科生期中考试周（不停课）"
+  },
+  {
+    "month": 5,
+    "category": "undergraduate",
+    "text": "5月9日上单周周二的课"
+  },
+  {
+    "month": 6,
+    "category": "undergraduate",
+    "text": "6月8日-18日本科生期末复习考试周"
+  },
+  {
+    "month": 6,
+    "category": "undergraduate",
+    "text": "6月22日-7月3日本科生夏季学期选课"
+  },
+  {
+    "month": 6,
+    "category": "undergraduate",
+    "text": "6月29日-8月7日本科生夏季学期"
+  },
+  {
+    "month": 6,
+    "category": "undergraduate",
+    "text": "6月29日-9月3日本科生暑假"
+  },
+  {
+    "month": 7,
+    "category": "undergraduate",
+    "text": "7月6日-9月3日本科生秋季学期积分选课"
+  },
+  {
+    "month": 7,
+    "category": "undergraduate",
+    "text": "7月6日-8月26日教职工集中轮休"
+  },
+  {
+    "month": 8,
+    "category": "undergraduate",
+    "text": "8月27日教职工返校"
+  },
+  {
+    "month": 8,
+    "category": "undergraduate",
+    "text": "8月31日-9月6日本科新生、研究生新生入学教育"
+  },
+  {
+    "month": 9,
+    "category": "undergraduate",
+    "text": "9月4日在校本科生返校"
+  },
+  {
+    "month": 9,
+    "category": "undergraduate",
+    "text": "9月7日本科生上课"
+  },
+  {
+    "month": 9,
+    "category": "undergraduate",
+    "text": "9月7日-24日本科生秋季学期退补选课暨导师指导周（1-3周）"
+  },
+  {
+    "month": 9,
+    "category": "undergraduate",
+    "text": "9月20日上单周周五的课"
+  },
+  {
+    "month": 10,
+    "category": "undergraduate",
+    "text": "10月10日上单周周三的课"
+  },
+  {
+    "month": 10,
+    "category": "undergraduate",
+    "text": "10月26日-11月8日本科生期中考试周（不停课）"
+  },
+  {
+    "month": 11,
+    "category": "undergraduate",
+    "text": "11月20日停课一天"
+  },
+  {
+    "month": 12,
+    "category": "undergraduate",
+    "text": "12月28日-1月8日本科生期末复习考试周"
+  },
+  {
+    "month": 12,
+    "category": "graduate",
+    "text": "12月29日-1月9日研究生期末复习考试周"
+  },
+  {
+    "month": 1,
+    "category": "graduate",
+    "text": "1月12日-2月23日研究生寒假"
+  },
+  {
+    "month": 2,
+    "category": "graduate",
+    "text": "2月24日在校研究生返校"
+  },
+  {
+    "month": 2,
+    "category": "graduate",
+    "text": "2月25日研究生上课"
+  },
+  {
+    "month": 2,
+    "category": "graduate",
+    "text": "2月28日上单周周一的课"
+  },
+  {
+    "month": 3,
+    "category": "graduate",
+    "text": "3月-4月2026级硕士研究生招生复试与录取"
+  },
+  {
+    "month": 4,
+    "category": "graduate",
+    "text": "4月13日-26日研究生期中考试周（不停课）"
+  },
+  {
+    "month": 4,
+    "category": "graduate",
+    "text": "4月-6月2026级博士生招生录取（第二批）"
+  },
+  {
+    "month": 5,
+    "category": "graduate",
+    "text": "5月9日上单周周二的课"
+  },
+  {
+    "month": 6,
+    "category": "graduate",
+    "text": "6月8日-18日研究生期末复习考试周"
+  },
+  {
+    "month": 6,
+    "category": "graduate",
+    "text": "6月29日-8月7日研究生夏季学期"
+  },
+  {
+    "month": 6,
+    "category": "graduate",
+    "text": "6月29日-9月3日研究生暑假"
+  },
+  {
+    "month": 7,
+    "category": "graduate",
+    "text": "7月-8月研究生招生夏令营"
+  },
+  {
+    "month": 8,
+    "category": "graduate",
+    "text": "8月-9月2027级推免生（含直博士）招生录取"
+  },
+  {
+    "month": 9,
+    "category": "graduate",
+    "text": "9月4日在校研究生返校"
+  },
+  {
+    "month": 9,
+    "category": "graduate",
+    "text": "9月7日研究生上课"
+  },
+  {
+    "month": 9,
+    "category": "graduate",
+    "text": "9月20日上单周周五的课"
+  },
+  {
+    "month": 10,
+    "category": "graduate",
+    "text": "10月10日上单周周三的课"
+  },
+  {
+    "month": 10,
+    "category": "graduate",
+    "text": "10月26日-11月8日研究生期中考试周（不停课）"
+  },
+  {
+    "month": 10,
+    "category": "graduate",
+    "text": "10月-12月2027级博士生招生录取（第一批）"
+  },
+  {
+    "month": 11,
+    "category": "graduate",
+    "text": "11月20日停课一天"
+  },
+  {
+    "month": 12,
+    "category": "graduate",
+    "text": "12月28日-1月8日研究生期末复习考试周"
+  },
+  {
+    "month": 12,
+    "category": "graduate",
+    "text": "12月下旬全国硕士研究生招生考试"
+  }
+]

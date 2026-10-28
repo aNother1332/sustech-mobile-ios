@@ -37,8 +37,9 @@ extension ICClient {
     public func schedules(rooms: [ReservationItem], day: Date) async throws -> [String: ICRoomSchedule] {
         let labs = Set(rooms.map { $0.raw["labId"].text }.filter { !$0.isEmpty })
         let allowed = Set(rooms.map(\.id)); var result: [String: ICRoomSchedule] = [:]
-        for lab in labs.sorted() {
+        for (index, lab) in labs.sorted().enumerated() {
             try Task.checkCancellation()
+            if index > 0 { try await Task.sleep(for: .milliseconds(1100)) }
             let response = try await call("/reserve", query: ["sysKind": "1", "resvDates": CampusClock.format(day, "yyyyMMdd"), "labIds": lab, "page": "1", "pageSize": "100"])
             guard case .array = response else { throw CampusError.invalidResponse("研讨间日历") }
             guard response.rows.count < 100 else { throw CampusError.invalidResponse("研讨间日历分页") }

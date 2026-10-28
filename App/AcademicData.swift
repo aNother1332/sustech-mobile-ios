@@ -23,6 +23,11 @@ enum AcademicData {
         }
         return nil
     }
+    static func holiday(at date: Date) -> String? {
+        let year = AcademicTerm.calendar.component(.year, from: date)
+        let key = CampusClock.format(date)
+        return load("calendar-\(year)-general")?["holidays"].rows.first { $0["start"].text <= key && $0["end"].text >= key }?["name"].text
+    }
     private static func load(_ name: String) -> WireValue? {
         guard let url = Bundle.main.url(forResource: name, withExtension: "json"), let data = try? Data(contentsOf: url) else { return nil }
         return try? JSONDecoder().decode(WireValue.self, from: data)

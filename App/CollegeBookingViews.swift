@@ -39,7 +39,7 @@ struct CollegeBookingView: View {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let revision = store.sessionRevision
         do {
-            let api = await store.collegeBookingClient()
+            let api = try await store.collegeBookingClient()
             let value = try await api.rooms()
             guard revision == store.sessionRevision else { return }
             rooms = value; connected = true; needsLogin = false; message = nil
@@ -76,7 +76,7 @@ private struct CollegeRoomView: View {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let revision = store.sessionRevision; rows = []
         do {
-            let api = await store.collegeBookingClient(); let value = try await api.schedule(room: room.id, day: day)
+            let api = try await store.collegeBookingClient(); let value = try await api.schedule(room: room.id, day: day)
             guard revision == store.sessionRevision else { return }; rows = value
             message = value.isEmpty ? "学校未返回该日安排，不代表已确认可预约。" : nil
         } catch { if revision == store.sessionRevision { message = error.localizedDescription } }
@@ -84,9 +84,8 @@ private struct CollegeRoomView: View {
 }
 
 extension CampusStore {
-    func collegeBookingClient() async -> CollegeBookingClient {
-        let cookies = await sessions.cookies()
-        let token = cookies.first { $0.name == "meeting_manager_token" && ["booking.sustech.edu.cn", ".booking.sustech.edu.cn"].contains($0.domain.lowercased()) }?.value ?? ""
-        return CollegeBookingClient(http: ServiceHTTP(origin: SchoolService.booking.portalURL, cookies: cookies), token: token)
+    func collegeBookingClient() async throws -> CollegeBookingClient {
+        try await prepareBusiness(.booking)
+        return CollegeBookingClient(http: await serviceHTTP(origin: SchoolService.booking.portalURL), token: sessions.collegeToken)
     }
 }

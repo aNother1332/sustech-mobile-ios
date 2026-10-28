@@ -93,7 +93,7 @@ struct AgendaView: View {
         for course in store.activeCourses { await store.refreshCourse(course) }
         guard version == store.sessionRevision else { return }
         var collected: [AgendaEntry] = []; var failures: [String] = []
-        do { try await store.sessions.connectIC(); let http = await store.serviceHTTP(origin: SchoolService.rooms.portalURL); let mine = try await ICClient(http: http).mine(); collected += mine.filter { ReservationAgendaPolicy.activeIC($0.raw) }.compactMap { reservation($0, source: "IC", begin: "resvBeginTime", end: "resvEndTime") } } catch { failures.append("IC：" + error.localizedDescription) }
+        do { try await store.prepareBusiness(.rooms); let http = await store.serviceHTTP(origin: SchoolService.rooms.portalURL); let mine = try await ICClient(http: http).mine(); collected += mine.filter { ReservationAgendaPolicy.activeIC($0.raw) }.compactMap { reservation($0, source: "IC", begin: "resvBeginTime", end: "resvEndTime") } } catch { failures.append("IC：" + error.localizedDescription) }
         if !store.sessions.cleID.isEmpty {
             do {
                 let client = CLEClient(http: await store.serviceHTTP(origin: CLEClient.index))

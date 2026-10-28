@@ -6,7 +6,10 @@ import PDFKit
 
 struct ServiceMessage: View {
     let message: String?
-    var body: some View { InlineFailure(message: message ?? "") }
+    var hideLogin = false
+    var body: some View {
+        if !hideLogin || DisplayNotice.error(message) != "未登录" { InlineFailure(message: message ?? "") }
+    }
 
 }
 
@@ -39,7 +42,7 @@ struct CardAccountView: View {
                 } else { Text("余额尚未读取") }
                 EmptyView()
                 if busy { ProgressView() }
-                ServiceMessage(message: message)
+                ServiceMessage(message: message, hideLogin: true)
                 NavigationLink { CampusCodeView().id(store.sessionRevision) } label: { Label("出示校园码 / 身份码", systemImage: "qrcode") }
                 CardBalancePreference(balance: account?.balance)
                 NavigationLink { CardRechargeView() } label: { Label("校园卡充值", systemImage: "plus.circle") }
@@ -279,7 +282,7 @@ struct PrintingWorkspaceView: View {
             Section("打印队列") {
                 SessionBadge(service: .printing)
                 EmptyView()
-                if busy { ProgressView() }; ServiceMessage(message: message)
+                if busy { ProgressView() }; ServiceMessage(message: message, hideLogin: true)
                 ForEach(jobs) { job in
                     VStack(alignment: .leading) {
                         Text(job.name).font(.headline); Text("\(job.copies) 份 · \(job.attributes)").font(.caption)

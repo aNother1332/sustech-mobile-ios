@@ -36,6 +36,14 @@ struct AcademicCalendarTests {
         #expect(term.date(week: 1, weekday: 8) == nil)
         #expect(term.dates(weeks: [], weekday: 1).isEmpty)
     }
+    @Test func schoolExamWeeksRemainVisibleAcrossMonthAndYearBoundaries() throws {
+        let term = try term()
+        #expect(term.examLabel(try #require(CampusClock.date("2026-10-29"))) == "期中考试周")
+        #expect(term.examLabel(try #require(CampusClock.date("2026-11-08"))) == "期中考试周")
+        #expect(term.examLabel(try #require(CampusClock.date("2026-11-09"))) == nil)
+        #expect(term.examLabel(try #require(CampusClock.date("2027-01-08"))) == "复习考试周")
+        #expect(term.examLabel(try #require(CampusClock.date("2027-01-09"))) == nil)
+    }
     @Test func springFirstMondayMakeupSurvivesEarlierThanSignInSource() throws {
         func load(_ name: String) throws -> WireValue {
             let url = try #require(Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Fixtures"))

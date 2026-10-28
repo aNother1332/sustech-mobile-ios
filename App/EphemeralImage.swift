@@ -20,7 +20,8 @@ struct EphemeralImage: View {
         let version = store.sessionRevision
         let config = URLSessionConfiguration.ephemeral; config.urlCache = nil; config.requestCachePolicy = .reloadIgnoringLocalCacheData
         let cookies = url.host == "ws.sustech.edu.cn" ? await store.sessions.cookies() : []
-        let http = ServiceHTTP(origin: URL(string: "https://" + (url.host ?? ""))!, cookies: cookies, configuration: config)
+        let origin = URL(string: "https://" + (url.host ?? ""))!
+        let http = ServiceHTTP(origin: origin, cookies: cookies, configuration: config, recovery: store.recovery(for: origin))
         do {
             let parts = URLComponents(url: url, resolvingAgainstBaseURL: false)
             let path = url.path + (parts?.percentEncodedQuery.map { "?" + $0 } ?? "")

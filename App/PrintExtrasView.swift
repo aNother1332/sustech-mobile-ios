@@ -25,7 +25,7 @@ struct PrintExtrasView: View {
                     Picker("类型", selection: $type) { Text("打印").tag(1); Text("扫描").tag(2); Text("复印").tag(3) }
                 }
                 EmptyView()
-                if busy { ProgressView() }; ServiceMessage(message: message)
+                if busy { ProgressView() }; ServiceMessage(message: message, hideLogin: tab != 0)
             }
             if rows.isEmpty && !busy { Text(tab == 0 ? "暂无站点数据，请下拉刷新。" : "暂无记录").foregroundStyle(.secondary) }
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in

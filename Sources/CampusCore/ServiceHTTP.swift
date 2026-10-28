@@ -49,8 +49,12 @@ public struct ServiceFailure: Error, LocalizedError, Sendable {
 public struct ServiceHTTP: Sendable {
     public let origin: URL
     private let session: URLSession
-    public init(origin: URL, cookies: [HTTPCookie] = [], configuration: URLSessionConfiguration = .ephemeral) {
+    private let recovery: SessionRecovery?
+    private let startingCookies: [HTTPCookie]
+    public init(origin: URL, cookies: [HTTPCookie] = [], configuration: URLSessionConfiguration = .ephemeral, recovery: SessionRecovery? = nil) {
         self.origin = origin
+        self.recovery = recovery
+        self.startingCookies = cookies
         configuration.timeoutIntervalForRequest = 25
         configuration.timeoutIntervalForResource = 120
         configuration.urlCache = nil
@@ -58,6 +62,7 @@ public struct ServiceHTTP: Sendable {
         session = URLSession(configuration: configuration, delegate: RedirectBlocker(), delegateQueue: nil)
     }
     public func cookies() -> [HTTPCookie] { session.configuration.httpCookieStorage?.cookies ?? [] }
+    public func changedCookies() -> [HTTPCookie] { CookieChanges.changed(from: startingCookies, to: cookies()) }
     public func data(_ path: String, query: [String: String] = [:], form: [String: String]? = nil,
                      json: WireValue? = nil, method: String = "GET", body: Data? = nil,
                      contentType: String? = nil, headers: [String: String] = [:]) async throws -> Data {
@@ -74,13 +79,26 @@ public struct ServiceHTTP: Sendable {
         if let form { request.httpBody = CampusHTTPClient.formBody(form); request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type") }
         if let json { request.httpBody = try JSONEncoder().encode(json); request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         if let body { request.httpBody = body; request.setValue(contentType, forHTTPHeaderField: "Content-Type") }
+        for attempt in 0...1 {
         let (data, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw CampusError.invalidResponse("校园服务") }
+        let expired = SessionReadPolicy.expired(status: response.statusCode, data: data)
+        let bootstrapNeeded = response.statusCode == 403 && origin.host == "ehall.sustech.edu.cn"
+        if attempt == 0, expired || bootstrapNeeded, SessionReadPolicy.canReplay(method: request.httpMethod ?? "GET", path: url.path + (url.query.map { "?" + $0 } ?? "")), let recovery {
+            let renewed = try await recovery()
+            for old in session.configuration.httpCookieStorage?.cookies ?? [] { session.configuration.httpCookieStorage?.deleteCookie(old) }
+            for cookie in renewed.cookies { session.configuration.httpCookieStorage?.setCookie(cookie) }
+            for (name, value) in renewed.headers { request.setValue(value, forHTTPHeaderField: name) }
+            continue
+        }
+        if expired { throw CampusError.signInRequired }
         if response.statusCode == 401 || (300..<400).contains(response.statusCode) { throw CampusError.signInRequired }
         if response.statusCode == 403 { throw CampusError.accessDenied }
         if response.statusCode == 429 { throw CampusError.rateLimited }
         guard (200..<300).contains(response.statusCode) else { throw CampusError.http(response.statusCode) }
         return data
+        }
+        throw CampusError.signInRequired
     }
     public func json(_ path: String, query: [String: String] = [:], form: [String: String]? = nil,
                      payload: WireValue? = nil, method: String = "GET", headers: [String: String] = [:]) async throws -> WireValue {

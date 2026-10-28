@@ -3,6 +3,11 @@ import Foundation
 public struct CampusWeather: Sendable {
     public let summary: String
     public let aqi: Int?
+    public var temperature: String? {
+        HTMLText.captures("(?<!体感)气温\\s*(-?[0-9]+(?:\\.[0-9]+)?)\\s*[℃°]", in: summary).first.map { $0[1] + "°" }
+    }
+    public var symbol: String { summary.contains("无降雨") ? "cloud.sun" : summary.contains("雨") ? "cloud.rain" : "cloud.sun" }
+    public init(summary: String, aqi: Int?) { self.summary = summary; self.aqi = aqi }
     public static func read() async throws -> CampusWeather {
         let weather = ServiceHTTP(origin: URL(string: "https://api.sustech.online")!)
         let air = ServiceHTTP(origin: URL(string: "https://air-quality-api.open-meteo.com")!)

@@ -16,9 +16,13 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     var epoch: Int { revision }
     var cleID = ""
     var cleName = ""
+    var collegeToken = ""
+    private var businessConnections: [String: Task<Void, Error>] = [:]
+    private var businessChecked: [String: Date] = [:]
     private var libraryConnectionID: UUID?
     private var libraryConnection: Task<String, Error>?
-    private var connecting: [CASService: Task<Void, Never>] = [:]
+    private var connecting: [CASService: Task<Void, Error>] = [:]
+    private let cleBootstrap = SchoolWebBootstrap()
     private let vault = "cn.sustech.community.daily.sessions.v1"
     override init() {
         super.init()
@@ -43,6 +47,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         if let identity = CredentialVault.load([String: String].self, key: "cle-identity") {
             cleID = identity["id"] ?? ""; cleName = identity["name"] ?? ""
         }
+        collegeToken = CredentialVault.load(String.self, key: "college-token") ?? ""
         var item: CFTypeRef?
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: vault, kSecReturnData as String: true]
@@ -62,18 +67,20 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         return await websiteDataStore.httpCookieStore.allCookies()
     }
     func connectIfPossible(_ service: CASService) async {
-        if let task = connecting[service] { await task.value; return }
+        try? await connectCAS(service)
+    }
+    func connectCAS(_ service: CASService) async throws {
+        if let task = connecting[service] { try await task.value; return }
+        let version = revision
         let task = Task { @MainActor in
-            do {
                 var parts = URLComponents(url: CASPolicy.login, resolvingAgainstBaseURL: false)!
                 parts.queryItems = [URLQueryItem(name: "service", value: service.entry.absoluteString)]
                 guard let entry = parts.url else { throw CASFailure.redirect }
                 try await connect(entry: entry, finalHost: service.entry.host)
-            } catch { /* Actual API probe reports service failure. */ }
         }
         connecting[service] = task
-        await task.value
-        connecting[service] = nil
+        defer { if version == revision { connecting[service] = nil } }
+        try await task.value
     }
     func connect(entry: URL, finalHost: String? = nil) async throws {
         let version = revision
@@ -103,7 +110,8 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     func clear() async {
         clearing = true; revision += 1; restored = true
         libraryConnection?.cancel(); libraryConnection = nil; libraryConnectionID = nil
-        cleID = ""; cleName = ""; CredentialVault.delete("library-token"); CredentialVault.delete("recharge-token"); CredentialVault.delete("court"); CredentialVault.delete("cle-identity")
+        cleID = ""; cleName = ""; collegeToken = ""; CredentialVault.delete("library-token"); CredentialVault.delete("recharge-token"); CredentialVault.delete("court"); CredentialVault.delete("cle-identity"); CredentialVault.delete("college-token")
+        for task in businessConnections.values { task.cancel() }; businessConnections = [:]; businessChecked = [:]
         restoration?.cancel(); restoration = nil; restoring = false
         for task in connecting.values { task.cancel() }; connecting = [:]
         SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: vault] as CFDictionary)
@@ -116,6 +124,12 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         try? CredentialVault.save(["id": id, "name": name], key: "cle-identity")
     }
     func connectIC() async throws {
+        try await ensureBusiness("ic") { try await self.exchangeIC() }
+    }
+    func renewIC() async throws {
+        try await ensureBusiness("ic", force: true) { try await self.exchangeIC() }
+    }
+    private func exchangeIC() async throws {
         let existing = await cookies()
         let http = ServiceHTTP(origin: SchoolService.rooms.portalURL, cookies: existing)
         // Probe the actual service instead of treating cookie presence as proof.
@@ -126,6 +140,62 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         guard reply["code"].text == "0", let entry = URL(string: reply["data"].text),
               SessionConnector.allowed(entry), entry.path.contains("authcenter/toLoginPage") else { throw CASFailure.redirect }
         try await connect(entry: entry, finalHost: "booking.lib.sustech.edu.cn")
+        let verified = ServiceHTTP(origin: SchoolService.rooms.portalURL, cookies: await cookies())
+        let user = try await verified.json("/ic-web/auth/userInfo")
+        guard user["code"].text == "0", user["data"]["accNo"].int != nil else { throw CampusError.signInRequired }
+    }
+    private func ensureBusiness(_ key: String, force: Bool = false, action: @escaping @MainActor () async throws -> Void) async throws {
+        if let task = businessConnections[key] { try await task.value; return }
+        if !force, let date = businessChecked[key], Date.now.timeIntervalSince(date) < 60 { return }
+        let version = revision
+        let task = Task { @MainActor in try await action(); try Task.checkCancellation() }
+        businessConnections[key] = task
+        defer { if revision == version { businessConnections[key] = nil } }
+        try await task.value
+        guard revision == version, !clearing else { throw CancellationError() }
+        businessChecked[key] = .now
+    }
+    private func exchange(_ entry: URL, host: String) async throws -> SessionConnector.Exchange {
+        let version = revision
+        let result = try await SessionConnector().exchange(entry, cookies: await cookies(), finalHost: host)
+        guard version == revision, !clearing else { throw CancellationError() }
+        for cookie in result.updatedCookies {
+            guard version == revision, !clearing else { throw CancellationError() }
+            await websiteDataStore.httpCookieStore.setCookie(cookie)
+        }
+        await save()
+        return result
+    }
+    func connectCLE(force: Bool = false) async throws {
+        try await ensureBusiness("cle", force: force) {
+            _ = try await self.exchange(CLEClient.index, host: "ehall.sustech.edu.cn")
+            let identity = try await self.cleBootstrap.establish(in: self.websiteDataStore)
+            self.setCLEIdentity(id: identity.id, name: identity.name, epoch: self.revision)
+        }
+    }
+    func connectExchange(force: Bool = false) async throws {
+        try await ensureBusiness("exchange", force: force) {
+            var parts = URLComponents(url: CASPolicy.login, resolvingAgainstBaseURL: false)!
+            parts.queryItems = [URLQueryItem(name: "service", value: "https://ws.sustech.edu.cn/SUSTechHome.aspx")]
+            _ = try await self.exchange(parts.url!, host: "ws.sustech.edu.cn")
+        }
+    }
+    func connectCollege(force: Bool = false) async throws {
+        try await ensureBusiness("college", force: force) {
+            let version = self.revision
+            var parts = URLComponents(url: CASPolicy.login, resolvingAgainstBaseURL: false)!
+            parts.queryItems = [URLQueryItem(name: "service", value: CollegeAuthentication.callback.absoluteString)]
+            let result = try await self.exchange(parts.url!, host: "booking.sustech.edu.cn")
+            let ticket = try CollegeAuthentication.ticket(from: result.finalURL)
+            let http = ServiceHTTP(origin: SchoolService.booking.portalURL, cookies: result.cookies)
+            let response = try await http.json("/api/SystemApi/GetUserProfile", payload: .object([
+                "MessageType": .integer(1001), "MessageID": .string(UUID().uuidString),
+                "Data": .object(["Url": .string(CollegeAuthentication.callback.absoluteString), "St": .string(ticket)])]))
+            let token = try CollegeAuthentication.token(response)
+            guard self.revision == version, !self.clearing else { throw CancellationError() }
+            self.collegeToken = token
+            try CredentialVault.save(token, key: "college-token")
+        }
     }
     nonisolated func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
         Task { @MainActor [weak self] in await self?.save() }

@@ -20,6 +20,10 @@ final class CampusStore {
     var loginAccount: String?
     var cardBalance: String?
     var cardBalanceLoading = false
+    var campusWeather: CampusWeather?
+    var weatherFetched: Date?
+    var weatherLoading = false
+    var weatherMessage: String?
     var cardBalanceMessage: String?
     var cardBalanceRequest: UUID?
     var agendaExtras: [AgendaEntry] = []
@@ -179,7 +183,7 @@ final class CampusStore {
                 owner = LocalRepository.identity(username)
                 hiddenCourses = CoursePreferences().load(owner: owner!) ?? []
                 if service == .teaching {
-                    let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
+                    let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies, recovery: recovery(for: SchoolService.teaching.portalURL))
                     _ = try TISParser.semester(await http.data(path: "/component/querydangqianxnxq", form: [:]))
                     await refreshTeaching()
                 } else {
@@ -232,7 +236,7 @@ final class CampusStore {
             guard version == generation else { return }
             if !value.isEmpty { profile = value; profileMessage = nil; persist() }
             else { profileMessage = "暂未读取到个人资料" }
-        } catch { if version == generation { profileMessage = "个人资料暂不可用" } }
+        } catch { if version == generation { profileMessage = LoginRequirement.confirmed(error) ? nil : "个人资料暂不可用"; recordSession(.teaching, error: error) } }
         await absorb(http, revision: version)
     }
 
@@ -250,12 +254,12 @@ final class CampusStore {
         if serviceSessions[.teaching]?.valid != true { await sessions.connectIfPossible(.teaching) }
         let cookies = await sessions.cookies()
         guard version == generation else { return }
-        let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
+        let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies, recovery: recovery(for: SchoolService.teaching.portalURL))
         do {
             let snapshot = try await TISClient(http: http).snapshot()
             try Task.checkCancellation()
             guard version == generation else { return }
-            await retainCookies(http.cookies(), version: version)
+            await retainCookies(http.changedCookies().filter { cookie in let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")); return http.origin.host == host || http.origin.host?.hasSuffix("." + host) == true }, version: version)
             guard version == generation else { return }
             if owner == nil { owner = "web-" + UUID().uuidString }
             recordSession(.teaching)
@@ -275,12 +279,12 @@ final class CampusStore {
         if serviceSessions[.teaching]?.valid != true { await sessions.connectIfPossible(.teaching) }
         let cookies = await sessions.cookies()
         guard version == generation else { return }
-        let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies)
+        let http = CampusHTTPClient(origin: SchoolService.teaching.portalURL, cookies: cookies, recovery: recovery(for: SchoolService.teaching.portalURL))
         do {
             let snapshot = try await TISClient(http: http).grades()
             try Task.checkCancellation()
             guard version == generation else { return }
-            await retainCookies(http.cookies(), version: version)
+            await retainCookies(http.changedCookies().filter { cookie in let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")); return http.origin.host == host || http.origin.host?.hasSuffix("." + host) == true }, version: version)
             guard version == generation else { return }
             if owner == nil { owner = "web-" + UUID().uuidString }
             recordSession(.teaching)
@@ -296,12 +300,12 @@ final class CampusStore {
         if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { return }
-        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies, recovery: recovery(for: SchoolService.blackboard.portalURL))
         do {
             let snapshot = try await BlackboardClient(http: http).snapshot()
             try Task.checkCancellation()
             guard version == generation else { return }
-            await retainCookies(http.cookies(), version: version)
+            await retainCookies(http.changedCookies().filter { cookie in let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")); return http.origin.host == host || http.origin.host?.hasSuffix("." + host) == true }, version: version)
             guard version == generation else { return }
             let ids = Set(snapshot.courses.map(\.id))
             courseDetails = courseDetails.filter { ids.contains($0.key) }
@@ -322,13 +326,13 @@ final class CampusStore {
         if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { return }
-        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies, recovery: recovery(for: SchoolService.blackboard.portalURL))
         let client = BlackboardClient(http: http)
         do {
             let detail = try await client.courseDetail(course)
             try Task.checkCancellation()
             guard version == generation else { return }
-            await retainCookies(http.cookies(), version: version)
+            await retainCookies(http.changedCookies().filter { cookie in let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")); return http.origin.host == host || http.origin.host?.hasSuffix("." + host) == true }, version: version)
             guard version == generation else { return }
             recordSession(.blackboard)
             courseDetails[course.id] = detail.retainingUnreadSections(from: courseDetails[course.id])
@@ -350,14 +354,14 @@ final class CampusStore {
         if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
-        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies, recovery: recovery(for: SchoolService.blackboard.portalURL))
         let client = BlackboardClient(http: http)
         let result: [BBContent]
         do { result = try await client.contents(courseID: course, parentID: parent) }
         catch { if version == generation { recordSession(.blackboard, error: error); if (error as? CampusError) == .signInRequired { await checkSession(.blackboard, force: true) } }; throw error }
         try Task.checkCancellation()
         guard version == generation else { throw CancellationError() }
-        await retainCookies(http.cookies(), version: version)
+        await retainCookies(http.changedCookies().filter { cookie in let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")); return http.origin.host == host || http.origin.host?.hasSuffix("." + host) == true }, version: version)
         guard version == generation else { throw CancellationError() }
         contentCache[contentKey(course, parent)] = result
         persist()
@@ -369,13 +373,13 @@ final class CampusStore {
         if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
-        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies, recovery: recovery(for: SchoolService.blackboard.portalURL))
         let result: [BBAttachment]
         do { result = try await BlackboardClient(http: http).attachments(courseID: course, contentID: content) }
         catch { if version == generation { recordSession(.blackboard, error: error); if (error as? CampusError) == .signInRequired { await checkSession(.blackboard, force: true) } }; throw error }
         try Task.checkCancellation()
         guard version == generation else { throw CancellationError() }
-        await retainCookies(http.cookies(), version: version)
+        await retainCookies(http.changedCookies().filter { cookie in let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")); return http.origin.host == host || http.origin.host?.hasSuffix("." + host) == true }, version: version)
         guard version == generation else { throw CancellationError() }
         return result
     }
@@ -392,14 +396,14 @@ final class CampusStore {
         if serviceSessions[.blackboard]?.valid != true { await sessions.connectIfPossible(.blackboard) }
         let cookies = await sessions.cookies()
         guard version == generation else { throw CancellationError() }
-        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies)
+        let http = CampusHTTPClient(origin: SchoolService.blackboard.portalURL, cookies: cookies, recovery: recovery(for: SchoolService.blackboard.portalURL))
         let temporary: URL
         do { temporary = try await http.download(path: attachment.path) }
         catch { if version == generation { recordSession(.blackboard, error: error); if (error as? CampusError) == .signInRequired { await checkSession(.blackboard, force: true) } }; throw error }
         defer { try? FileManager.default.removeItem(at: temporary) }
         try Task.checkCancellation()
         guard version == generation else { throw CancellationError() }
-        await retainCookies(http.cookies(), version: version)
+        await retainCookies(http.changedCookies().filter { cookie in let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")); return http.origin.host == host || http.origin.host?.hasSuffix("." + host) == true }, version: version)
         guard version == generation else { throw CancellationError() }
         try repository.prepare()
         let id = UUID()
@@ -465,17 +469,18 @@ final class CampusStore {
         case .card: origin = SchoolService.card.portalURL
         case .printing: origin = SchoolService.printing.portalURL
         }
-        return ServiceHTTP(origin: origin, cookies: await sessions.cookies())
+        return ServiceHTTP(origin: origin, cookies: await sessions.cookies(), recovery: recovery(for: origin))
     }
     func serviceHTTP(origin: URL) async -> ServiceHTTP {
-        ServiceHTTP(origin: origin, cookies: await sessions.cookies())
+        ServiceHTTP(origin: origin, cookies: await sessions.cookies(), recovery: recovery(for: origin))
     }
     func absorb(_ http: ServiceHTTP, revision: Int) async {
         guard generation == revision, !clearing else { return }
-        for cookie in http.cookies() {
+        for cookie in http.changedCookies() {
             guard generation == revision, !clearing else { return }
             let host = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: "."))
             guard host == "sustech.edu.cn" || host.hasSuffix(".sustech.edu.cn") else { continue }
+            guard http.origin.host == host || http.origin.host?.hasSuffix("." + host) == true else { continue }
             await websiteDataStore.httpCookieStore.setCookie(cookie)
         }
     }

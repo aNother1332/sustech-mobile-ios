@@ -7,10 +7,21 @@ public struct ReviewCourse: Identifiable, Codable, Sendable {
     public let teachers: String
     public let count: Int
     public let rating: String
-    public var difficulty: Int? = nil
-    public var homework: Int? = nil
-    public var grading: Int? = nil
-    public var gain: Int? = nil
+    public var difficulty: Double? = nil
+    public var homework: Double? = nil
+    public var grading: Double? = nil
+    public var gain: Double? = nil
+    public var displayRating: String { ReviewScores.rating(rating) }
+}
+public enum ReviewScores {
+    public static func rating(_ text: String) -> String {
+        guard let value = Double(text), value.isFinite, (0...10).contains(value) else { return "—" }
+        return String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), value)
+    }
+    public static func metric(_ value: WireValue) -> Double? {
+        guard let value = Double(value.text), value.isFinite, (0...100).contains(value) else { return nil }
+        return value
+    }
 }
 public struct ReviewSearchPage: Sendable {
     public let items: [ReviewCourse]; public let page: Int; public let pages: Int; public let total: Int
@@ -21,6 +32,7 @@ public struct CourseReview: Identifiable, Sendable {
     public let term: String
     public let rating: String
     public let content: String
+    public var displayRating: String { ReviewScores.rating(rating) }
 }
 public struct ReviewClient: Sendable {
     public let http: ServiceHTTP
@@ -29,7 +41,7 @@ public struct ReviewClient: Sendable {
         guard case .array = value["courses"]["items"] else { throw CampusError.invalidResponse("课程评价搜索") }
         return try value["courses"]["items"].rows.map { row in
             guard !row["id"].text.isEmpty else { throw CampusError.invalidResponse("课程 ID") }
-            return ReviewCourse(id: row["id"].text, name: row["name"].text, code: row["course_code"].text, teachers: row["teacher_names"].text, count: row["review_count"].int ?? 0, rating: row["rate_average"].text, difficulty: row["difficulty_score"].int, homework: row["homework_score"].int, grading: row["grading_score"].int, gain: row["gain_score"].int)
+            return ReviewCourse(id: row["id"].text, name: row["name"].text, code: row["course_code"].text, teachers: row["teacher_names"].text, count: row["review_count"].int ?? 0, rating: row["rate_average"].text, difficulty: ReviewScores.metric(row["difficulty_score"]), homework: ReviewScores.metric(row["homework_score"]), grading: ReviewScores.metric(row["grading_score"]), gain: ReviewScores.metric(row["gain_score"]))
         }
     }
     public func searchPage(_ query: String, page: Int = 1) async throws -> ReviewSearchPage {
@@ -94,7 +106,7 @@ public struct DegreeClient: Sendable {
         fields["pylx"] = fields["pylx"] ?? .string(type)
         let labels: [String: String] = ["YQXDXF": "要求学分", "XF": "完成学分", "MS": "要求门数", "ZYFXMC": "专业方向", "XFLBMC": "类别", "YQWCXF": "要求学分", "YQXF": "要求学分", "YWCXF": "完成学分", "WWCXF": "未完成学分", "BZ": "备注", "KZMC": "模块", "MKMC": "模块", "SFTG": "学校通过标记", "WC_XF": "尚差学分", "WC_MS": "尚差门数", "YWCMS": "已完成门数", "WWCMS": "未完成门数"]
         var sections: [DegreeSection] = []; var warnings: [String] = []
-        for (path, title) in [("querybyyq", "学校总要求"), ("queryBxkqk", "完成情况"), ("queryXflbyq", "学分类别"), ("queryMkyq", "模块要求")] {
+        for (path, title) in [("querybyyq", "学校总要求")] {
             do {
                 var records: [WireValue] = []; var previous: [WireValue]?
                 for page in 1...20 {

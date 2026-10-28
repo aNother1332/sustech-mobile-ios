@@ -26,7 +26,7 @@ struct StudyView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
                 CampusHero(eyebrow: "", title: "学习", subtitle: "", symbol: "books.vertical")
-                NativeLoginButton()
+                NativeLoginButton(service: store.serviceSessions[.teaching]?.status == .expired ? .teaching : .blackboard)
                 LearningOverviewView()
                 ModeNotice()
                 HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }; Spacer(); NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) } }.font(.caption)
@@ -104,7 +104,6 @@ struct StudyView: View {
     }
     private var gradesContent: some View {
         VStack(spacing: 10) {
-            NativeLoginButton()
             ConnectionNotice(state: store.gradesState)
             if let snapshot = store.academic {
                 let terms = Array(Set(snapshot.records.map(\.term))).sorted(by: >)
@@ -135,7 +134,6 @@ struct StudyView: View {
     }
     private var blackboardContent: some View {
         VStack(spacing: 10) {
-            NativeLoginButton(service: .blackboard)
             ConnectionNotice(state: store.blackboardState)
             if let snapshot = store.blackboard {
                 ForEach(store.activeCourses) { course in

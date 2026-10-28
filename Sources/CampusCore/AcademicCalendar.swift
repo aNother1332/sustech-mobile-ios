@@ -10,7 +10,9 @@ public struct AcademicTerm: Sendable {
     public let breaks: Set<String>
     public let finalWeeks: Set<Int>
     private let teachingStart: Date
-    private let finalStart: Date?
+    public let finalStart: Date?
+    public let midtermStart: Date?
+    public let midtermEnd: Date?
     public struct Holiday: Sendable { public let name: String; public let start: Date; public let end: Date }
     public struct Makeup: Sendable { public let date: Date; public let weekday: Int; public let parity: Int }
     public static var calendar: Calendar {
@@ -23,6 +25,8 @@ public struct AcademicTerm: Sendable {
               let end = CampusClock.date(term["final"]["end"].text) else { return nil }
         self.start = start; self.end = end
         teachingStart = teaching; finalStart = CampusClock.date(term["final"]["start"].text)
+        midtermStart = CampusClock.date(term["midterm"]["start"].text)
+        midtermEnd = CampusClock.date(term["midterm"]["end"].text)
         let day = (Self.calendar.component(.weekday, from: teaching) + 5) % 7
         monday = Self.calendar.date(byAdding: .day, value: -day, to: teaching)!
         holidays = general["holidays"].rows.compactMap { row in
@@ -43,6 +47,12 @@ public struct AcademicTerm: Sendable {
         return Self.calendar.date(byAdding: .day, value: (week - 1) * 7 + weekday - 1, to: monday)
     }
     public func holiday(_ date: Date) -> String? { let day = Self.calendar.startOfDay(for: date); return holidays.first { day >= $0.start && day <= $0.end }?.name }
+    public func examLabel(_ date: Date) -> String? {
+        let day = Self.calendar.startOfDay(for: date)
+        if let midtermStart, let midtermEnd, day >= midtermStart, day <= midtermEnd { return "期中考试周" }
+        if let finalStart, day >= finalStart, day <= end { return "复习考试周" }
+        return nil
+    }
     private func source(for item: Makeup) -> Date? {
         var candidates: [Date] = []
         for holiday in holidays {

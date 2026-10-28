@@ -33,7 +33,7 @@ extension CampusStore {
         await sessions.connectIfPossible(service)
         let cookies = await sessions.cookies()
         guard version == sessionRevision, serviceProbeTokens[service] == probe else { return }
-        let http = ServiceHTTP(origin: service.entry, cookies: cookies)
+        let http = ServiceHTTP(origin: service.entry, cookies: cookies, recovery: recovery(for: service.entry))
         do {
             switch service {
             case .teaching:

@@ -14,7 +14,16 @@ struct TodayView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
-                    CampusHero(eyebrow: "", title: AcademicData.dateTitle(context.date), subtitle: AcademicData.term(at: context.date).map { "第 \($0.week(context.date)) 教学周" } ?? "", symbol: "sun.max")
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 7) {
+                            Text(AcademicData.dateTitle(context.date)).font(.title2.bold())
+                            if let term = AcademicData.term(at: context.date) { Text("第 \(term.week(context.date)) 教学周").font(.subheadline) }
+                        }
+                        Spacer(minLength: 0)
+                        Button { withAnimation { proxy.scrollTo("campus-weather", anchor: .bottom) } } label: {
+                            HStack(spacing: 6) { if let temperature = store.campusWeather?.temperature { Text(temperature).font(.title3.weight(.semibold)).monospacedDigit() }; Image(systemName: store.campusWeather?.symbol ?? "cloud.sun").font(.title2) }
+                        }.buttonStyle(.plain).accessibilityLabel("查看完整天气")
+                    }.foregroundStyle(.white).padding(20).background { CampusHeaderBackground().clipShape(RoundedRectangle(cornerRadius: 20)) }
                 }
                 HStack(spacing: 0) {
                     quick("校园卡", "creditcard") { CardView().id(store.sessionRevision) }
@@ -34,16 +43,14 @@ struct TodayView: View {
                     }
                 }
                 if store.mode == .demo { ModeNotice() }
-                if store.mode == .live, store.teaching == nil, store.blackboard == nil {
-                    HStack { Text("连接学校账号").font(.headline); Spacer(); NativeLoginButton() }
-                }
+                NativeLoginButton()
                 LearningOverviewView()
                 HomeAgendaView().id("home-agenda")
-                CampusFold(title: "校园天气", symbol: "cloud.sun") { TodaySummaryView(weatherOnly: true) }
+                CampusWeatherView().id("campus-weather")
 
             }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
         }.background(Color.campusPaper)
-            .refreshable { await store.refreshHomeBalance(); await store.refreshTeaching(); await store.refreshBlackboard() }
+            .refreshable { await store.refreshHomeBalance(); await store.refreshTeaching(); await store.refreshBlackboard(); await store.refreshWeather(force: true) }
             .task(id: "\(store.mode.rawValue)-\(store.sessionRevision)-\(store.authenticating)") { await store.refreshHomeBalance() }
             .onChange(of: phase) { _, value in if value == .active { Task { await store.refreshHomeBalance() } } }
             .navigationTitle("今天").navigationBarTitleDisplayMode(.inline)

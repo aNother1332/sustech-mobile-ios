@@ -38,7 +38,7 @@ struct ConnectionNotice: View {
     let state: ConnectionState
 
     var body: some View {
-        if case .failed(let message) = state { InlineFailure(message: message) }
+        if case .failed(let message) = state, DisplayNotice.error(message) != "未登录" { InlineFailure(message: message) }
 
     }
 }

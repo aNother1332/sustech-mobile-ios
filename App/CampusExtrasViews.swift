@@ -26,7 +26,7 @@ struct CampusCodeView: View {
                     }
                 }
                 EmptyView()
-                if busy { ProgressView() }; ServiceMessage(message: message)
+                if busy { ProgressView() }; ServiceMessage(message: message, hideLogin: true)
                 EmptyView()
             }.padding(16).frame(maxWidth: 640).frame(maxWidth: .infinity)
         }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("校园码").navigationBarTitleDisplayMode(.inline)
@@ -57,14 +57,18 @@ struct CampusCodeView: View {
 }
 
 struct FacultyDirectoryView: View {
-    struct Person: Identifiable { let id: Int; let name: String; let detail: String; let search: String; let url: URL }
+    struct Person: Identifiable { let id: Int; let name: String; let detail: String; let search: String; let url: URL; let department: String }
     @State private var query = ""
     @State private var people: [Person] = []
     @State private var generated = ""
+    @State private var department = "全部院系"
+    private var departments: [String] { ["全部院系"] + Set(people.map(\.department).filter { !$0.isEmpty }).sorted() }
+    private var filteredPeople: [Person] { people.filter { (department == "全部院系" || $0.department == department) && (query.isEmpty || $0.search.localizedCaseInsensitiveContains(query)) } }
     var body: some View {
         List {
             Section { BusinessHeader(title: "师资", symbol: "person.crop.rectangle.stack", color: .campusGreen) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
-            ForEach(people.filter { query.isEmpty || $0.search.localizedCaseInsensitiveContains(query) }) { person in
+            Section { Picker("院系", selection: $department) { ForEach(departments, id: \.self) { Text($0).tag($0) } }; Text("\(filteredPeople.count) 位教师").font(.caption).foregroundStyle(.secondary) }
+            ForEach(filteredPeople) { person in
                 NavigationLink { FacultyDetailView(name: person.name, detail: person.detail, url: person.url) } label: { HStack(spacing: 12) { Image(systemName: "person.crop.square").foregroundStyle(Color.campusGreen).font(.title2); VStack(alignment: .leading, spacing: 4) { Text(person.name).foregroundStyle(.primary).font(.subheadline.bold()); Text(person.detail).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "info.circle").font(.caption).foregroundStyle(.secondary) } }
             }
             if people.isEmpty { Text("目录资源暂不可读。") }
@@ -77,7 +81,7 @@ struct FacultyDirectoryView: View {
             guard let url = URL(string: row["url"].text), url.scheme == "https", url.host == "www.sustech.edu.cn", url.path.hasPrefix("/zh/faculties/") else { return nil }
             let names = [row["nameZh"].text, row["nameEn"].text].filter { !$0.isEmpty }.joined(separator: " · ")
             let details = [row["departmentZh"].text, row["titleZh"].text].filter { !$0.isEmpty }.joined(separator: " · ")
-            return Person(id: index, name: names, detail: details, search: names + details + row["departmentEn"].text + row["titleEn"].text, url: url)
+            return Person(id: index, name: names, detail: details, search: names + details + row["departmentEn"].text + row["titleEn"].text, url: url, department: row["departmentZh"].text)
         }
     }
 }
@@ -103,7 +107,7 @@ struct ExchangeProgramsView: View {
                     TextField("学校、地区、项目", text: $query)
                     Toggle("可申请", isOn: $onlyOpen).labelsHidden().accessibilityLabel("仅看可申请项目")
                 }.padding(14).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 14))
-                ServiceMessage(message: message)
+                ServiceMessage(message: message, hideLogin: needsLogin)
                 ForEach(items.filter { (!onlyOpen || $0.available) && (query.isEmpty || ($0.name + $0.location).localizedCaseInsensitiveContains(query)) }) { item in
                     NavigationLink { ExchangeDetailView(item: item).toolbar(.visible, for: .navigationBar) } label: {
                         HStack(spacing: 14) {
@@ -135,7 +139,7 @@ struct ExchangeProgramsView: View {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let origin = URL(string: "https://ws.sustech.edu.cn")!
         do {
-            try await store.sessions.connect(entry: URL(string: "https://cas.sustech.edu.cn/cas/login?service=https%3A%2F%2Fws.sustech.edu.cn%2FSUSTechHome.aspx")!, finalHost: origin.host)
+            try await store.prepareBusiness(.exchange)
             let http = await store.serviceHTTP(origin: origin)
             do {
                 let next = reset ? 1 : page + 1; let value = try await ExchangeClient(http: http).programs(page: next)

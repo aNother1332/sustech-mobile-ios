@@ -50,7 +50,7 @@ struct ICReservationView: View {
                     Spacer(); if busy { ProgressView() }
                 }
                 IndependentConnectionStatus(connected: connected, requiresLogin: needsLogin) { portal = true }
-                ServiceMessage(message: message)
+                ServiceMessage(message: message, hideLogin: needsLogin)
                 HStack(alignment: .top, spacing: 0) {
                     VStack(spacing: 0) {
                         Text("讨论间").font(.caption).frame(width: 104, height: 34)
@@ -103,7 +103,7 @@ struct ICReservationView: View {
         }.frame(width: slotWidth * 28, height: 58).overlay(alignment: .bottom) { Divider() }
     }
     private func client() async throws -> ICClient {
-        try await store.sessions.connectIC(); return ICClient(http: await store.serviceHTTP(origin: SchoolService.rooms.portalURL))
+        try await store.prepareBusiness(.rooms); return ICClient(http: await store.serviceHTTP(origin: SchoolService.rooms.portalURL))
     }
     private func refresh() async {
         guard !busy else { return }
@@ -165,7 +165,7 @@ private struct ICBookingForm: View {
         let requestedBegin = begin, requestedEnd = end, requestedTitle = title
         let requestedMembers = members.components(separatedBy: CharacterSet(charactersIn: ",， \n")).filter { !$0.isEmpty }
         do {
-            try await store.sessions.connectIC()
+            try await store.prepareBusiness(.rooms)
             let http = await store.serviceHTTP(origin: SchoolService.rooms.portalURL); let api = ICClient(http: http)
             try await api.book(room: room, begin: requestedBegin, end: requestedEnd, title: requestedTitle, members: requestedMembers)
             let orders = try await api.mine()
@@ -197,7 +197,7 @@ struct CLEReservationView: View {
                 DatePicker("查询日期", selection: $day, displayedComponents: .date)
                 TextField("预约说明（必填，最多 500 字）", text: $note, axis: .vertical)
                 EmptyView()
-                if busy { ProgressView() }; ServiceMessage(message: message)
+                if busy { ProgressView() }; ServiceMessage(message: message, hideLogin: needsLogin)
             }
             Section("当日辅导时段") {
                 ForEach(slots) { slot in
@@ -224,23 +224,23 @@ struct CLEReservationView: View {
             if let order = cancelling { Button("取消此预约", role: .destructive) { Task { await cancel(order) } } }
         }
     }
-    private func client() async -> CLEClient { CLEClient(http: await store.serviceHTTP(origin: CLEClient.index)) }
+    private func client() async throws -> CLEClient { try await store.prepareBusiness(.cle); return CLEClient(http: await store.serviceHTTP(origin: CLEClient.index)) }
     private func refresh() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
-        do { let api = await client(); slots = try await api.slots(day: day); orders = try await api.mine(sid: store.sessions.cleID); connected = true; needsLogin = false; message = "读取于 \(Date.now.formatted())" }
+        do { let api = try await client(); slots = try await api.slots(day: day); orders = try await api.mine(sid: store.sessions.cleID); connected = true; needsLogin = false; message = nil }
         catch { connected = false; needsLogin = LoginRequirement.confirmed(error); message = error.localizedDescription }
     }
     private func book(_ slot: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
         let requestedNote = note
-        do { let api = await client(); try await api.book(slot, sid: store.sessions.cleID, name: store.sessions.cleName, note: requestedNote)
+        do { let api = try await client(); try await api.book(slot, sid: store.sessions.cleID, name: store.sessions.cleName, note: requestedNote)
             orders = try await api.mine(sid: store.sessions.cleID)
             message = orders.contains { $0.raw["SJSZ_WID"].text == slot.id && $0.raw["YYZT"].text == "1" } ? "已在我的预约中确认。" : "请求已返回，但预约尚未回读确认，请先到学校页面核对。"
         } catch { if (error as? CampusError) == .signInRequired { connected = false; needsLogin = true }; message = "结果需核对：\(error.localizedDescription)" }
     }
     private func cancel(_ order: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
-        do { let api = await client(); try await api.cancel(order); orders = try await api.mine(sid: store.sessions.cleID)
+        do { let api = try await client(); try await api.cancel(order); orders = try await api.mine(sid: store.sessions.cleID)
             message = orders.first { $0.id == order.id }?.raw["YYZT"].text == "4" ? "已回读确认取消。" : "取消请求已返回，请核对记录状态。"
         } catch { if (error as? CampusError) == .signInRequired { connected = false; needsLogin = true }; message = "结果需核对：\(error.localizedDescription)" }
     }

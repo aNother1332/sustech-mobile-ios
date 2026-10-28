@@ -15,7 +15,7 @@ struct ReviewCourseSummary: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 3) {
-                    Text(course.rating.isEmpty ? "—" : course.rating).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(reviewBlue)
+                    Text(course.displayRating).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(reviewBlue)
                     Text("\(course.count) 条评价").font(.caption2).foregroundStyle(.secondary)
                 }
             }
@@ -25,9 +25,9 @@ struct ReviewCourseSummary: View {
             }
         }
     }
-    @ViewBuilder private func metric(_ title: String, _ value: Int?, _ color: Color) -> some View {
+    @ViewBuilder private func metric(_ title: String, _ value: Double?, _ color: Color) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            HStack { Text(title); Spacer(minLength: 2); Text(value.map(String.init) ?? "—").monospacedDigit() }.font(.caption2).foregroundStyle(.secondary)
+            HStack { Text(title); Spacer(minLength: 2); Text(value.map { $0.formatted(.number.precision(.fractionLength(0...2))) } ?? "—").monospacedDigit() }.font(.caption2).foregroundStyle(.secondary)
             GeometryReader { proxy in
                 ZStack(alignment: .leading) { Capsule().fill(color.opacity(0.10)); Capsule().fill(color.opacity(0.72)).frame(width: proxy.size.width * CGFloat(min(max(value ?? 0, 0), 100)) / 100) }
             }.frame(height: 4)
@@ -113,7 +113,7 @@ private struct ReviewsDetailView: View {
                 ServiceMessage(message: message)
                 ForEach(items) { item in
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack { Text(item.term).font(.caption).padding(.horizontal, 8).padding(.vertical, 4).background(reviewBlue.opacity(0.09), in: Capsule()); Spacer(); Text(item.rating).font(.headline.monospacedDigit()).foregroundStyle(reviewBlue) }
+                        HStack { Text(item.term).font(.caption).padding(.horizontal, 8).padding(.vertical, 4).background(reviewBlue.opacity(0.09), in: Capsule()); Spacer(); Text(item.displayRating).font(.headline.monospacedDigit()).foregroundStyle(reviewBlue) }
                         Text(item.content).font(.subheadline).lineSpacing(5).textSelection(.enabled)
                     }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 12))
                 }
@@ -136,14 +136,15 @@ struct DegreeProgressView: View {
     var body: some View {
         List {
             Section { BusinessHeader(title: "修读进度", symbol: "graduationcap", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+            Section { CurriculumCard() }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
             Section { SessionBadge()
-                if busy { ProgressView() }; ServiceMessage(message: message)
+                if busy { ProgressView() }; ServiceMessage(message: message, hideLogin: true)
                 EmptyView()
             }
             if let result { ForEach(result.sections) { section in Section(section.title) { ForEach(Array(section.values.enumerated()), id: \.offset) { _, value in LabeledContent(value.0, value: value.1) } } }
                 if !result.warnings.isEmpty { Section("部分来源未读取") { ForEach(result.warnings, id: \.self) { Text($0).font(.caption).foregroundStyle(.orange) } } }
             }
-        }.navigationTitle("学业修读进度").navigationBarTitleDisplayMode(.inline).task { await load() }.refreshable { await load() }
+        }.navigationTitle("学业修读进度").navigationBarTitleDisplayMode(.inline).task { if store.profile == nil { await store.refreshProfile() }; await load() }.refreshable { await store.refreshProfile(); await load() }
     }
     private func load() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }; let version = store.sessionRevision

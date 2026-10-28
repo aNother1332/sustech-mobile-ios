@@ -33,6 +33,8 @@ public struct ICClient: Sendable {
     public init(http: ServiceHTTP) { self.http = http }
     public func call(_ path: String, query: [String: String] = [:], payload: WireValue? = nil) async throws -> WireValue {
         let value = try await http.json("/ic-web" + path, query: query, payload: payload)
+        if value["code"].text == "300" { throw CampusError.signInRequired }
+        if value["message"].text.contains("频繁") { throw CampusError.rateLimited }
         guard value["code"].text == "0" else { throw ServiceFailure(value["message"].text.isEmpty ? "IC 服务未确认操作成功，请先连接图书馆预约会话。" : value["message"].text) }
         return value["data"]
     }

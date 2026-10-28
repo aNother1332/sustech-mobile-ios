@@ -65,21 +65,3 @@ struct EnrolledCoursesView: View {
     }
 }
 
-struct AcademicCalendarView: View {
-    @AppStorage("academic-level") private var level = "undergraduate"
-    @State private var date = Date.now
-    var body: some View {
-        List {
-            Section {
-                Picker("培养层次", selection: $level) { Text("本科生").tag("undergraduate"); Text("研究生").tag("graduate") }
-                DatePicker("查询日期", selection: $date, displayedComponents: .date)
-            }
-            if let term = AcademicData.term(at: date, level: level) {
-                Section("当日安排") { LabeledContent("教学周", value: "第 \(term.week(date)) 周"); if let holiday = term.holiday(date) { Label(holiday, systemImage: "sun.max.fill").foregroundStyle(Color.campusOrange) }; if let makeup = term.makeup.first(where: { CampusClock.format($0.date) == CampusClock.format(date) }) { Text("补课：\(makeup.parity == 1 ? "单" : "双")周 · 周\(makeup.weekday)") }; if term.breaks.contains(CampusClock.format(date)) { Text("校历额外停课日") } }
-                Section("节假日") { ForEach(Array(term.holidays.enumerated()), id: \.offset) { _, item in LabeledContent(item.name, value: CampusClock.format(item.start) + " — " + CampusClock.format(item.end)) } }
-                Section("调课") { ForEach(Array(term.makeup.enumerated()), id: \.offset) { _, item in Text("\(CampusClock.format(item.date)) · 补\(item.parity == 1 ? "单" : "双")周 周\(item.weekday)") } }
-            } else { Text("此日期没有已收录校历，不推算放假或补课安排。") }
-            Section { Link("校历数据与来源", destination: URL(string: "https://github.com/dumixthestpd/sustech-calendar")!); Text("内置 2026 年数据；临时调整以学校通知为准。").font(.caption).foregroundStyle(.secondary) }
-        }.navigationTitle("教学日历").navigationBarTitleDisplayMode(.inline)
-    }
-}
