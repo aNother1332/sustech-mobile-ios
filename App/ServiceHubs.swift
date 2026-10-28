@@ -40,8 +40,9 @@ struct CardView: View {
     @State private var message: String?
     var body: some View {
         CampusHub(title: "校园卡", symbol: "creditcard") {
+            NativeLoginButton(service: .card)
             if let balance { CampusCard { Text("校园卡余额").font(.caption).foregroundStyle(.secondary); Text(balance).font(.largeTitle.bold()).monospacedDigit() } }
-            if let message { Text(message).font(.caption).foregroundStyle(.secondary) }
+            ServiceMessage(message: message, hideLogin: true)
             CampusSectionTitle(title: "账户服务")
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ServiceTile(title: "余额与账单", detail: "", symbol: "creditcard", color: .campusOrange) { CardAccountView().id(store.sessionRevision) }

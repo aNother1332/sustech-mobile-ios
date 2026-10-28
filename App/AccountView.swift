@@ -27,7 +27,7 @@ struct AccountView: View {
                 }.foregroundStyle(.white).padding(24).frame(maxWidth: .infinity, minHeight: 240, alignment: .topLeading)
                     .background { CampusHeaderBackground().clipShape(RoundedRectangle(cornerRadius: 28)) }
                 NativeLoginButton()
-                ServiceMessage(message: store.profileMessage)
+                ServiceMessage(message: store.profileMessage, hideLogin: true)
                 CampusSectionTitle(title: "常用")
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                     ServiceTile(title: "我的预约", detail: "", symbol: "calendar.badge.clock", color: .blue) { MyReservationsView().toolbar(.visible, for: .navigationBar) }

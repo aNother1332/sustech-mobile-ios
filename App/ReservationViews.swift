@@ -116,7 +116,7 @@ struct ICReservationView: View {
             let api = try await client(); let list = try await api.rooms(); let availability = try await api.schedules(rooms: list, day: date); let mine = try await api.mine()
             guard revision == store.sessionRevision, CampusClock.format(date) == CampusClock.format(day) else { return }
             rooms = list; schedules = availability; orders = mine; connected = true; needsLogin = false; message = nil
-        } catch { guard revision == store.sessionRevision else { return }; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }
+        } catch { guard revision == store.sessionRevision, !Task.isCancelled else { return }; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }
     }
     private func cancel(_ order: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
@@ -215,7 +215,10 @@ struct CLEReservationView: View {
                     }
                 }
             }
-        }.refreshable { await refresh() }.task { await refresh() }.navigationTitle("CLE 语言辅导").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal, onDismiss: { Task { await refresh() } }) { SchoolBrowser(service: .cle) }
+        }.refreshable { await refresh() }.task(id: CampusClock.format(day)) {
+            while busy { do { try await Task.sleep(for: .milliseconds(100)) } catch { return } }
+            if !Task.isCancelled { await refresh() }
+        }.navigationTitle("CLE 语言辅导").navigationBarTitleDisplayMode(.inline).sheet(isPresented: $portal, onDismiss: { Task { await refresh() } }) { NativeLoginView() }
         .onChange(of: day) { _, _ in slots = [] }
         .campusConfirmation("确认预约该辅导？", isPresented: Binding(get: { selected != nil }, set: { if !$0 { selected = nil } }), titleVisibility: .visible) {
             if let slot = selected { Button("提交一次") { Task { await book(slot) } } }
@@ -227,8 +230,13 @@ struct CLEReservationView: View {
     private func client() async throws -> CLEClient { try await store.prepareBusiness(.cle); return CLEClient(http: await store.serviceHTTP(origin: CLEClient.index)) }
     private func refresh() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
-        do { let api = try await client(); slots = try await api.slots(day: day); orders = try await api.mine(sid: store.sessions.cleID); connected = true; needsLogin = false; message = nil }
-        catch { connected = false; needsLogin = LoginRequirement.confirmed(error); message = error.localizedDescription }
+        let revision = store.sessionRevision; let selectedDay = CampusClock.format(day); let date = day
+        do {
+            let api = try await client(); let available = try await api.slots(day: date); let mine = try await api.mine(sid: store.sessions.cleID)
+            guard revision == store.sessionRevision, selectedDay == CampusClock.format(day), !Task.isCancelled else { return }
+            slots = available; orders = mine; connected = true; needsLogin = false; message = nil
+        }
+        catch { guard revision == store.sessionRevision, selectedDay == CampusClock.format(day), !Task.isCancelled else { return }; connected = false; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }
     }
     private func book(_ slot: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }

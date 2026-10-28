@@ -225,7 +225,7 @@ final class CampusStore {
     }
 
     func refreshProfile() async {
-        if mode == .demo { profile = StudentProfile(name: "示例同学", studentID: "示例学号", major: "示例专业", department: "示例院系"); return }
+        if mode == .demo { profile = StudentProfile(name: "示例同学", studentID: "示例学号", major: "示例专业", department: "示例院系", admissionYear: 2025); return }
         guard !clearing else { return }
         let version = generation
         let http = await serviceHTTP(.teaching)

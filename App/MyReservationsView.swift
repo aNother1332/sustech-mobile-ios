@@ -16,7 +16,7 @@ struct MyReservationsView: View {
                 BusinessHeader(title: "我的预约", symbol: "calendar.badge.clock", color: .blue)
                 Picker("类型", selection: $type) { Text("讨论间").tag(0); Text("语言辅导").tag(1) }.pickerStyle(.segmented).disabled(busy)
                 IndependentConnectionStatus(connected: !needsLogin, requiresLogin: needsLogin) { portal = true }
-                ServiceMessage(message: message)
+                ServiceMessage(message: message, hideLogin: needsLogin)
                 if busy { ProgressView().frame(maxWidth: .infinity) }
                 ForEach(items) { item in
                     CampusCard {
@@ -29,7 +29,7 @@ struct MyReservationsView: View {
             }.padding(16).frame(maxWidth: 900).frame(maxWidth: .infinity)
         }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("我的预约").navigationBarTitleDisplayMode(.inline)
             .task(id: type) { items = []; await load() }.refreshable { await load() }
-            .sheet(isPresented: $portal, onDismiss: { Task { await load() } }) { SchoolBrowser(service: type == 0 ? .rooms : .cle) }
+            .sheet(isPresented: $portal, onDismiss: { Task { await load() } }) { NativeLoginView() }
             .campusConfirmation("取消这项预约？", isPresented: Binding(get: { cancelling != nil }, set: { if !$0 { cancelling = nil } })) {
                 if let item = cancelling { Button("确认取消", role: .destructive) { Task { await cancel(item) } } }
             }

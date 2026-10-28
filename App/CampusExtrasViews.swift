@@ -83,6 +83,9 @@ struct FacultyDirectoryView: View {
             let details = [row["departmentZh"].text, row["titleZh"].text].filter { !$0.isEmpty }.joined(separator: " · ")
             return Person(id: index, name: names, detail: details, search: names + details + row["departmentEn"].text + row["titleEn"].text, url: url, department: row["departmentZh"].text)
         }
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--smoke-faculty-filtered"), departments.contains("数学系") { department = "数学系" }
+        #endif
     }
 }
 

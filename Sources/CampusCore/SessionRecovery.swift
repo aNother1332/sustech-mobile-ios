@@ -35,7 +35,7 @@ public enum SessionReadPolicy {
 
 public enum CookieChanges {
     public static func changed(from initial: [HTTPCookie], to current: [HTTPCookie]) -> [HTTPCookie] {
-        func key(_ cookie: HTTPCookie) -> String { cookie.domain.lowercased() + "|" + cookie.path + "|" + cookie.name }
+        func key(_ cookie: HTTPCookie) -> String { cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased() + "|" + cookie.path + "|" + cookie.name }
         let old = Dictionary(initial.map { (key($0), $0) }, uniquingKeysWith: { _, last in last })
         return current.filter { cookie in
             guard let previous = old[key(cookie)] else { return true }

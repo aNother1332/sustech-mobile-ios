@@ -194,7 +194,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
             let token = try CollegeAuthentication.token(response)
             guard self.revision == version, !self.clearing else { throw CancellationError() }
             self.collegeToken = token
-            try CredentialVault.save(token, key: "college-token")
+            try? CredentialVault.save(token, key: "college-token")
         }
     }
     nonisolated func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {

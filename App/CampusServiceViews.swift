@@ -187,7 +187,7 @@ struct ClassroomView: View {
                     HStack { Picker("开始节次", selection: $first) { ForEach(1...14, id: \.self) { Text("第 \($0) 节").tag($0) } }; Image(systemName: "arrow.right").font(.caption); Picker("结束节次", selection: $last) { ForEach(first...max(first, 14), id: \.self) { Text("第 \($0) 节").tag($0) } } }
                 }
                 NativeLoginButton()
-                ServiceMessage(message: message)
+                ServiceMessage(message: message, hideLogin: true)
                 if busy { ProgressView().frame(maxWidth: .infinity) }
                 ForEach(filtered) { room in
                     HStack(spacing: 13) {

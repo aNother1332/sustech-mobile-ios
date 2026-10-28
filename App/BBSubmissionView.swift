@@ -28,7 +28,7 @@ struct BBSubmissionView: View {
                 SessionBadge(service: .blackboard)
                 Text(task.course).font(.caption).foregroundStyle(.secondary); Text(task.title).font(.headline)
                 DetailNote(title: "支持范围", text: "仅支持开放的 Original 个人文件作业，单文件上限 50 MB。不覆盖已有草稿，不支持小组作业、测验或 Ultra。正式提交前核对文件与作业要求。")
-                ServiceMessage(message: message)
+                ServiceMessage(message: message, hideLogin: true)
                 if busy { ProgressView() }
             }
             if let pending {

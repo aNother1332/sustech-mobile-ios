@@ -59,6 +59,9 @@ struct TodayView: View {
                 if ProcessInfo.processInfo.arguments.contains("--smoke-home-agenda") {
                     try? await Task.sleep(for: .milliseconds(300)); proxy.scrollTo("home-agenda", anchor: .top)
                 }
+                if ProcessInfo.processInfo.arguments.contains("--smoke-home-weather") {
+                    try? await Task.sleep(for: .milliseconds(500)); proxy.scrollTo("campus-weather", anchor: .bottom)
+                }
                 #endif
             }
         }

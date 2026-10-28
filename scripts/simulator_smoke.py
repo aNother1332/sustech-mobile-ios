@@ -34,6 +34,7 @@ def main():
             scenes = (
                 ("today", ["--smoke-demo"]),
                 ("today-agenda", ["--smoke-demo", "--smoke-home-agenda"]),
+                ("today-weather", ["--smoke-demo", "--smoke-home-weather"]),
                 ("navigation-glass", ["--smoke-demo", "--smoke-tab-cycle"]),
                 ("navigation-material", ["--smoke-demo", "--smoke-tab-cycle", "--smoke-force-material"]),
                 ("learning-home", ["--smoke-demo", "--smoke-study"]),
@@ -47,6 +48,7 @@ def main():
                 ("today-dark", ["--smoke-demo", "--smoke-dark"]),
                 ("services-dark", ["--smoke-demo", "--smoke-services", "--smoke-dark"]),
                 ("faculty", ["--smoke-demo", "--smoke-faculty"]),
+                ("faculty-filtered", ["--smoke-demo", "--smoke-faculty", "--smoke-faculty-filtered"]),
                 ("calendar", ["--smoke-demo", "--smoke-calendar"]),
                 ("code", ["--smoke-demo", "--smoke-code"]),
                 ("exchange", ["--smoke-demo", "--smoke-exchange"]),
@@ -84,7 +86,7 @@ def main():
                 print(f"Capture: {family} {scene}", flush=True)
                 launched_at = time.time()
                 run("launch", "--terminate-running-process", uid, BUNDLE, *arguments)
-                time.sleep(6 if "--smoke-tab-cycle" in arguments else 3)
+                time.sleep(15 if "--smoke-degree" in arguments else 6 if "--smoke-tab-cycle" in arguments else 3)
                 if "--smoke-tab-cycle" in arguments:
                     container = Path(run("get_app_container", uid, BUNDLE, "data").strip())
                     check = json.loads((container / "Documents/smoke-navigation.json").read_text())

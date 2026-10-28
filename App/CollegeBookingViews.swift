@@ -29,7 +29,7 @@ struct CollegeBookingView: View {
         }.navigationTitle("书院与其他场地").navigationBarTitleDisplayMode(.inline)
         .searchable(text: $query, prompt: "场地名称、位置、书院")
         .task { await load() }.refreshable { await load() }
-        .sheet(isPresented: $portal, onDismiss: { Task { await load() } }) { SchoolBrowser(service: .booking) }
+        .sheet(isPresented: $portal, onDismiss: { Task { await load() } }) { NativeLoginView() }
     }
     private func load() async {
         if store.mode == .demo {
