@@ -29,11 +29,11 @@
 
 ## 当前状态
 
-当前功能版本为 **0.8.0 试用版**。修复底栏切换动画并强化 iOS 26+ 原生玻璃选中态，首页自动读取余额、直接显示待办日程，页头融入学校官方校徽与校名；移除图书馆和排课。体育授权支持复制链接唤起企业微信、粘贴连接和一键复制本机密钥。充值继续研究原生授权及自定义金额，正式原生下单尚未启用。详见 [0.8.0 说明](docs/RELEASE_0_8.md)。
+当前功能版本为 **0.9.0 试用版**。重做个人资料与设置、IC 房间时间网格、NCES 蓝白评价卡和交换项目原生详情；修复交换项目实体文字，封面按需加载且不写磁盘；补充 ProMotion 高刷新率配置，精简连接、更新时间及说明文字，保留下拉刷新和短错误。体育因没有验证到原生登录或企业微信对应页直达而移除。详见 [0.9.0 说明](docs/RELEASE_0_9.md) 与 [真实只读核对](docs/BUSINESS_VERIFICATION_0_9.md)。
 
 界面根据 Apple 设计原则重新整理，采用[学校官方标识页](https://www.sustech.edu.cn/zh/school_logo.html)公布的 **南科大橙 `#ED6C00`、墨绿 `#003F43`、天青 `#2BBCB3`**，以深色重点摘要、彩色服务入口与紧凑课程块建立层级；支持深色模式和系统大字号。使用文字和图标共同表达状态，临近截止时间单独强调。完整功能与验证边界见 [0.6.0 说明](docs/RELEASE_0_6.md)、[0.5.0 说明](docs/RELEASE_0_5.md)。
 
-**真实校园账号下的新接口及续借、打印、预约、BB 提交仍待逐项真机验收。** 界面与编译通过不代表学校服务全部可用；未签名 IPA 仍需本地签名安装，Apple 证书申请问题不属于 App 内登录功能。
+**本机真实只读核对已确认专业资料、IC 房间与日期占用、交换项目及图片；空教室旧目录接口仍返回空响应，尚未恢复。** 打印、预约、BB 提交与充值写操作仍待逐项真机验收。未签名 IPA 需本地签名安装；模拟器截图不代表真实业务或实测 120 fps。
 
 ## 当前功能
 
@@ -44,24 +44,24 @@
 | 课表与考试 | 网格/列表周课表、本学期课程汇总、教学日历、放假与补课、考试和离线缓存 | 全学期失败时当前周回退；未知周次和临时调整需核对 |
 | 成绩 | 分页读取、学期筛选、成绩与学分、GPA 记录试算 | 不代表学校官方总 GPA 或毕业审核结论 |
 | Blackboard | 课程、任务、提交状态、公告、课件、折叠/恢复，Original 个人单文件提交 | 不支持测验/Ultra/小组/已有草稿；预检、本人确认、一次 POST、服务器新记录回读；结果未知不重发 |
-| 课件与离线 | 下载、Quick Look 预览、系统分享、删除与同步时间 | 外部链接和特殊内容交学校页面 |
+| 课件与离线 | 下载、Quick Look 预览、系统分享、删除 | 外部链接和特殊内容交学校页面 |
 | 校园卡 | 余额、近期账单、本地范围筛选、按日消费曲线 | 原生充值渠道页（支付宝 / 微信入口）；金额与付款在平台完成；消费统计仅覆盖已返回记录 |
-| 空教室 | 教室目录、教学周/星期/节次筛选、课程与借用占用查询 | 每次核对筛选前 20 间；系统未见占用不保证可进入 |
-| 校车 | 站点、线路方向、预计到站、更新时间与数据来源 | CRA 公共数据，手动刷新，预测不等于实际到站 |
+| 空教室 | 教学周/星期/节次筛选及占用查询界面 | **旧目录接口返回空体，当前查询尚不可用**；缺失数据不显示为空闲 |
+| 校车 | 最近方向站台与到站、车辆/站台浮卡、可拖动时刻表、定位与曲线路线 | CRA 公共数据，前台轮询与下拉刷新；预测不等于实际到站 |
 | 校园打印 | PDF 导入、纸张/颜色/单双面/份数/页码、上传、队列与删除 | 50 MB 以内有效 PDF；需签名安装后在校园环境验证；不自动重传 |
-| 预约中心 | IC 房间、CLE 辅导、reservation 体育场馆目录与时段、手动预约/取消、本人记录 | 各平台认证和规则独立；体育首次企业微信授权、本人完成滑块；没有抢场 |
-| 日程与提醒 | 课程、考试、BB、预约、借阅到期与个人事项；日历添加/更新、本地提醒 | 课程日期需核对校历锚点；基于已同步信息，不承诺实时后台更新 |
-| 课程评价 | NCES 搜索、公开评价分页、收藏 | 社区来源，不代表学校正式评价 |
+| 预约中心 | IC 房间×时间网格、CLE 辅导、书院场地日程、本人记录及既有预约/取消 | 缺失占用不可选；体育入口已移除；写入仍需设备验证，没有抢场 |
+| 日程与提醒 | 课程、考试、BB、预约与个人事项；日历添加/更新、本地提醒 | 课程日期需核对校历锚点；基于已同步信息，不承诺实时后台更新 |
+| 课程评价 | NCES 蓝白卡片、10 分总评、四维指标、真实分页、收藏 | 社区来源，不代表学校正式评价 |
 | 修读进度 | 学校总要求、完成情况、学分类别、模块要求 | 学校数据部分失败独立显示，不合计重叠类别为毕业结论 |
 | 打印增强 | PDF 课件直接打印、站点、扫描任务列表/确认删除、用量查询 | 扫描下载路径未验证；系统分享扩展单独签名验证 |
 | 校园码 | 原生校园码与身份码、30/60 秒前台刷新、过期/后台隐藏、低余额设置 | 真实消费机/核验终端仍待验证，不等于 Apple Wallet 卡片 |
 | 教师目录 | 994 条公开资料搜索，原生详情中的邮箱/办公室、复制/分享和邮件入口 | 名录快照 2026-10-02；联系方式按需读取、缓存 7 天，可能未公开或无法识别 |
-| 交换项目 | 原生分页列表、可申请筛选、已加载项目搜索、官方详情与申请 | CAS 与 WS 服务会话需学校账号实测，申请在官方页面完成 |
-| 校车地图 | 原生 Apple 地图、线路轨迹、站点到站入口、车辆位置、线路筛选、暂停车辆开关 | 10 秒前台轮询；超过 2 分钟或未知上报时间标灰，不等同连续 GPS；底图需联网 |
+| 交换项目 | 原生分页列表与详情、实体文字清洗、临时内存封面、可申请筛选 | 真实只读查询已核对；申请在官方临时网页会话完成 |
+| 校车地图 | 原生 Apple 地图、线路轨迹、站点到站、车辆位置、线路筛选 | 10 秒前台轮询；超过 2 分钟或未知上报时间标灰，不等同连续 GPS；底图需联网 |
 | 小组件 | 可配课程/BB/天气/校车信息，四宫格快捷入口与 App 路由 | 独立扩展包；共享课程与 BB 需主动开启，App Groups 签名未实测 |
 | 维护工具 | 网络与服务可达性诊断、GitHub 发布版本检查 | 可达性不代表已登录；侧载更新仍需本地签名 |
-| 其他办事 | 保留仍使用的学校官方网页及原体育预约平台入口 | 尚未原生化的流程继续使用学校页面 |
-| iPad 与演示 | 宽屏布局，虚构学习样例及无需账号的界面浏览 | 新校园服务在演示模式不产生真实打印或预约 |
+| 我的与设置 | 姓名、学号、真实专业及院系；我的预约、下载、日程；分区设置 | 仅展示学校实际提供的字段；成功登录静默，确认失效才提示 |
+| iPad 与开发验证 | 宽屏布局，DEBUG 虚构样例供界面测试 | 正式安装版没有演示模式入口 |
 
 0.5.0 提供普通包和包含系统分享打印、WidgetKit 扩展的独立验证包；扩展需要有效 App Groups 签名，免费账号/iLoader 兼容性未通过真机验收。普通包保留主 App 内 PDF 导入。
 
@@ -72,6 +72,33 @@
 本轮操作路径和验收步骤见 [0.3.0 说明](docs/RELEASE_0_3.md)，上一版记录见 [0.2.0 说明](docs/RELEASE_0_2.md)。
 
 ## 界面截图
+
+**0.9.0 业务页改版**：以下 38 张页面截图来自 [运行 40684347344](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40684347344)，源码 `588e49c`。均使用 DEBUG 示例资料；不含真实账号。IC、NCES、交换项目六张图已由最终源码 `162c4e0` 的 [运行 40717121442](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40717121442) 更新；最终包另精简说明并修正过期登录提示。构建来源见 [发布说明](docs/RELEASE_0_9.md)。截图不替代真实校园业务验收。
+
+| 页面 | iPhone | iPad |
+| --- | --- | --- |
+| 今天 | <img src="docs/screenshots/v09-iPhone-today.png" width="230" alt="iPhone 今天"> | <img src="docs/screenshots/v09-iPad-today.png" width="420" alt="iPad 今天"> |
+| 学习摘要 | <img src="docs/screenshots/v09-iPhone-learning-home.png" width="230" alt="iPhone 学习摘要"> | <img src="docs/screenshots/v09-iPad-learning-home.png" width="420" alt="iPad 学习摘要"> |
+| 课表 | <img src="docs/screenshots/v09-iPhone-timetable.png" width="230" alt="iPhone 课表"> | <img src="docs/screenshots/v09-iPad-timetable.png" width="420" alt="iPad 课表"> |
+| 考试 | <img src="docs/screenshots/v09-iPhone-exams.png" width="230" alt="iPhone 考试"> | <img src="docs/screenshots/v09-iPad-exams.png" width="420" alt="iPad 考试"> |
+| 成绩 | <img src="docs/screenshots/v09-iPhone-grades.png" width="230" alt="iPhone 成绩"> | <img src="docs/screenshots/v09-iPad-grades.png" width="420" alt="iPad 成绩"> |
+| Blackboard | <img src="docs/screenshots/v09-iPhone-blackboard.png" width="230" alt="iPhone Blackboard"> | <img src="docs/screenshots/v09-iPad-blackboard.png" width="420" alt="iPad Blackboard"> |
+| 个人资料 | <img src="docs/screenshots/v09-iPhone-account.png" width="230" alt="iPhone 个人资料"> | <img src="docs/screenshots/v09-iPad-account.png" width="420" alt="iPad 个人资料"> |
+| 设置 | <img src="docs/screenshots/v09-iPhone-settings.png" width="230" alt="iPhone 设置"> | <img src="docs/screenshots/v09-iPad-settings.png" width="420" alt="iPad 设置"> |
+| 我的预约 | <img src="docs/screenshots/v09-iPhone-my-reservations.png" width="230" alt="iPhone 我的预约"> | <img src="docs/screenshots/v09-iPad-my-reservations.png" width="420" alt="iPad 我的预约"> |
+| 预约中心 | <img src="docs/screenshots/v09-iPhone-reservations.png" width="230" alt="iPhone 预约中心"> | <img src="docs/screenshots/v09-iPad-reservations.png" width="420" alt="iPad 预约中心"> |
+| IC房间时间网格 | <img src="docs/screenshots/v09-iPhone-ic.png" width="230" alt="iPhone IC房间时间网格"> | <img src="docs/screenshots/v09-iPad-ic.png" width="420" alt="iPad IC房间时间网格"> |
+| 空教室查询界面 | <img src="docs/screenshots/v09-iPhone-classrooms.png" width="230" alt="iPhone 空教室查询界面"> | <img src="docs/screenshots/v09-iPad-classrooms.png" width="420" alt="iPad 空教室查询界面"> |
+| NCES课程评价 | <img src="docs/screenshots/v09-iPhone-reviews.png" width="230" alt="iPhone NCES课程评价"> | <img src="docs/screenshots/v09-iPad-reviews.png" width="420" alt="iPad NCES课程评价"> |
+| 交换项目 | <img src="docs/screenshots/v09-iPhone-exchange.png" width="230" alt="iPhone 交换项目"> | <img src="docs/screenshots/v09-iPad-exchange.png" width="420" alt="iPad 交换项目"> |
+| 打印 | <img src="docs/screenshots/v09-iPhone-printing.png" width="230" alt="iPhone 打印"> | <img src="docs/screenshots/v09-iPad-printing.png" width="420" alt="iPad 打印"> |
+| 校园卡 | <img src="docs/screenshots/v09-iPhone-card.png" width="230" alt="iPhone 校园卡"> | <img src="docs/screenshots/v09-iPad-card.png" width="420" alt="iPad 校园卡"> |
+| 教师详情 | <img src="docs/screenshots/v09-iPhone-faculty-detail.png" width="230" alt="iPhone 教师详情"> | <img src="docs/screenshots/v09-iPad-faculty-detail.png" width="420" alt="iPad 教师详情"> |
+| 原生玻璃底栏 | <img src="docs/screenshots/v09-iPhone-navigation-glass.png" width="230" alt="iPhone 原生玻璃底栏"> | <img src="docs/screenshots/v09-iPad-navigation-glass.png" width="420" alt="iPad 原生玻璃底栏"> |
+| 半透明回退底栏 | <img src="docs/screenshots/v09-iPhone-navigation-material.png" width="230" alt="iPhone 半透明回退底栏"> | <img src="docs/screenshots/v09-iPad-navigation-material.png" width="420" alt="iPad 半透明回退底栏"> |
+
+<details>
+<summary>0.8.0 历史界面（含已移除功能）</summary>
 
 **0.8.0 当前界面**：截图来自 [iOS 26.2 模拟器运行 40527017735](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40527017735)，界面源码 `e03fead`，共 20 张。原生玻璃与强制半透明两条路径均验证四次切换后底栏实例保持一个。最终包 `fd0a668` 另补上学校预约正常目录和自动登录结束后的余额重读，并通过完整测试及编译。图片为演示资料，真实余额、企业微信及充值仍需设备核对。
 
@@ -86,6 +113,8 @@
 | 充值渠道 | <img src="docs/screenshots/v08-iPhone-recharge.png" width="230" alt="iPhone 充值渠道"> | <img src="docs/screenshots/v08-iPad-recharge.png" width="420" alt="iPad 充值渠道"> |
 | 原生玻璃底栏 | <img src="docs/screenshots/v08-iPhone-navigation-glass.png" width="230" alt="iPhone 原生玻璃底栏"> | <img src="docs/screenshots/v08-iPad-navigation-glass.png" width="420" alt="iPad 原生玻璃底栏"> |
 | 半透明回退底栏 | <img src="docs/screenshots/v08-iPhone-navigation-material.png" width="230" alt="iPhone 半透明回退底栏"> | <img src="docs/screenshots/v08-iPad-navigation-material.png" width="420" alt="iPad 半透明回退底栏"> |
+
+</details>
 
 <details>
 <summary>0.7.0 与更早版本的历史截图（含已移除功能）</summary>
