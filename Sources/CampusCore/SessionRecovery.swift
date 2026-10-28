@@ -27,6 +27,8 @@ public enum SessionReadPolicy {
         if prefix.range(of: "(?i)name=[\"']execution[\"']|cas/login|j_spring_cas_security_check", options: .regularExpression) != nil { return true }
         if ["请用户重新登录", "无效会话", "用户未登录"].contains(where: prefix.contains) { return true }
         if data.count < 8_000_000, let value = try? JSONDecoder().decode(WireValue.self, from: data) {
+            let message = value["message"].text + value["msg"].text
+            if ["请用户重新登录", "无效会话", "用户未登录", "未登录"].contains(where: message.contains) { return true }
             return ["300", "302", "401"].contains(value["code"].text) || ["5001", "5002", "5003"].contains(value["ErrorCode"].text)
         }
         return false

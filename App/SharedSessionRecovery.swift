@@ -26,7 +26,17 @@ extension CampusStore {
         }
     }
     private func exchangeSession(for origin: URL) async throws {
-        if let service = CASService.allCases.first(where: { $0.entry.host == origin.host }) { try await sessions.connectCAS(service) }
+        if origin.host == SchoolService.printing.portalURL.host {
+            try await sessions.renewPrinting {
+                guard !UserDefaults.standard.bool(forKey: "printing-auto-login-paused"), let account = CredentialVault.load(RememberedSchoolAccount.self, key: "printing-auto-login") else { throw CampusError.signInRequired }
+                let version = self.sessionRevision
+                let http = ServiceHTTP(origin: origin, cookies: await self.sessions.cookies())
+                do { try await PrintingAuthentication(http: http).signIn(username: account.username, password: account.password) }
+                catch { if error is PrintingAuthFailure { UserDefaults.standard.set(true, forKey: "printing-auto-login-paused") }; throw error }
+                await self.absorb(http, revision: version)
+            }
+        }
+        else if let service = CASService.allCases.first(where: { $0.entry.host == origin.host }) { try await sessions.connectCAS(service) }
         else if origin.host == SchoolService.rooms.portalURL.host { try await sessions.renewIC() }
         else if origin.host == SchoolService.cle.portalURL.host { try await sessions.connectCLE(force: true) }
         else if origin.host == SchoolService.booking.portalURL.host { try await sessions.connectCollege(force: true) }
@@ -37,7 +47,7 @@ extension CampusStore {
         guard !clearing else { throw CancellationError() }
         do { try await exchangeSession(for: origin) }
         catch {
-            guard LoginRequirement.confirmed(error), remembersSchoolAccount else { throw error }
+            guard origin.host != SchoolService.printing.portalURL.host, LoginRequirement.confirmed(error), remembersSchoolAccount else { throw error }
             serviceSessions[.teaching] = ServiceSessionState(status: .expired)
             await resumeSchoolConnections()
             guard version == sessionRevision else { throw CancellationError() }

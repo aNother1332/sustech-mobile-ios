@@ -67,6 +67,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         return await websiteDataStore.httpCookieStore.allCookies()
     }
     func connectIfPossible(_ service: CASService) async {
+        guard service != .printing else { return }
         try? await connectCAS(service)
     }
     func connectCAS(_ service: CASService) async throws {
@@ -111,6 +112,7 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
         clearing = true; revision += 1; restored = true
         libraryConnection?.cancel(); libraryConnection = nil; libraryConnectionID = nil
         cleID = ""; cleName = ""; collegeToken = ""; CredentialVault.delete("library-token"); CredentialVault.delete("recharge-token"); CredentialVault.delete("court"); CredentialVault.delete("cle-identity"); CredentialVault.delete("college-token")
+        CredentialVault.delete("printing-auto-login"); UserDefaults.standard.removeObject(forKey: "printing-auto-login-paused")
         for task in businessConnections.values { task.cancel() }; businessConnections = [:]; businessChecked = [:]
         restoration?.cancel(); restoration = nil; restoring = false
         for task in connecting.values { task.cancel() }; connecting = [:]
@@ -128,6 +130,9 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
     }
     func renewIC() async throws {
         try await ensureBusiness("ic", force: true) { try await self.exchangeIC() }
+    }
+    func renewPrinting(action: @escaping @MainActor () async throws -> Void) async throws {
+        try await ensureBusiness("printing", action: action)
     }
     private func exchangeIC() async throws {
         let existing = await cookies()

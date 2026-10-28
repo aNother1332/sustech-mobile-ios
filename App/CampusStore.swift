@@ -240,6 +240,23 @@ final class CampusStore {
         await absorb(http, revision: version)
     }
 
+    func signInPrinting(username: String, password: String, remember: Bool) async -> String? {
+        guard mode == .live, !authenticating, !clearing, !writing else { return "稍后重试" }
+        authenticating = true; defer { authenticating = false }
+        let version = generation
+        let http = ServiceHTTP(origin: SchoolService.printing.portalURL, cookies: await sessions.cookies())
+        do {
+            try await PrintingAuthentication(http: http).signIn(username: username, password: password)
+            guard generation == version else { return "账号已切换" }
+            await absorb(http, revision: version)
+            if remember { try CredentialVault.save(RememberedSchoolAccount(username: username, password: password), key: "printing-auto-login") }
+            else { CredentialVault.delete("printing-auto-login") }
+            UserDefaults.standard.removeObject(forKey: "printing-auto-login-paused")
+            recordSession(.printing)
+            return nil
+        } catch { recordSession(.printing, error: error); return error.localizedDescription }
+    }
+
     /// Browsing a service preserves shared CAS and per-service sessions.
     func prepareSchoolBrowser(_ service: SchoolService) async -> Bool {
         guard !authenticating, !clearing, !writing else { return false }

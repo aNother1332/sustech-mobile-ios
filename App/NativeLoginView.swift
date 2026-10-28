@@ -15,7 +15,7 @@ struct NativeLoginButton: View {
         .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
         .task { await store.checkSession(service) }
         .sheet(isPresented: $presented, onDismiss: { Task { await store.checkSession(service, force: true); await store.checkSchoolSessions(force: true) } }) {
-            NativeLoginView()
+            if service == .printing { PrintingLoginView() } else { NativeLoginView() }
         }
     }
 }

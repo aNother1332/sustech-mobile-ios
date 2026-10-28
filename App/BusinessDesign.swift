@@ -62,6 +62,7 @@ struct DisplayCapabilityReader: UIViewRepresentable {
 
 enum LoginRequirement {
     static func confirmed(_ error: Error) -> Bool {
+        if error is PrintingAuthFailure { return true }
         if (error as? CampusError) == .signInRequired { return true }
         if let cas = error as? CASFailure { return cas == .challenge || cas == .rejected }
         return false

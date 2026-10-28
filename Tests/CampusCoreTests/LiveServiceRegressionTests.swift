@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import Security
 @testable import CampusCore
 
 @Test func ncesAcceptsActualDecimalStringMetrics() throws {
@@ -57,6 +58,30 @@ import Testing
 @Test func topWeatherTemperatureUsesCurrentValueInsteadOfRangeOrFeelsLike() {
     let weather = CampusWeather(summary: "南科大天气：24℃-30℃。气温24.7℃，体感26.2℃，近两个小时内无降雨。", aqi: nil)
     #expect(weather.temperature == "24.7°")
+}
+
+@Test func printingSPKIKeyEncryptsNoncePasswordWithServerCompatiblePadding() throws {
+    let key = try #require(SecKeyCreateRandomKey([kSecAttrKeyType: kSecAttrKeyTypeRSA, kSecAttrKeySizeInBits: 2048] as CFDictionary, nil))
+    let publicKey = try #require(SecKeyCopyPublicKey(key))
+    let raw = try #require(SecKeyCopyExternalRepresentation(publicKey, nil)) as Data
+    func der(_ tag: UInt8, _ bytes: Data) -> Data {
+        let size = bytes.count
+        let length: [UInt8] = size < 128 ? [UInt8(size)] : size < 256 ? [0x81, UInt8(size)] : [0x82, UInt8(size >> 8), UInt8(size & 255)]
+        return Data([tag] + length) + bytes
+    }
+    let algorithm = Data([0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00])
+    let spki = der(0x30, algorithm + der(0x03, Data([0]) + raw))
+    for encoded in [raw.base64EncodedString(), spki.base64EncodedString()] {
+        let encrypted = try PrintingAuthentication.encrypt("fixture-password;fixture-nonce", publicKey: encoded)
+        let bytes = try #require(Data(base64Encoded: encrypted))
+        let decrypted = try #require(SecKeyCreateDecryptedData(key, .rsaEncryptionPKCS1, bytes as CFData, nil)) as Data
+        #expect(String(decoding: decrypted, as: UTF8.self) == "fixture-password;fixture-nonce")
+    }
+}
+
+@Test func escapedPrintingSessionErrorStillTriggersRenewal() {
+    let body = Data(#"{"code":4,"message":"\u65e0\u6548\u4f1a\u8bdd\uff0c\u672a\u767b\u5f55"}"#.utf8)
+    #expect(SessionReadPolicy.expired(status: 200, data: body))
 }
 
 private final class RenewalFixtureState: @unchecked Sendable {
