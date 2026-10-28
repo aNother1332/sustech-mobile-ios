@@ -36,9 +36,9 @@ struct BusinessHeader: View {
                 if !value.isEmpty { Text(value).font(.caption).foregroundStyle(.white.opacity(0.85)) }
             }
             Spacer()
-            Image("SchoolWordmark").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white.opacity(0.12)).frame(width: 120)
         }.foregroundStyle(.white).padding(16)
             .background(LinearGradient(colors: [color.opacity(0.78), color], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 20))
+            .overlay(alignment: .trailing) { Image("SchoolWordmark").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white.opacity(0.12)).frame(width: 120).padding(.trailing, 16).allowsHitTesting(false).accessibilityHidden(true) }
             .accessibilityElement(children: .combine)
     }
 }

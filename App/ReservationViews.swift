@@ -44,7 +44,7 @@ struct ICReservationView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                BusinessHeader(title: "Information Commons", symbol: "person.2.crop.square.stack", color: Color(red: 0.18, green: 0.47, blue: 0.72))
+                BusinessHeader(title: "IC 讨论间", symbol: "person.2.crop.square.stack", color: Color(red: 0.18, green: 0.47, blue: 0.72))
                 HStack {
                     DatePicker("日期", selection: $day, in: Date.now...Date.now.addingTimeInterval(7 * 86400), displayedComponents: .date).labelsHidden()
                     Spacer(); if busy { ProgressView() }
