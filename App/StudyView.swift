@@ -130,7 +130,7 @@ struct StudyView: View {
                         if !grade.score.isEmpty, grade.score != grade.display { Text("学校原始成绩：\(grade.score)").font(.caption) }
                     }
                 }
-            } else { ContentUnavailableView("成绩尚未同步", systemImage: "chart.bar.doc.horizontal", description: Text("登录教务后单独同步成绩。")) }
+            } else { ContentUnavailableView("暂无成绩", systemImage: "chart.bar.doc.horizontal") }
         }
     }
     private var blackboardContent: some View {

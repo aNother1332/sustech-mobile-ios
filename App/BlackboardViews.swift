@@ -21,15 +21,13 @@ struct BBCourseView: View {
                         ForEach(Array(detail.warnings.enumerated()), id: \.offset) { _, warning in Text(warning).font(.caption).foregroundStyle(.orange) }
                         if tab == 0 {
                             Toggle("只看未提交与草稿", isOn: $onlyPending)
-                            Text("未知状态不归入未提交；没有截止日期的任务也会保留。").font(.caption).foregroundStyle(.secondary)
                             let tasks = detail.tasks.filter { !onlyPending || [.pending, .draft].contains($0.submission) }
-                            if tasks.isEmpty { Text(onlyPending ? "本次读取中没有确认未交/草稿的条目。请同时检查未知状态和读取提示。" : "本次未读取到任务，请同时检查读取提示。").foregroundStyle(.secondary) }
+                            if tasks.isEmpty { Text(onlyPending ? "暂无未交作业" : "暂无任务").foregroundStyle(.secondary) }
                             ForEach(tasks) { task in
                                 NavigationLink { BBTaskView(task: task) } label: { CampusCard { DeadlineRow(deadline: task) } }.buttonStyle(.plain)
                             }
                         } else {
-                            if let date = detail.announcementsUpdated { Text("公告数据：\(date.formatted())").font(.caption).foregroundStyle(.secondary) }
-                            if detail.announcements.isEmpty { Text("本次未读取到公告，请同时检查读取提示。").foregroundStyle(.secondary) }
+                            if detail.announcements.isEmpty { Text("暂无公告").foregroundStyle(.secondary) }
                             ForEach(detail.announcements) { item in
                                 CampusCard {
                                     Text(item.title).font(.headline)
@@ -38,7 +36,7 @@ struct BBCourseView: View {
                                 }
                             }
                         }
-                    } else { ContentUnavailableView("课程尚未读取", systemImage: "books.vertical", description: Text("点击刷新以读取本人任务和课程公告。")) }
+                    } else { ContentUnavailableView("暂无课程内容", systemImage: "books.vertical") }
                 }
             }.padding(12).frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }
@@ -61,7 +59,6 @@ struct BBTaskView: View {
                 Link("在学校课程页面核对", destination: SchoolService.blackboard.portalURL)
                 NavigationLink("原生文件作业提交") { BBSubmissionView(task: task).id(task.courseID) }
                 if let due = task.due { NavigationLink("日历与提醒") { EventActionView(title: task.title, start: due, end: due.addingTimeInterval(900), key: "bb-" + task.id, courseID: task.courseID) } }
-                Text("个人文件作业可进入原生提交；其他类型使用学校页面。").font(.caption).foregroundStyle(.secondary)
             }.padding(12).frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }.navigationTitle("任务详情").navigationBarTitleDisplayMode(.inline)
     }

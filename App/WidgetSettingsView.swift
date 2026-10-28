@@ -37,12 +37,10 @@ struct WidgetSettingsView: View {
             Section("信息小组件") {
                 Text("长按桌面添加 SUSTechMobile，可选择课程、BB 截止时间、天气、校车或快捷入口。")
                 Toggle("允许在桌面展示课程与截止时间", isOn: $share).onChange(of: share) { _, _ in CampusWidgetBridge.publish(store) }
-                Text("仅共享显示所需的文字快照，不向扩展提供账号、密码、Cookie 或校园码。退出时清除。").font(.caption).foregroundStyle(.secondary)
             }
             Section("当前安装") {
                 LabeledContent("共享容器", value: CampusWidgetBridge.root == nil ? "不可用" : "可用")
                 Text("小组件需要包含 Widget 扩展的安装包，并为主应用与扩展匹配 App Groups 签名。普通安装包不包含扩展。").font(.caption).foregroundStyle(.secondary)
-                Text("iOS 决定刷新时间；校车预测与旧快照始终显示读取时间，点击组件进入 App 刷新。").font(.caption).foregroundStyle(.secondary)
             }
         }.navigationTitle("桌面小组件").navigationBarTitleDisplayMode(.inline)
     }

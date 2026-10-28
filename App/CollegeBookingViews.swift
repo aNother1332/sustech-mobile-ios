@@ -7,6 +7,7 @@ struct CollegeBookingView: View {
     @State private var busy = false
     @State private var message: String?
     @State private var connected = false
+    @State private var needsLogin = false
     @State private var portal = false
     @State private var query = ""
     var body: some View {
@@ -14,7 +15,7 @@ struct CollegeBookingView: View {
             Section { BusinessHeader(title: "书院场地", symbol: "building.2", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
 
             Section {
-                IndependentConnectionStatus(connected: connected, requiresLogin: !connected) { portal = true }
+                IndependentConnectionStatus(connected: connected, requiresLogin: needsLogin) { portal = true }
                 if busy { ProgressView() }; ServiceMessage(message: message)
                 EmptyView()
             }
@@ -41,8 +42,8 @@ struct CollegeBookingView: View {
             let api = await store.collegeBookingClient()
             let value = try await api.rooms()
             guard revision == store.sessionRevision else { return }
-            rooms = value; connected = true; message = "更新于 " + Date.now.formatted(date: .omitted, time: .shortened)
-        } catch { guard revision == store.sessionRevision else { return }; connected = false; message = error.localizedDescription }
+            rooms = value; connected = true; needsLogin = false; message = nil
+        } catch { guard revision == store.sessionRevision else { return }; connected = false; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }
     }
 }
 

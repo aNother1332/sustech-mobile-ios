@@ -43,11 +43,10 @@ struct CardAccountView: View {
                 NavigationLink { CampusCodeView().id(store.sessionRevision) } label: { Label("出示校园码 / 身份码", systemImage: "qrcode") }
                 CardBalancePreference(balance: account?.balance)
                 NavigationLink { CardRechargeView() } label: { Label("校园卡充值", systemImage: "plus.circle") }
-                Text("充值由支付宝或学校微信页面完成，返回后可刷新余额与账单。").font(.caption).foregroundStyle(.secondary)
             }
             Section("消费曲线") {
                 Picker("账单范围", selection: $days) { Text("近 7 天").tag(7); Text("近 30 天").tag(30); Text("已读取全部").tag(0) }.pickerStyle(.segmented)
-                if curve.isEmpty { Text("当前记录中没有可确认日期和支出方向的消费数据。") }
+                if curve.isEmpty { Text("暂无消费记录") }
                 else {
                     Chart(curve) { day in
                         LineMark(x: .value("日期", day.id), y: .value("消费（元）", day.value)).foregroundStyle(Color.campusGreen)
