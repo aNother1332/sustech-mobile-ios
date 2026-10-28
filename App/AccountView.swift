@@ -47,11 +47,13 @@ struct AccountView: View {
 struct SettingsView: View {
     @Environment(CampusStore.self) private var store
     @State private var login = false
+    @State private var printingLogin = false
     @State private var confirmClear = false
     var body: some View {
         List {
             Section("账号") {
                 Button("账号与登录", systemImage: "person.crop.circle") { login = true }
+                Button("打印账号", systemImage: "printer") { printingLogin = true }
                 if store.remembersSchoolAccount { Button("关闭自动登录") { store.forgetSchoolAccount() } }
                 Button("退出登录", role: .destructive) { confirmClear = true }
             }
@@ -70,6 +72,7 @@ struct SettingsView: View {
             }
         }.navigationTitle("设置").navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $login) { NativeLoginView() }
+            .sheet(isPresented: $printingLogin) { PrintingLoginView() }
             .campusConfirmation("退出并清除本机缓存与下载？", isPresented: $confirmClear) {
                 Button("确认清除", role: .destructive) { Task { await store.clearLocalSession() } }
             }

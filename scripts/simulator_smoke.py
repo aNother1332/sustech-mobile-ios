@@ -62,6 +62,7 @@ def main():
                 ("settings", ["--smoke-demo", "--smoke-settings"]),
                 ("my-reservations", ["--smoke-demo", "--smoke-my-reservations"]),
                 ("native-login", ["--smoke-login"]),
+                ("printing-login", ["--smoke-demo", "--smoke-printing-login"]),
                 ("card", ["--smoke-demo", "--smoke-card"]),
                 ("recharge", ["--smoke-demo", "--smoke-recharge"]),
                 ("agenda", ["--smoke-demo", "--smoke-agenda"]),
