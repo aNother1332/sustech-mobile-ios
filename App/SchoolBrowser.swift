@@ -41,11 +41,11 @@ struct SchoolBrowser: View {
                     HStack {
                         Button("缩小", systemImage: "minus.magnifyingglass") { browserState.zoom = max(0.3, browserState.zoom - 0.15) }
                         Spacer()
-                        Text("桌面网页 · 可双指缩放").font(.caption)
+                        EmptyView()
                         Spacer()
                         Button("放大", systemImage: "plus.magnifyingglass") { browserState.zoom = min(2, browserState.zoom + 0.15) }
                     }
-                    Text("完成后自动检测连接。切换账号请先在“我的”退出。")
+                    EmptyView()
                     .font(.caption).foregroundStyle(.secondary)
                 }
                     .frame(maxWidth: .infinity).padding().background(.regularMaterial)

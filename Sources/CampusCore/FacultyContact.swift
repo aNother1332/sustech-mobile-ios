@@ -4,8 +4,9 @@ public struct FacultyContact: Codable, Sendable {
     public var email: String?
     public var office: String?
     public var profile: URL?
+    public var portrait: URL?
     public var fetched: Date
-    public init(email: String? = nil, office: String? = nil, profile: URL? = nil, fetched: Date = .now) { self.email = email; self.office = office; self.profile = profile; self.fetched = fetched }
+    public init(email: String? = nil, office: String? = nil, profile: URL? = nil, portrait: URL? = nil, fetched: Date = .now) { self.email = email; self.office = office; self.profile = profile; self.portrait = portrait; self.fetched = fetched }
 }
 public enum FacultyContactParser {
     public static func official(_ url: URL) -> Bool {
@@ -24,7 +25,8 @@ public enum FacultyContactParser {
         let labeled = HTMLText.captures("(?im)^\\s*(?:办公室(?:地址|地点)?|办公(?:地址|地点|位置)|Office(?:\\s+(?:Address|Location))?)\\s*[:：]\\s*([^\\n\\r]{2,160})", in: plain).first?[1]
         let office = [labeled].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }.first { !$0.isEmpty }
         let profile = HTMLText.captures("(?is)<a\\b[^>]*href=[\"']([^\"']+)[\"'][^>]*>\\s*(?:个人主页|Personal\\s+(?:Homepage|Website))\\s*</a>", in: scoped).compactMap { URL(string: HTMLText.decoded($0[1]).trimmingCharacters(in: .whitespacesAndNewlines), relativeTo: base)?.absoluteURL }.first(where: official)
-        return FacultyContact(email: email, office: office, profile: profile)
+        let portrait = HTMLText.captures("(?is)<img[^>]*src=[\"']([^\"']+)[\"']", in: sidebar ?? body).compactMap { URL(string: HTMLText.decoded($0[1]), relativeTo: base)?.absoluteURL }.first { official($0) && $0.path.contains("/uploads/") }
+        return FacultyContact(email: email, office: office, profile: profile, portrait: portrait)
     }
     private static func validEmail(_ text: String) -> String? {
         guard text.range(of: "^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", options: .regularExpression) != nil else { return nil }; return text

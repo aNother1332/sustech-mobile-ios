@@ -14,7 +14,7 @@ struct CampusCodeView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                CampusHero(eyebrow: "CAMPUS PASS", title: kind.rawValue, subtitle: "学校动态码 · 仅在前台展示有效内容", symbol: "qrcode")
+                BusinessHeader(title: kind.rawValue, symbol: "qrcode", color: .campusGreen)
                 SessionBadge(service: .card)
                 Picker("码类型", selection: $kind) { ForEach(CardCodeKind.allCases, id: \.self) { Text($0.rawValue).tag($0) } }.pickerStyle(.segmented)
                 TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -25,9 +25,9 @@ struct CampusCodeView: View {
                         } else { ContentUnavailableView(store.mode == .demo ? "演示不生成可用校园码" : "校园码已隐藏或待刷新", systemImage: "qrcode", description: Text("刷新成功后显示，过期内容不保留。")) }
                     }
                 }
-                Button("刷新" , systemImage: "arrow.clockwise") { Task { await load() } }.buttonStyle(.borderedProminent).disabled(busy || store.mode == .demo)
+                EmptyView()
                 if busy { ProgressView() }; ServiceMessage(message: message)
-                Text("校园码与身份码用途以学校说明及终端支持为准；无法添加到 Apple Wallet。请勿分享截图。").font(.caption).foregroundStyle(.secondary)
+                EmptyView()
             }.padding(16).frame(maxWidth: 640).frame(maxWidth: .infinity)
         }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("校园码").navigationBarTitleDisplayMode(.inline)
             .refreshable { await load() }
@@ -63,7 +63,7 @@ struct FacultyDirectoryView: View {
     @State private var generated = ""
     var body: some View {
         List {
-            Section { Text("学校公开教师目录 · 离线快照").font(.subheadline.bold()); Text("资料更新：" + generated).font(.caption).foregroundStyle(.secondary) }
+            Section { BusinessHeader(title: "师资", symbol: "person.crop.rectangle.stack", color: .campusGreen) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
             ForEach(people.filter { query.isEmpty || $0.search.localizedCaseInsensitiveContains(query) }) { person in
                 NavigationLink { FacultyDetailView(name: person.name, detail: person.detail, url: person.url) } label: { HStack(spacing: 12) { Image(systemName: "person.crop.square").foregroundStyle(Color.campusGreen).font(.title2); VStack(alignment: .leading, spacing: 4) { Text(person.name).foregroundStyle(.primary).font(.subheadline.bold()); Text(person.detail).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "info.circle").font(.caption).foregroundStyle(.secondary) } }
             }
@@ -91,10 +91,13 @@ struct ExchangeProgramsView: View {
     @State private var message: String?
     @State private var query = ""
     @State private var onlyOpen = false
+    @State private var needsLogin = false
+    @State private var login = false
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14) {
                 BusinessHeader(title: "交换项目", symbol: "airplane.departure", color: .blue)
+                IndependentConnectionStatus(connected: !needsLogin, requiresLogin: needsLogin) { login = true }
                 HStack {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField("学校、地区、项目", text: $query)
@@ -120,6 +123,7 @@ struct ExchangeProgramsView: View {
             }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
         }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("交换项目").navigationBarTitleDisplayMode(.inline)
             .task { await load(reset: true) }.refreshable { await load(reset: true) }
+            .sheet(isPresented: $login, onDismiss: { Task { await load(reset: true) } }) { NativeLoginView() }
     }
     private func load(reset: Bool) async {
         #if DEBUG
@@ -136,10 +140,10 @@ struct ExchangeProgramsView: View {
             do {
                 let next = reset ? 1 : page + 1; let value = try await ExchangeClient(http: http).programs(page: next)
                 guard version == store.sessionRevision else { return }
-                items = reset ? value.items : items + value.items.filter { row in !items.contains { $0.id == row.id } }; total = value.total; page = next; message = nil
+                items = reset ? value.items : items + value.items.filter { row in !items.contains { $0.id == row.id } }; total = value.total; page = next; message = nil; needsLogin = false
             } catch { await store.absorb(http, revision: version); throw error }
             await store.absorb(http, revision: version)
-        } catch { guard version == store.sessionRevision else { return }; message = error.localizedDescription }
+        } catch { guard version == store.sessionRevision else { return }; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }
     }
 }
 private struct ExchangeDetailView: View {

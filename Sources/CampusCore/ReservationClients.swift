@@ -2,12 +2,10 @@ import Foundation
 
 public enum CampusClock {
     public static func format(_ date: Date, _ pattern: String = "yyyy-MM-dd") -> String {
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "Asia/Shanghai"); f.dateFormat = pattern
-        return f.string(from: date)
+        CampusDateFormats.shared.string(date, pattern: pattern)
     }
     public static func date(_ text: String, _ pattern: String = "yyyy-MM-dd") -> Date? {
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "Asia/Shanghai"); f.dateFormat = pattern
-        return f.date(from: text)
+        CampusDateFormats.shared.date(text, pattern: pattern)
     }
     public static func serverDate(_ value: WireValue) -> Date? {
         if let number = Double(value.text), number > 100_000_000 {

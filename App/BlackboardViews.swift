@@ -15,16 +15,11 @@ struct BBCourseView: View {
                 }.pickerStyle(.segmented)
                 if tab == 2 { BBContentList(course: course, parent: nil) }
                 else {
-                    Button { Task { await store.refreshCourse(course) } } label: {
-                        if store.courseLoading.contains(course.id) { ProgressView("正在读取课程…") }
-                        else { Label("刷新任务与公告", systemImage: "arrow.clockwise") }
-                    }.disabled(store.courseLoading.contains(course.id) || store.mode == .demo || store.authenticating || store.clearing)
+                    EmptyView()
                     if let detail = store.courseDetails[course.id] {
-                        Text("最近读取：\(detail.updated.formatted(date: .abbreviated, time: .shortened))")
-                            .font(.caption).foregroundStyle(.secondary)
+                        EmptyView()
                         ForEach(Array(detail.warnings.enumerated()), id: \.offset) { _, warning in Text(warning).font(.caption).foregroundStyle(.orange) }
                         if tab == 0 {
-                            if let date = detail.tasksUpdated { Text("任务数据：\(date.formatted())").font(.caption).foregroundStyle(.secondary) }
                             Toggle("只看未提交与草稿", isOn: $onlyPending)
                             Text("未知状态不归入未提交；没有截止日期的任务也会保留。").font(.caption).foregroundStyle(.secondary)
                             let tasks = detail.tasks.filter { !onlyPending || [.pending, .draft].contains($0.submission) }
@@ -80,12 +75,9 @@ struct BBContentList: View {
     @State private var failure: String?
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Button { Task { await load() } } label: {
-                if loading { ProgressView("正在读取课件目录…") } else { Label("刷新课件目录", systemImage: "arrow.clockwise") }
-            }.disabled(loading || store.mode == .demo || store.authenticating || store.clearing)
+            EmptyView()
             if let failure { Text(failure).font(.caption).foregroundStyle(.orange) }
             if let rows = store.contentCache[store.contentKey(course.id, parent)] {
-                Text("已缓存的目录；附件需单独下载后才能离线打开。").font(.caption).foregroundStyle(.secondary)
                 if rows.isEmpty { Text("该目录本次返回为空。").foregroundStyle(.secondary) }
                 ForEach(rows) { item in
                     NavigationLink {
@@ -173,9 +165,10 @@ struct OfflineDownloadsView: View {
     @State private var selected: OfflineFile?
     var body: some View {
         List {
+            Section { BusinessHeader(title: "下载文件", symbol: "folder", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
+
             Section {
-                Text("文件保存在本机，退出/切换账号时清除。系统支持的格式可预览，也可分享至“文件”或其他应用。")
-                    .font(.footnote).foregroundStyle(.secondary)
+                EmptyView()
             }
             ForEach(store.files.sorted { $0.saved > $1.saved }) { file in
                 Button { selected = file } label: {

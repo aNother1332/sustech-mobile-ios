@@ -26,7 +26,7 @@ struct TodaySummaryView: View {
     var body: some View {
         VStack(spacing: 10) {
             CampusCard(accent: .campusOrange) {
-                HStack { Label("校园天气", systemImage: "cloud.sun.fill").font(.subheadline.bold()); Spacer(); Button { Task { await load() } } label: { Image(systemName: "arrow.clockwise") }.accessibilityLabel("刷新天气") }
+                HStack { Label("校园天气", systemImage: "cloud.sun.fill").font(.subheadline.bold()); Spacer(); EmptyView() }
                 if let weather {
                     Text(weather.summary).font(.subheadline)
                     HStack { if let aqi = weather.aqi { Text("US AQI \(aqi)").font(.caption.bold()) }; Spacer(); if let fetched { Text(fetched, style: .time).font(.caption).foregroundStyle(.secondary) } }

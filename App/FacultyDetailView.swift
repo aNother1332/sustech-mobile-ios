@@ -16,7 +16,12 @@ struct FacultyDetailView: View {
     var body: some View {
         List {
             Section {
-                CampusHero(eyebrow: "FACULTY", title: name, subtitle: detail, symbol: "person.crop.square")
+                HStack(spacing: 18) {
+                    if let portrait = contact?.portrait { EphemeralImage(url: portrait).frame(width: 96, height: 128).clipShape(RoundedRectangle(cornerRadius: 12)) }
+                    else { Image(systemName: "person.crop.rectangle").font(.system(size: 60, weight: .ultraLight)).foregroundStyle(Color.campusGreen) }
+                    VStack(alignment: .leading, spacing: 10) { Text(name).font(.title2.bold()); Text(detail).font(.subheadline).foregroundStyle(.secondary) }
+                    Spacer(minLength: 0)
+                }.padding(.vertical, 12)
             }
             Section("联系方式") {
                 if let email = contact?.email {
@@ -29,8 +34,8 @@ struct FacultyDetailView: View {
             Section("官方资料") {
                 Link("学校教师页面", destination: url)
                 if let profile = contact?.profile { Link("教师个人主页", destination: profile) }
-                if let date = contact?.fetched { Text("读取于 " + date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }
-                Button("刷新联系方式", systemImage: "arrow.clockwise") { Task { await load(force: true) } }.disabled(busy)
+                if let date = contact?.fetched { EmptyView() }
+                EmptyView()
                 if busy { ProgressView() }; ServiceMessage(message: message)
                 Text("仅显示官方页面明确公开的邮箱和办公地点；暂未提供时不推测。已读取资料可离线查看。").font(.caption).foregroundStyle(.secondary)
             }

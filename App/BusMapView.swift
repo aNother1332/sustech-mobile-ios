@@ -265,9 +265,9 @@ struct BusMapView: View {
             HStack { Text("地图设置").font(.headline); Spacer(); Button("关闭") { showSettings = false } }
             Toggle("国内底图对齐", isOn: $mainlandMap)
             Button("选择站台") { showSettings = false; showStops = true }
-            Button("刷新") { showSettings = false; Task { await load(staticData: true) } }
+            EmptyView()
             Link("数据与来源 · SUSTech CRA", destination: URL(string: "https://sustech.online/transport/bustimer.html")!)
-            if let fetched { Text("更新于 " + fetched.formatted(date: .omitted, time: .shortened)).font(.caption).foregroundStyle(.secondary) }
+            if let fetched { EmptyView() }
         }.padding(22).frame(maxWidth: 440).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 24)).padding(18)
     }
     private func centerOnUser() {

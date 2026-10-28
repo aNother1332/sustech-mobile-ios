@@ -29,3 +29,22 @@ import Testing
     let uncertain = try ICRoomSchedule.parse(raw.replacing(["resvInfo": .array([.object(["resvStatus": .integer(4)])])]), day: day)
     #expect(!uncertain.complete && !uncertain.canSelect(start: start, end: start.addingTimeInterval(1800)))
 }
+
+@Test func icMissingRoomCalendarRemainsUnknown() throws {
+    let day = try #require(CampusClock.date("2026-10-28"))
+    let unknown = try ICRoomSchedule.parse(.object(["devId": .string("example-room")]), day: day)
+    #expect(!unknown.complete && unknown.windows.isEmpty)
+    #expect(!unknown.canSelect(start: day, end: day.addingTimeInterval(1800)))
+}
+
+@Test func campusDateFormattingIsSafeForConcurrentReaders() async {
+    await withTaskGroup(of: Bool.self) { group in
+        for _ in 0..<100 {
+            group.addTask {
+                guard let date = CampusClock.date("2026-10-28 09:30", "yyyy-MM-dd HH:mm") else { return false }
+                return CampusClock.format(date, "yyyy-MM-dd HH:mm") == "2026-10-28 09:30"
+            }
+        }
+        for await valid in group { #expect(valid) }
+    }
+}

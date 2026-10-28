@@ -27,8 +27,8 @@ struct ServiceTile<Destination: View>: View {
     var body: some View {
         NavigationLink { destination.toolbar(.visible, for: .navigationBar) } label: {
             VStack(alignment: .leading, spacing: 11) {
-                Image(systemName: symbol.replacingOccurrences(of: ".fill", with: "")).font(.system(size: 28, weight: .regular)).foregroundStyle(Color.campusOrange)
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                Image(systemName: symbol.replacingOccurrences(of: ".fill", with: "")).font(.system(size: 26, weight: .regular)).foregroundStyle(color).frame(width: 48, height: 48).background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 13))
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary).lineLimit(1).minimumScaleFactor(0.75)
             }.frame(maxWidth: .infinity, minHeight: 88, alignment: .leading).padding(17)
                 .background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 17))
                 .overlay { RoundedRectangle(cornerRadius: 17).strokeBorder(Color.primary.opacity(0.07), lineWidth: 1) }
@@ -66,6 +66,13 @@ struct CampusFold<Content: View>: View {
     @ViewBuilder var content: Content
     @State private var expanded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    init(title: String, symbol: String, @ViewBuilder content: () -> Content) {
+        self.title = title; self.symbol = symbol; self.content = content()
+        #if DEBUG
+        let flags = ["课表": "--smoke-timetable", "考试": "--smoke-exams", "成绩": "--smoke-grades", "Blackboard": "--smoke-blackboard"]
+        _expanded = State(initialValue: flags[title].map { ProcessInfo.processInfo.arguments.contains($0) } ?? false)
+        #endif
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button { withAnimation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.95)) { expanded.toggle() } } label: {

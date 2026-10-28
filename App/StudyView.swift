@@ -26,19 +26,21 @@ struct StudyView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
                 CampusHero(eyebrow: "", title: "学习", subtitle: "", symbol: "books.vertical")
+                NativeLoginButton()
                 LearningOverviewView()
                 ModeNotice()
                 HStack { NavigationLink("日程与提醒") { AgendaView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }; Spacer(); NavigationLink("修读进度") { DegreeProgressView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) } }.font(.caption)
                 if let message = store.cacheMessage { Text(message).font(.caption).foregroundStyle(.orange) }
                 CampusFold(title: "课表", symbol: "calendar") { teachingContentFor(.timetable) }
                 CampusFold(title: "考试", symbol: "pencil.and.list.clipboard") { teachingContentFor(.exams) }
-                CampusFold(title: "成绩", symbol: "chart.bar.doc.horizontal") { gradesContent }
+                CampusFold(title: "成绩", symbol: "chart.bar.doc.horizontal") { gradesContent.task { if store.academic == nil { await store.refreshGrades() } } }
                 CampusFold(title: "Blackboard", symbol: "books.vertical") { blackboardContent }
 
             }.frame(maxWidth: 1100).padding(12).frame(maxWidth: .infinity)
         }
         .background(Color(uiColor: .systemGroupedBackground))
-        .refreshable { await store.refreshTeaching(); await store.refreshBlackboard() }
+        .refreshable { await store.refreshTeaching(); await store.refreshBlackboard(); await store.refreshGrades() }
+        .task { if store.teaching == nil { await store.refreshTeaching() }; if store.blackboard == nil { await store.refreshBlackboard() } }
         .navigationTitle("学习").navigationBarTitleDisplayMode(.inline)
         .sheet(item: $portal) { SchoolBrowser(service: $0) }
         .onChange(of: store.teaching?.week, initial: true) { _, week in if let week { selectedWeek = week } }
@@ -104,15 +106,8 @@ struct StudyView: View {
     }
     private var gradesContent: some View {
         VStack(spacing: 10) {
-            CampusCard {
-                Label("成绩与学分", systemImage: "chart.bar.doc.horizontal").font(.headline)
-                if store.mode == .live {
-                    NativeLoginButton()
-                    Button("同步全部成绩") { Task { await store.refreshGrades() } }
-                        .disabled(store.gradesState.isLoading || store.clearing || store.authenticating)
-                    ConnectionNotice(state: store.gradesState).font(.caption)
-                }
-            }
+            NativeLoginButton()
+            ConnectionNotice(state: store.gradesState)
             if let snapshot = store.academic {
                 let terms = Array(Set(snapshot.records.map(\.term))).sorted(by: >)
                 Picker("学期", selection: $selectedTerm) {
@@ -142,16 +137,8 @@ struct StudyView: View {
     }
     private var blackboardContent: some View {
         VStack(spacing: 10) {
-            CampusCard {
-                Label("Blackboard 学习中心", systemImage: "books.vertical").font(.headline)
-                if store.mode == .live {
-                    PortalActions(service: .blackboard) { portal = .blackboard }
-                    Button("同步课程列表") { Task { await store.refreshBlackboard() } }
-                        .disabled(store.blackboardState.isLoading || store.clearing || store.authenticating)
-                    ConnectionNotice(state: store.blackboardState).font(.caption)
-                }
-                NavigationLink { OfflineDownloadsView().toolbar(.visible, for: .navigationBar) } label: { Label("离线文件 · \(store.files.count)", systemImage: "arrow.down.document") }
-            }
+            NativeLoginButton(service: .blackboard)
+            ConnectionNotice(state: store.blackboardState)
             if let snapshot = store.blackboard {
                 ForEach(store.activeCourses) { course in
                     NavigationLink { BBCourseView(course: course).toolbar(.visible, for: .navigationBar) } label: {

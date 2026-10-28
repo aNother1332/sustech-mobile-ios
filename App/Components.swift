@@ -84,7 +84,7 @@ struct DeadlineRow: View {
             Label(deadline.submission.label, systemImage: deadline.submission == .submitted ? "checkmark.circle" : "questionmark.circle")
                 .font(.caption).foregroundStyle(.secondary)
             if let date = store.courseDetails[deadline.courseID]?.tasksUpdated {
-                Text("状态读取于 \(date.formatted(date: .abbreviated, time: .shortened))").font(.caption2).foregroundStyle(.secondary)
+                EmptyView()
             }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 5)
     }
@@ -95,14 +95,9 @@ struct PortalActions: View {
     var open: () -> Void
 
     var body: some View {
-        HStack {
-            if [.teaching, .blackboard].contains(service) { NativeLoginButton(service: service == .blackboard ? .blackboard : .teaching) }
-            Button("学校网页", action: open).buttonStyle(.bordered)
-            Spacer()
-            Link(destination: service.portalURL) {
-                Label("浏览器", systemImage: "safari")
-            }.accessibilityLabel("在系统浏览器打开\(service.title)，登录状态可能不同")
-        }
+        if service == .teaching { NativeLoginButton() }
+        else if service == .blackboard { NativeLoginButton(service: .blackboard) }
+
     }
 }
 

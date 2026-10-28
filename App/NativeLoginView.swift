@@ -4,22 +4,16 @@ import CampusCore
 struct NativeLoginButton: View {
     @Environment(CampusStore.self) private var store
     @State private var presented = false
-    @State private var choices = false
-    @State private var openLogin = false
     var service: CASService = .teaching
     var body: some View {
         let status = store.serviceSessions[service] ?? ServiceSessionState()
         Group {
             if store.mode == .live, status.status == .expired {
                 Button { presented = true } label: { Label("未登录", systemImage: "person.crop.circle.badge.exclamationmark").foregroundStyle(.red).font(.subheadline.weight(.medium)) }
-            } else if store.mode == .live, status.status == .unavailable { InlineFailure(message: "网络或学校服务暂不可用") }
+            }
         }
         .disabled(store.mode == .demo || store.authenticating || store.clearing || store.writing)
         .task { await store.checkSession(service) }
-        .campusConfirmation("学校连接", isPresented: $choices, onDismiss: { if openLogin { openLogin = false; presented = true } }) {
-            Button("登录 / 切换账号") { openLogin = true }
-            Button("重新检测") { Task { await store.checkSession(service, force: true) } }.disabled(status.status == .checking)
-        }
         .sheet(isPresented: $presented, onDismiss: { Task { await store.checkSession(service, force: true); await store.checkSchoolSessions(force: true) } }) {
             if service == .printing { SchoolBrowser(service: .printing) }
             else if service == .card { SchoolBrowser(service: .card) }

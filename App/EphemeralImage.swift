@@ -15,10 +15,12 @@ struct EphemeralImage: View {
         }.clipped().task(id: url) { await load() }.onDisappear { image = nil }
     }
     private func load() async {
-        guard url.scheme == "https", url.host == "ws.sustech.edu.cn", store.mode == .live else { return }
+        guard url.scheme == "https", ["ws.sustech.edu.cn", "www.sustech.edu.cn", "newshub.sustech.edu.cn"].contains(url.host ?? "") else { return }
+        if url.host == "ws.sustech.edu.cn", store.mode != .live { return }
         let version = store.sessionRevision
         let config = URLSessionConfiguration.ephemeral; config.urlCache = nil; config.requestCachePolicy = .reloadIgnoringLocalCacheData
-        let http = ServiceHTTP(origin: URL(string: "https://ws.sustech.edu.cn")!, cookies: await store.sessions.cookies(), configuration: config)
+        let cookies = url.host == "ws.sustech.edu.cn" ? await store.sessions.cookies() : []
+        let http = ServiceHTTP(origin: URL(string: "https://" + (url.host ?? ""))!, cookies: cookies, configuration: config)
         do {
             let parts = URLComponents(url: url, resolvingAgainstBaseURL: false)
             let path = url.path + (parts?.percentEncodedQuery.map { "?" + $0 } ?? "")

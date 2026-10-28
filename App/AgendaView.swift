@@ -50,6 +50,8 @@ struct AgendaView: View {
     }
     var body: some View {
         List {
+            Section { BusinessHeader(title: "我的日程", symbol: "calendar.badge.clock", color: .campusGreen) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
+
             Section {
                 ModeNotice()
                 Picker("显示范围", selection: $range) { Text("一周").tag(7); Text("一月").tag(30); Text("一学期").tag(180) }.pickerStyle(.segmented)
@@ -58,7 +60,7 @@ struct AgendaView: View {
                     if let term = store.academicTerm { Text("已使用内置校历：第一周周一 " + CampusClock.format(term.monday)); NavigationLink("查看放假与补课") { AcademicCalendarView() } } else { DatePicker("第一教学周周一", selection: $monday, displayedComponents: .date) }
                     Text("有校历时自动处理已收录的节假日与补课；临时调整请核对学校通知。").font(.caption).foregroundStyle(.secondary)
                 }
-                Button("同步学习与预约日程") { Task { await refresh() } }.disabled(busy || store.mode == .demo || store.authenticating || store.clearing)
+                EmptyView()
                 if busy { ProgressView() }
                 if !warnings.isEmpty { DisclosureGroup("部分来源未同步 · \(warnings.count)") { ForEach(warnings, id: \.self) { Text($0).font(.caption).foregroundStyle(.orange) } } }
             }
@@ -78,7 +80,7 @@ struct AgendaView: View {
                 Button("添加") { let value = personal + [Personal(id: "personal-" + UUID().uuidString, title: personalTitle, start: personalDate)]; save(value); personalTitle = "" }.disabled(personalTitle.trimmingCharacters(in: .whitespaces).isEmpty)
                 ForEach(personal, id: \.id) { item in HStack { Text(item.title); Spacer(); Text(item.start, style: .date).font(.caption) }.swipeActions { Button("删除", role: .destructive) { save(personal.filter { $0.id != item.id }); UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["campus-" + store.accountScope + "-" + item.id]) } } }
             }
-        }.navigationTitle("我的日程").navigationBarTitleDisplayMode(.inline).task { personalData = UserDefaults.standard.string(forKey: "personal-agenda-" + store.accountScope) ?? "[]" }.refreshable { await refresh() }
+        }.navigationTitle("我的日程").navigationBarTitleDisplayMode(.inline).task { personalData = UserDefaults.standard.string(forKey: "personal-agenda-" + store.accountScope) ?? "[]"; await refresh() }.refreshable { await refresh() }
     }
     private func save(_ items: [Personal]) { if let data = try? JSONEncoder().encode(items) { personalData = String(decoding: data, as: UTF8.self); UserDefaults.standard.set(personalData, forKey: "personal-agenda-" + store.accountScope) } }
     private func reservation(_ value: ReservationItem, source: String, begin: String, end: String) -> AgendaEntry? {

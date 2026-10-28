@@ -95,11 +95,13 @@ public struct ClassroomClient: Sendable {
     public func catalog(semester: Semester) async throws -> [Classroom] {
         var result: [String: Classroom] = [:]
         for page in 1...20 {
-            var form = ["pylx": "1", "pageNum": String(page), "pageSize": "100", "xn": semester.year, "xq": semester.term,
+            var form = ["pylx": "1", "pageNum": String(page), "pageSize": "50", "xn": semester.year, "xq": semester.term,
                 "hlct": "0", "hltyxct": "0", "sfjtjs": "2", "zysfkyd": "2", "xiaoqu": "1", "mxid": "[]"]
             for key in ["jslx", "lc", "kkyx", "key", "sybm"] { form[key] = "" }
             for key in ["sfxsyxzws", "yqzws", "yqkszws", "yxzws", "yxkszws", "bjrs", "zws", "kszws"] { form[key] = "0" }
-            let root = try await http.json("/component/queryDiDian", form: form, headers: ["RoleCode": "00"])
+            let data = try await http.data("/component/queryDiDian", form: form, headers: ["RoleCode": "00"])
+            guard !data.isEmpty else { throw ServiceFailure("教室目录暂不可用") }
+            let root = try JSONDecoder().decode(WireValue.self, from: data)
             guard case .array = root["list"] else { throw CampusError.invalidResponse("教室目录") }
             let rows = root["list"].rows
             if rows.isEmpty { return result.values.sorted { $0.name < $1.name } }
@@ -108,11 +110,11 @@ public struct ClassroomClient: Sendable {
                 let id = row["dm"].text.isEmpty ? row["CDDM"].text : row["dm"].text
                 let name = row["mc"].text.isEmpty ? row["CDMC"].text : row["mc"].text
                 guard !id.isEmpty, !name.isEmpty else { throw CampusError.invalidResponse("教室目录条目") }
-                result[id] = Classroom(id: id, name: name, capacity: row["zws"].text)
+                result[id] = Classroom(id: id, name: name, capacity: ["zws", "ZWS", "jszw", "JSZW"].map { row[$0].text }.first { !$0.isEmpty } ?? "")
             }
             if result.count == before { throw CampusError.invalidResponse("教室目录重复分页") }
             if let total = root["total"].int, result.count >= total { return result.values.sorted { $0.name < $1.name } }
-            if rows.count < 100 { return result.values.sorted { $0.name < $1.name } }
+            if rows.count < 50 { return result.values.sorted { $0.name < $1.name } }
         }
         throw ServiceFailure("教室目录超过分页上限，未将不完整目录作为完整结果。")
     }

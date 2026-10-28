@@ -15,6 +15,8 @@ struct PrintExtrasView: View {
     @State private var deleting: WireValue?
     var body: some View {
         List {
+            Section { BusinessHeader(title: "打印服务", symbol: "printer.dotmatrix", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
+
             Section {
                 if tab != 0 { SessionBadge(service: .printing) }
                 Picker("查询", selection: $tab) { Text("打印站点").tag(0); Text("扫描任务").tag(1); Text("用量").tag(2) }.pickerStyle(.segmented).disabled(busy)
@@ -22,7 +24,7 @@ struct PrintExtrasView: View {
                     DatePicker("开始", selection: $begin, displayedComponents: .date); DatePicker("结束", selection: $end, displayedComponents: .date)
                     Picker("类型", selection: $type) { Text("打印").tag(1); Text("扫描").tag(2); Text("复印").tag(3) }
                 }
-                Button("刷新") { Task { page = 1; await load() } }.disabled(busy || store.mode == .demo)
+                EmptyView()
                 if busy { ProgressView() }; ServiceMessage(message: message)
             }
             if rows.isEmpty && !busy { Text(tab == 0 ? "暂无站点数据，请下拉刷新。" : "暂无记录").foregroundStyle(.secondary) }

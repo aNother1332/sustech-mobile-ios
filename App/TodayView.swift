@@ -29,7 +29,7 @@ struct TodayView: View {
                         if let message = store.cardBalanceMessage { NavigationLink(message) { CardView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }.font(.caption2) }
                     }
                     CampusCard {
-                        Text("已同步待办").font(.caption).foregroundStyle(.secondary)
+                        Text("待办").font(.caption).foregroundStyle(.secondary)
                         Text(pendingCount).font(.title2.bold()).monospacedDigit()
                     }
                 }
@@ -40,12 +40,7 @@ struct TodayView: View {
                 LearningOverviewView()
                 HomeAgendaView().id("home-agenda")
                 CampusFold(title: "校园天气", symbol: "cloud.sun") { TodaySummaryView(weatherOnly: true) }
-                CampusFold(title: "同步与连接", symbol: "arrow.triangle.2.circlepath") {
-                    SessionBadge()
-                    Button("同步教务") { Task { await store.refreshTeaching() } }.disabled(store.teachingState.isLoading || store.authenticating || store.clearing)
-                    Button("同步Blackboard") { Task { await store.refreshBlackboard() } }.disabled(store.blackboardState.isLoading || store.authenticating || store.clearing)
-                    ConnectionNotice(state: store.teachingState).font(.caption)
-                }
+
             }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
         }.background(Color.campusPaper)
             .refreshable { await store.refreshHomeBalance(); await store.refreshTeaching(); await store.refreshBlackboard() }

@@ -135,9 +135,10 @@ struct DegreeProgressView: View {
     @State private var message: String?
     var body: some View {
         List {
-            Section { ModeNotice(); SessionBadge(); DetailNote(title: "培养方案与口径", text: "读取教务系统的个性化修读进度。类别可能重叠，不能将各行学分直接相加。学校字段缺失时不推算毕业资格，最终以适用培养方案及教学工作部确认为准。")
+            Section { BusinessHeader(title: "修读进度", symbol: "graduationcap", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+            Section { SessionBadge()
                 if busy { ProgressView() }; ServiceMessage(message: message)
-                Button("刷新修读进度") { Task { await load() } }.disabled(busy || store.mode == .demo)
+                EmptyView()
             }
             if let result { ForEach(result.sections) { section in Section(section.title) { ForEach(Array(section.values.enumerated()), id: \.offset) { _, value in LabeledContent(value.0, value: value.1) } } }
                 if !result.warnings.isEmpty { Section("部分来源未读取") { ForEach(result.warnings, id: \.self) { Text($0).font(.caption).foregroundStyle(.orange) } } }

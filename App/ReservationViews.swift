@@ -6,6 +6,7 @@ struct ReservationCenterView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                BusinessHeader(title: "预约中心", symbol: "calendar.badge.plus", color: .blue)
                 CampusSectionTitle(title: "场地空间")
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                     ServiceTile(title: "IC研讨间", detail: "", symbol: "door.left.hand.open", color: .campusOrange) { ICReservationView().id(store.sessionRevision) }
@@ -91,7 +92,7 @@ struct ICReservationView: View {
                 let allowed = schedule?.canSelect(start: start, end: end) == true && start > .now
                 Button { selected = ICSlotSelection(room: room, start: start, end: end) } label: {
                     Rectangle().fill(schedule == nil ? Color.gray.opacity(0.15) : allowed ? Color.blue.opacity(0.035) : Color.gray.opacity(0.07)).frame(width: slotWidth, height: 58).overlay(alignment: .trailing) { Rectangle().fill(Color.gray.opacity(0.14)).frame(width: 0.5) }
-                }.buttonStyle(.plain).disabled(!allowed || busy).accessibilityLabel("\(room.title) \(CampusClock.format(start, "HH:mm"))")
+                }.buttonStyle(.plain).disabled(!allowed || busy).accessibilityLabel("\(room.title) \(String(format: "%02d:%02d", 8 + index / 2, index % 2 * 30))")
             } }
             if let schedule {
                 ForEach(schedule.occupied) { occupied in
@@ -115,7 +116,7 @@ struct ICReservationView: View {
             let api = try await client(); let list = try await api.rooms(); let availability = try await api.schedules(rooms: list, day: date); let mine = try await api.mine()
             guard revision == store.sessionRevision, CampusClock.format(date) == CampusClock.format(day) else { return }
             rooms = list; schedules = availability; orders = mine; connected = true; needsLogin = false; message = nil
-        } catch { guard revision == store.sessionRevision else { return }; needsLogin = (error as? CampusError) == .signInRequired || error is CASFailure; message = error.localizedDescription }
+        } catch { guard revision == store.sessionRevision else { return }; needsLogin = LoginRequirement.confirmed(error); message = error.localizedDescription }
     }
     private func cancel(_ order: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }
@@ -188,12 +189,14 @@ struct CLEReservationView: View {
     @State private var cancelling: ReservationItem?
     var body: some View {
         List {
+            Section { BusinessHeader(title: "语言辅导", symbol: "bubble.left.and.bubble.right", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+
             Section {
                 IndependentConnectionStatus(connected: connected, requiresLogin: needsLogin) { portal = true }
-                Text("首次请打开学校页面完成连接，之后复用会话。预约与取消条件以语言中心当前规则为准。").font(.caption).foregroundStyle(.secondary)
+                EmptyView()
                 DatePicker("查询日期", selection: $day, displayedComponents: .date)
                 TextField("预约说明（必填，最多 500 字）", text: $note, axis: .vertical)
-                Button("刷新时段与我的预约") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
+                EmptyView()
                 if busy { ProgressView() }; ServiceMessage(message: message)
             }
             Section("当日辅导时段") {
@@ -225,7 +228,7 @@ struct CLEReservationView: View {
     private func refresh() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         do { let api = await client(); slots = try await api.slots(day: day); orders = try await api.mine(sid: store.sessions.cleID); connected = true; needsLogin = false; message = "读取于 \(Date.now.formatted())" }
-        catch { connected = false; needsLogin = (error as? CampusError) == .signInRequired || error is CASFailure; message = error.localizedDescription }
+        catch { connected = false; needsLogin = LoginRequirement.confirmed(error); message = error.localizedDescription }
     }
     private func book(_ slot: ReservationItem) async {
         guard !busy, store.beginWrite() else { return }; busy = true; defer { busy = false; store.endWrite() }

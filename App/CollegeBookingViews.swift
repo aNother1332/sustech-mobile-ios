@@ -11,10 +11,12 @@ struct CollegeBookingView: View {
     @State private var query = ""
     var body: some View {
         List {
+            Section { BusinessHeader(title: "书院场地", symbol: "building.2", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
+
             Section {
                 IndependentConnectionStatus(connected: connected, requiresLogin: !connected) { portal = true }
                 if busy { ProgressView() }; ServiceMessage(message: message)
-                Text("原生查看书院场地及当日安排。预定须知、参加人员和审批材料在学校页面确认提交。").font(.caption).foregroundStyle(.secondary)
+                EmptyView()
             }
             Section("学校返回的场地 · \(rooms.count)") {
                 ForEach(rooms.filter { query.isEmpty || ($0.title + $0.detail).localizedCaseInsensitiveContains(query) }) { room in

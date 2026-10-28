@@ -36,30 +36,7 @@ struct ServicesView: View {
                     if matches("网络 连接 诊断") { ServiceTile(title: "网络诊断", detail: "学校服务可达性", symbol: "network", color: .blue) { DiagnosticsView() } }
                     if matches("软件 更新 版本") { ServiceTile(title: "软件更新", detail: "发布说明 · 安装指引", symbol: "arrow.down.app.fill", color: .campusGreen) { AppUpdatesView() } }
                 }
-                DisclosureGroup("学校网页备用入口") {
-
-                ForEach(services) { service in
-                    NavigationLink {
-                        VStack(spacing: 20) {
-                            CampusCard {
-                                Label(service.title, systemImage: service.symbol).font(.title2.bold())
-                                Text(service.summary).foregroundStyle(.secondary)
-                                Text("学校网页入口").font(.caption).foregroundStyle(.secondary)
-                                PortalActions(service: service) { portal = service }
-                            }
-                            Spacer()
-                        }.padding().background(Color(uiColor: .systemGroupedBackground))
-                            .navigationTitle(service.title).toolbar(.visible, for: .navigationBar)
-                    } label: {
-                        Label {
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(service.title)
-                                Text(service.summary).font(.caption).foregroundStyle(.secondary)
-                            }.padding(.vertical, 4)
-                        } icon: { Image(systemName: service.symbol).foregroundStyle(Color.campusGreen) }
-                    }
-                }
-            }
+                EmptyView()
             }.padding(14).frame(maxWidth: 1100).frame(maxWidth: .infinity)
         }.background(Color(uiColor: .systemGroupedBackground))
         .refreshable { await store.checkSchoolSessions(force: true) }

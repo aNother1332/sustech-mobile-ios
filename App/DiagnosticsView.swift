@@ -7,9 +7,9 @@ struct DiagnosticsView: View {
     @State private var busy = false
     var body: some View {
         List {
-            Section { Text("检测服务可达性，不将网络故障视为登录失效。").font(.caption).foregroundStyle(.secondary); Button("重新检测") { Task { await load() } }.disabled(busy); if busy { ProgressView() } }
+            Section { Text("检测服务可达性，不将网络故障视为登录失效。").font(.caption).foregroundStyle(.secondary); EmptyView(); if busy { ProgressView() } }
             ForEach(Array(values.enumerated()), id: \.offset) { _, row in LabeledContent(row.0, value: row.1) }
-            Section { Text("服务可达不能证明位于校内，也不能证明已登录。打印接口在校外或未连接学校 VPN 时可能不可达。").font(.caption).foregroundStyle(.secondary) }
+            Section { EmptyView() }
         }.navigationTitle("网络与服务诊断").navigationBarTitleDisplayMode(.inline).task { await load() }.refreshable { await load() }
     }
     private func load() async {
@@ -33,7 +33,7 @@ struct AppUpdatesView: View {
         List {
             Section { LabeledContent("当前版本", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"); Text(message); Button("检查更新") { Task { await check() } }.disabled(busy); if busy { ProgressView() } }
             if let releaseURL { Link("查看版本与安装文件", destination: releaseURL) }
-            Section { Text("侧载版本需下载 IPA 后使用 Windows 签名工具安装；此处不会自动安装或更改证书。").font(.caption).foregroundStyle(.secondary); Link("GitHub Releases", destination: URL(string: "https://github.com/aNother1332/sustech-mobile-ios/releases")!) }
+            Section { EmptyView(); Link("GitHub Releases", destination: URL(string: "https://github.com/aNother1332/sustech-mobile-ios/releases")!) }
         }.navigationTitle("软件更新").navigationBarTitleDisplayMode(.inline).refreshable { await check() }
     }
     private func check() async {

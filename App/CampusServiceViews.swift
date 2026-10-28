@@ -27,6 +27,8 @@ struct CardAccountView: View {
     private var curve: [CardDay] { CardParser.curve(filtered) }
     var body: some View {
         List {
+            Section { BusinessHeader(title: "校园卡", symbol: "creditcard", color: .campusGreen) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
+
             Section {
                 ModeNotice()
                 SessionBadge(service: .card)
@@ -35,9 +37,9 @@ struct CardAccountView: View {
                     Text("校园卡余额").font(.caption)
                     if !account.name.isEmpty { Text(account.name) }
                 } else { Text("余额尚未读取") }
-                Button("刷新余额与账单", systemImage: "arrow.clockwise") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
+                EmptyView()
                 if busy { ProgressView() }
-                if let synced { Text("读取于 \(synced.formatted())").font(.caption) }
+                if let synced { EmptyView() }
                 ServiceMessage(message: message)
                 NavigationLink { CampusCodeView().id(store.sessionRevision) } label: { Label("出示校园码 / 身份码", systemImage: "qrcode") }
                 CardBalancePreference(balance: account?.balance)
@@ -104,7 +106,7 @@ struct BusStopsView: View {
                 if let note = location.message { Text(note).font(.caption).foregroundStyle(.secondary) }
                 Text("数据来源：SUSTech CRA · buseta.sustcra.com").font(.caption)
                 Text("到站时间为预测，方向请以站点标识为准。").font(.caption).foregroundStyle(.secondary)
-                Button("刷新站点") { Task { await load() } }.disabled(busy)
+                EmptyView()
                 if busy { ProgressView() }; ServiceMessage(message: message)
             }
             ForEach(orderedStops.filter { query.isEmpty || ($0.name + $0.directions).localizedCaseInsensitiveContains(query) }) { stop in
@@ -132,9 +134,9 @@ struct BusStopView: View {
                 Text(stop.directions)
                 LabeledContent("站点 ID", value: stop.id).font(.caption).textSelection(.enabled)
                 ShareLink("复制／分享站点 ID", item: stop.id).font(.caption)
-                Button("刷新预计到站") { Task { await load() } }.disabled(busy)
+                EmptyView()
                 if busy { ProgressView() }
-                if let synced { Text("读取于 \(synced.formatted()) · 前台每 30 秒刷新").font(.caption) }
+                if let synced { EmptyView() }
                 ServiceMessage(message: message)
             }
             ForEach(arrivals) { item in
@@ -170,61 +172,74 @@ struct ClassroomView: View {
     @State private var busy = false
     @State private var message: String?
     private var filtered: [Classroom] { rooms.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) } }
+    private var selectionKey: String { "\(week)-\(weekday)-\(first)-\(last)-\(query)" }
     var body: some View {
-        List {
-            Section("筛选时段") {
-                Stepper("第 \(week) 教学周", value: $week, in: 1...60)
-                Picker("星期", selection: $weekday) { ForEach(1...7, id: \.self) { Text("周" + ["一", "二", "三", "四", "五", "六", "日"][$0 - 1]).tag($0) } }
-                Stepper("开始：第 \(first) 节", value: $first, in: 1...20)
-                Stepper("结束：第 \(last) 节", value: $last, in: first...max(first, 20))
-                Button("加载教室目录") { Task { await load() } }.disabled(busy || store.mode == .demo)
-                Button("查询筛选结果前 20 间") { Task { await check() } }.disabled(busy || rooms.isEmpty || store.mode == .demo)
-                if busy { ProgressView() }; ServiceMessage(message: message)
-                Text("按教学周和学校节次查询课程及借用记录。‘系统未见占用’不保证教室开放或可进入；未查询和失败不视为空闲。").font(.caption).foregroundStyle(.secondary)
-            }
-            Section("教室 · \(filtered.count) 间") {
-                ForEach(filtered) { room in
-                    VStack(alignment: .leading) {
-                        Text(room.name).font(.headline)
-                        Text("座位：\(room.capacity.isEmpty ? "未知" : room.capacity) · \(results[room.id] ?? "尚未查询")").font(.caption).foregroundStyle(.secondary)
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 14) {
+                BusinessHeader(title: "空教室", symbol: "building.2.crop.circle", color: .blue)
+                CampusCard {
+                    HStack { Image(systemName: "magnifyingglass").foregroundStyle(.secondary); TextField("教学楼、教室", text: $query) }
+                    Divider()
+                    HStack {
+                        Stepper("第 \(week) 周", value: $week, in: 1...60)
+                        Picker("星期", selection: $weekday) { ForEach(1...7, id: \.self) { Text("周" + ["一", "二", "三", "四", "五", "六", "日"][$0 - 1]).tag($0) } }.labelsHidden()
                     }
+                    HStack { Picker("开始节次", selection: $first) { ForEach(1...14, id: \.self) { Text("第 \($0) 节").tag($0) } }; Image(systemName: "arrow.right").font(.caption); Picker("结束节次", selection: $last) { ForEach(first...max(first, 14), id: \.self) { Text("第 \($0) 节").tag($0) } } }
                 }
-            }
-        }.refreshable { if rooms.isEmpty { await load() } else { await check() } }.navigationTitle("空教室").navigationBarTitleDisplayMode(.inline).searchable(text: $query, prompt: "先按教学楼或教室名筛选")
-        .onChange(of: week) { _, _ in results = [:] }.onChange(of: weekday) { _, _ in results = [:] }
-        .onChange(of: first) { _, value in last = max(last, value); results = [:] }.onChange(of: last) { _, _ in results = [:] }
-        .task { week = store.teaching?.week ?? 1 }
+                NativeLoginButton()
+                ServiceMessage(message: message)
+                if busy { ProgressView().frame(maxWidth: .infinity) }
+                ForEach(filtered) { room in
+                    HStack(spacing: 13) {
+                        Image(systemName: "door.left.hand.open").font(.title2.weight(.light)).foregroundStyle(.blue).frame(width: 45, height: 48).background(.blue.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+                        VStack(alignment: .leading, spacing: 5) { Text(room.name).font(.headline); if !room.capacity.isEmpty { Text(room.capacity + " 座").font(.caption).foregroundStyle(.secondary) } }
+                        Spacer()
+                        Text(results[room.id] ?? "待查询").font(.caption.weight(.medium)).foregroundStyle(resultColor(room.id))
+                    }.padding(14).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 16))
+                }
+            }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
+        }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("空教室").navigationBarTitleDisplayMode(.inline)
+            .task { week = store.teaching?.week ?? store.academicTerm?.week(.now) ?? 1; weekday = (AcademicTerm.calendar.component(.weekday, from: .now) + 5) % 7 + 1; await load(); await check() }
+            .refreshable { if rooms.isEmpty { await load() }; await check() }
+            .task(id: selectionKey) { do { try await Task.sleep(for: .milliseconds(350)) } catch { return }; await check() }
+            .onChange(of: selectionKey) { _, _ in results = [:] }.onChange(of: first) { _, value in last = max(last, value) }
     }
+    private func resultColor(_ id: String) -> Color { results[id] == "系统未见占用" ? .campusGreen : results[id] == "已有安排" ? .orange : .secondary }
     private func semester(_ http: ServiceHTTP) async throws -> Semester {
-        try TISParser.semester(await http.data("/component/querydangqianxnxq", form: [:]))
+        do { return try TISParser.semester(await http.data("/component/querydangqianxnxq", form: [:], headers: ["RoleCode": "00"])) }
+        catch let error as CampusError where error != .signInRequired && error != .accessDenied {
+            let value = try await http.json("/component/dq_xnxq", form: [:], headers: ["RoleCode": "00"])
+            return try TISParser.semester(JSONEncoder().encode(value["content"]))
+        }
     }
     private func load() async {
+        #if DEBUG
+        if store.mode == .demo { rooms = [Classroom(id: "demo-room", name: "示例教学楼 203", capacity: "60")]; return }
+        #endif
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.teaching)
-        do { let sem = try await semester(http); let value = try await ClassroomClient(http: http).catalog(semester: sem)
-            guard version == store.sessionRevision else { return }; rooms = value; results = [:]; message = nil
-        } catch { message = error.localizedDescription }
+        do { let sem = try await semester(http); let value = try await ClassroomClient(http: http).catalog(semester: sem); guard version == store.sessionRevision else { return }; rooms = value; results = [:]; message = nil }
+        catch { guard version == store.sessionRevision, !Task.isCancelled else { return }; message = error.localizedDescription; store.recordSession(.teaching, error: error) }
         await store.absorb(http, revision: version)
     }
     private func check() async {
-        guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
-        let version = store.sessionRevision; let w = week, d = weekday, a = first, b = last
+        while busy { do { try await Task.sleep(for: .milliseconds(100)) } catch { return } }
+        guard !rooms.isEmpty, store.mode == .live, !Task.isCancelled else { return }
+        busy = true; defer { busy = false }
+        let version = store.sessionRevision; let key = selectionKey; let w = week, d = weekday, a = first, b = last
         let selected = Array(filtered.prefix(20)); let http = await store.serviceHTTP(.teaching)
         do {
             let sem = try await semester(http); let client = ClassroomClient(http: http)
             for room in selected {
-                try Task.checkCancellation(); guard version == store.sessionRevision else { return }
-                do { let entries = try await client.schedule(room, semester: sem)
-                    guard version == store.sessionRevision, w == week, d == weekday, a == first, b == last else { return }
-                    results[room.id] = entries.contains { $0.overlaps(week: w, weekday: d, first: a, last: b) } ? "有安排或周次待确认" : "系统未见占用"
-                } catch { results[room.id] = "查询失败，状态未知"; throw error }
+                try Task.checkCancellation()
+                guard version == store.sessionRevision, key == selectionKey else { return }
+                do { let entries = try await client.schedule(room, semester: sem); guard key == selectionKey else { return }; results[room.id] = entries.contains { $0.overlaps(week: w, weekday: d, first: a, last: b) } ? "已有安排" : "系统未见占用" }
+                catch { if Task.isCancelled { return }; results[room.id] = "未知"; message = "部分教室暂不可用" }
             }
-            message = "已核对 \(selected.count) 间 · \(Date.now.formatted())"
-        } catch { message = error.localizedDescription }
+        } catch { if !Task.isCancelled, version == store.sessionRevision { message = error.localizedDescription } }
         await store.absorb(http, revision: version)
     }
 }
-
 struct PrintingWorkspaceView: View {
     var initialURL: URL? = nil
     var startImport = false
@@ -243,10 +258,12 @@ struct PrintingWorkspaceView: View {
     @State private var portal = false
     var body: some View {
         Form {
+            Section { BusinessHeader(title: "校园打印", symbol: "printer", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
+
             Section("选取 PDF") {
                 Button("从文件导入 PDF", systemImage: "doc.badge.plus") { importing = true }.disabled(busy)
                 if pdf != nil { Text(filename); Text("\(pages) 页").font(.caption) }
-                Text("当前支持 50 MB 以内 PDF。提交后到打印机领取，实际费用以学校系统为准。").font(.caption).foregroundStyle(.secondary)
+                EmptyView()
             }
             Section("打印参数") {
                 Picker("纸张", selection: $options.paper) { Text("A4").tag(9); Text("A3").tag(8) }
@@ -264,7 +281,7 @@ struct PrintingWorkspaceView: View {
                 NavigationLink("打印站点、扫描与用量") { PrintExtrasView().id(store.sessionRevision) }; NavigationLink("系统分享待打印") { PrintInboxView() } }
             Section("打印队列") {
                 SessionBadge(service: .printing)
-                Button("刷新队列") { Task { await refresh() } }.disabled(busy || store.mode == .demo)
+                EmptyView()
                 if busy { ProgressView() }; ServiceMessage(message: message)
                 ForEach(jobs) { job in
                     VStack(alignment: .leading) {

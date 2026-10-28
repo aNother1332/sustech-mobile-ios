@@ -8,6 +8,7 @@ struct CampusHub<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
+                BusinessHeader(title: title, symbol: symbol, color: title == "校园卡" ? .campusGreen : .blue)
                 content
             }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
         }.background(Color.campusPaper).navigationTitle(title).navigationBarTitleDisplayMode(.inline)

@@ -13,8 +13,8 @@ struct InlineFailure: View {
 enum DisplayNotice {
     static func error(_ value: String?) -> String? {
         guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else { return nil }
-        let silent = ["读取于", "更新于", "查询于", "同步于", "已读取", "已刷新", "已核对", "已保存至", "已连接", "已登录", "场馆授权已连接"]
-        guard !silent.contains(where: value.hasPrefix) else { return nil }
+        let silent = ["读取于", "更新于", "查询于", "同步于", "已读取", "已刷新", "已核对", "已保存至", "已连接", "已登录", "场馆授权已连接", "已复制", "已取消", "已保存"]
+        guard !silent.contains(where: value.hasPrefix), value.range(of: "(?:读取|更新|查询|同步)于", options: .regularExpression) == nil else { return nil }
         if value.contains("网络连接已中断") || value.contains("无法连接") { return "网络不可用" }
         if value.contains("登录") && (value.contains("过期") || value.contains("需要") || value.contains("未登录")) { return "未登录" }
         return String(value.components(separatedBy: .newlines).first?.prefix(80) ?? "")
@@ -47,11 +47,23 @@ struct DisplayCapabilityReader: UIViewRepresentable {
     func makeUIView(context: Context) -> CapabilityView { CapabilityView() }
     func updateUIView(_ view: CapabilityView, context: Context) {}
     final class CapabilityView: UIView {
+        private(set) var maximumFrameRate = 60
         override func didMoveToWindow() {
             super.didMoveToWindow()
-            #if DEBUG
-            if let screen = window?.windowScene?.screen { UserDefaults.standard.set(screen.maximumFramesPerSecond, forKey: "diagnostic-display-maximum") }
-            #endif
+            if let screen = window?.windowScene?.screen {
+                maximumFrameRate = screen.maximumFramesPerSecond
+                #if DEBUG
+                UserDefaults.standard.set(maximumFrameRate, forKey: "diagnostic-display-maximum")
+                #endif
+            }
         }
+    }
+}
+
+enum LoginRequirement {
+    static func confirmed(_ error: Error) -> Bool {
+        if (error as? CampusError) == .signInRequired { return true }
+        if let cas = error as? CASFailure { return cas == .challenge || cas == .rejected }
+        return false
     }
 }

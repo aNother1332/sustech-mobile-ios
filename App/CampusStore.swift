@@ -188,7 +188,7 @@ final class CampusStore {
                 guard generation == version else { return }
                 let state = service == .teaching ? teachingState : blackboardState
                 if case .failed(let error) = state { results.append("\(label)：\(error)") }
-                else { results.append("\(label)已连接") }
+                else { }
             } catch is CancellationError { return }
             catch {
                 guard generation == version else { return }
@@ -215,7 +215,7 @@ final class CampusStore {
             if credentialsReady { UserDefaults.standard.removeObject(forKey: "school-auto-login-paused") }
             automaticLoginMessage = nil
         } else if automatic { automaticLoginMessage = "自动登录未完成，稍后可手动重试。" }
-        authenticationMessage = results.joined(separator: "\n")
+        authenticationMessage = results.isEmpty ? nil : results.joined(separator: "\n")
         if authenticated { await refreshProfile() }
         persist()
     }
@@ -232,7 +232,7 @@ final class CampusStore {
             guard version == generation else { return }
             if !value.isEmpty { profile = value; profileMessage = nil; persist() }
             else { profileMessage = "暂未读取到个人资料" }
-        } catch { if version == generation { profileMessage = "个人资料读取失败，点击刷新重试" } }
+        } catch { if version == generation { profileMessage = "个人资料暂不可用" } }
         await absorb(http, revision: version)
     }
 

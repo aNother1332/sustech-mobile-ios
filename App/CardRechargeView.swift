@@ -17,6 +17,8 @@ struct CardRechargeView: View {
 
     var body: some View {
         List {
+            Section { BusinessHeader(title: "校园卡充值", symbol: "creditcard.and.123", color: .campusGreen) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
+
             Section {
                 Label("校园卡充值", systemImage: "creditcard.fill").font(.title2.bold())
                 Text("选择渠道后，在对应平台核对学校、学号、姓名、金额和收款方，再确认付款。")
@@ -44,13 +46,14 @@ struct CardRechargeView: View {
                 }.disabled(store.mode == .demo)
                 DetailNote(text: "使用系统分享菜单发送链接，再在对应客户端打开。学校页面可能要求企业微信授权；App 内的学校登录不能代替该授权。")
             }
+            #if DEBUG
             Section { NavigationLink("原生下单接口验证") { NativeRechargeView().id(store.sessionRevision) } }
+            #endif
             Section("到账查询") {
-                Button("刷新余额与近期账单", systemImage: "arrow.clockwise") { Task { await refresh() } }
-                    .disabled(busy || store.mode == .demo)
+                EmptyView()
                 if busy { ProgressView() }
                 if let account { LabeledContent("当前余额", value: account.balance) }
-                if let synced { Text("查询于 \(synced.formatted())").font(.caption).foregroundStyle(.secondary) }
+                if let synced { EmptyView() }
                 ServiceMessage(message: message)
                 DetailNote(text: "返回 App、支付页面提示或余额变化均不单独作为本次充值成功凭证。请核对平台订单和校园卡到账记录；未确认结果时先查原订单，避免重复付款。")
                 ForEach(bills.prefix(10)) { bill in

@@ -12,7 +12,10 @@ public struct ICRoomSchedule: Sendable {
         complete && end > start && windows.contains { $0.start <= start && $0.end >= end } && !occupied.contains { $0.start < end && $0.end > start }
     }
     public static func parse(_ value: WireValue, day: Date) throws -> ICRoomSchedule {
-        guard !value["devId"].text.isEmpty, case .array = value["resvInfo"], case .array = value["openTimes"] else { throw CampusError.invalidResponse("研讨间日程") }
+        guard !value["devId"].text.isEmpty else { throw CampusError.invalidResponse("研讨间日程") }
+        guard case .array = value["resvInfo"], case .array = value["openTimes"] else {
+            return ICRoomSchedule(roomID: value["devId"].text, day: day, windows: [], occupied: [], complete: false)
+        }
         var complete = value["onlyView"] != .bool(true)
         let date = CampusClock.format(day)
         let windows = value["openTimes"].rows.compactMap { row -> (start: Date, end: Date)? in

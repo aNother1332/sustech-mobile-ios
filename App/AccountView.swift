@@ -29,11 +29,10 @@ struct AccountView: View {
                 NativeLoginButton()
                 ServiceMessage(message: store.profileMessage)
                 CampusSectionTitle(title: "常用")
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    ServiceTile(title: "我的预约", detail: "", symbol: "calendar.badge.clock", color: .blue) { ReservationCenterView().toolbar(.visible, for: .navigationBar) }
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                    ServiceTile(title: "我的预约", detail: "", symbol: "calendar.badge.clock", color: .blue) { MyReservationsView().toolbar(.visible, for: .navigationBar) }
                     ServiceTile(title: "下载文件", detail: "", symbol: "folder", color: .campusOrange) { OfflineDownloadsView().toolbar(.visible, for: .navigationBar) }
                     ServiceTile(title: "日程提醒", detail: "", symbol: "bell", color: .campusGreen) { AgendaView().toolbar(.visible, for: .navigationBar) }
-                    ServiceTile(title: "设置", detail: "", symbol: "gearshape", color: .secondary) { SettingsView().toolbar(.visible, for: .navigationBar) }
                 }
             }.padding(16).frame(maxWidth: 900).frame(maxWidth: .infinity)
         }.background(Color(uiColor: .systemGroupedBackground))

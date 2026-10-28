@@ -19,6 +19,8 @@ struct SUSTechApp: App {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("--smoke-agenda") { NavigationStack { AgendaView() } }
+        else if arguments.contains("--smoke-settings") { NavigationStack { SettingsView() } }
+        else if arguments.contains("--smoke-my-reservations") { NavigationStack { MyReservationsView() } }
         else if arguments.contains("--smoke-reviews") { NavigationStack { CourseReviewsView() } }
         else if arguments.contains("--smoke-degree") { NavigationStack { DegreeProgressView() } }
         else if arguments.contains("--smoke-recharge") { NavigationStack { CardRechargeView() } }
