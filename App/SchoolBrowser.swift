@@ -23,7 +23,7 @@ struct SchoolBrowser: View {
                     Text(failure).font(.callout).foregroundStyle(.orange).padding()
                 }
                 if ready {
-                    BrowserWebView(url: entryURL, dataStore: ephemeral ? transientStore : store.websiteDataStore, state: browserState, sessions: store.sessions)
+                    BrowserWebView(url: entryURL, dataStore: ephemeral ? transientStore : store.websiteDataStore, state: browserState, sessions: store.sessions, renew: renewBrowser)
                 } else if preparing { ProgressView("正在准备学校页面…").frame(maxWidth: .infinity, maxHeight: .infinity) }
                 else { ContentUnavailableView("暂时无法打开登录页面", systemImage: "lock", description: Text("请解锁设备，关闭页面后重新打开。")) }
             }
@@ -65,6 +65,16 @@ struct SchoolBrowser: View {
             await store.checkSchoolSessions(force: true)
         } }
     }
+    private func renewBrowser() async -> Bool {
+        let account = store.accountScope
+        do { _ = try await store.renewSession(for: service.portalURL) }
+        catch {
+            guard error is CancellationError, account == store.accountScope, store.serviceSessions[.teaching]?.valid == true else { return false }
+        }
+        guard account == store.accountScope, !store.clearing else { return false }
+        if ephemeral { for cookie in await store.sessions.cookies() { await transientStore.httpCookieStore.setCookie(cookie) } }
+        return true
+    }
 }
 
 @MainActor
@@ -80,8 +90,9 @@ struct BrowserWebView: UIViewRepresentable {
     let dataStore: WKWebsiteDataStore
     let state: BrowserState
     let sessions: SchoolSessions
+    let renew: @MainActor () async -> Bool
 
-    func makeCoordinator() -> Coordinator { Coordinator(state: state, sessions: sessions) }
+    func makeCoordinator() -> Coordinator { Coordinator(state: state, sessions: sessions, entry: url, renew: renew) }
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
@@ -110,10 +121,23 @@ struct BrowserWebView: UIViewRepresentable {
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         private let state: BrowserState
         private let sessions: SchoolSessions
-        init(state: BrowserState, sessions: SchoolSessions) { self.state = state; self.sessions = sessions }
+        private let entry: URL
+        private let renew: @MainActor () async -> Bool
+        private var attemptedRenewal = false
+        init(state: BrowserState, sessions: SchoolSessions, entry: URL, renew: @escaping @MainActor () async -> Bool) { self.state = state; self.sessions = sessions; self.entry = entry; self.renew = renew }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             captureIdentity(webView, attempts: 20, epoch: sessions.epoch)
+            if webView.url?.host == CASPolicy.login.host, webView.url?.path == CASPolicy.login.path, !attemptedRenewal {
+                attemptedRenewal = true
+                Task { @MainActor [weak self, weak webView] in
+                    guard let self, let webView else { return }
+                    // Leave an actual CAPTCHA visible; never replay a form POST.
+                    guard let html = try? await webView.evaluateJavaScript("document.documentElement.outerHTML") as? String,
+                          (try? CASPolicy.execution(in: html)) != nil else { return }
+                    if await self.renew() { webView.load(URLRequest(url: self.entry)) }
+                }
+            }
         }
         private func captureIdentity(_ webView: WKWebView, attempts: Int, epoch: Int) {
             guard webView.url?.host == "ehall.sustech.edu.cn" else { return }

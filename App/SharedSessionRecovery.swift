@@ -49,7 +49,7 @@ extension CampusStore {
         catch {
             guard origin.host != SchoolService.printing.portalURL.host, LoginRequirement.confirmed(error), remembersSchoolAccount else { throw error }
             serviceSessions[.teaching] = ServiceSessionState(status: .expired)
-            await resumeSchoolConnections()
+            await resumeSchoolConnections(confirmedCASExpiry: true)
             guard version == sessionRevision else { throw CancellationError() }
             try await exchangeSession(for: origin)
         }

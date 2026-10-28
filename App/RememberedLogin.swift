@@ -21,16 +21,16 @@ extension CampusStore {
         }
     }
     /// Foreground only. Reuse cookies first; never submit on an inconclusive network probe.
-    func resumeSchoolConnections() async {
+    func resumeSchoolConnections(confirmedCASExpiry: Bool = false) async {
         guard mode == .live, !clearing, !authenticating, !writing, !resumingConnections else { return }
         resumingConnections = true; defer { resumingConnections = false }
         let version = sessionRevision
-        await checkSchoolSessions()
+        if !confirmedCASExpiry { await checkSchoolSessions() }
         guard version == sessionRevision, mode == .live, !clearing, !authenticating, !writing,
               let account = CredentialVault.load(RememberedSchoolAccount.self, key: "school-auto-login"),
               AutomaticLoginPolicy.shouldAttempt(hasCredentials: true,
                 paused: UserDefaults.standard.bool(forKey: "school-auto-login-paused"),
-                confirmedExpired: serviceSessions[.teaching]?.status == .expired || serviceSessions[.blackboard]?.status == .expired,
+                confirmedExpired: confirmedCASExpiry || serviceSessions[.teaching]?.status == .expired || serviceSessions[.blackboard]?.status == .expired,
                 lastAttempt: lastAutomaticLogin) else { return }
         lastAutomaticLogin = .now
         automaticLoginMessage = "登录态已失效，正在自动登录…"
