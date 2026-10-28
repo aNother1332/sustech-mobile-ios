@@ -29,18 +29,18 @@
 
 ## 当前状态
 
-当前功能版本为 **0.9.0 试用版**。重做个人资料与设置、IC 房间时间网格、NCES 蓝白评价卡和交换项目原生详情；修复交换项目实体文字，封面按需加载且不写磁盘；补充 ProMotion 高刷新率配置，精简连接、更新时间及说明文字，保留下拉刷新和短错误。体育因没有验证到原生登录或企业微信对应页直达而移除。详见 [0.9.0 说明](docs/RELEASE_0_9.md) 与 [真实只读核对](docs/BUSINESS_VERIFICATION_0_9.md)。
+当前功能版本为 **0.10.0 试用版**。为教务、BB、校园卡、IC、CLE、书院和交换项目补齐 Cookie 失效自动续接；修复 IC 限流、CLE 初始化和书院独立令牌兑换。课程评价正确解析四维小分，总分固定两位小数；校历补原版考试周与活动，教师支持院系筛选，修读进度增加官方培养方案缩略图与原生 PDF 阅读。首页完整天气与温度跳转同步更新。详见 [0.10.0 说明](docs/RELEASE_0_10.md) 与 [真实接口核对](docs/BUSINESS_VERIFICATION_0_10.md)。
 
 界面根据 Apple 设计原则重新整理，采用[学校官方标识页](https://www.sustech.edu.cn/zh/school_logo.html)公布的 **南科大橙 `#ED6C00`、墨绿 `#003F43`、天青 `#2BBCB3`**，以深色重点摘要、彩色服务入口与紧凑课程块建立层级；支持深色模式和系统大字号。使用文字和图标共同表达状态，临近截止时间单独强调。完整功能与验证边界见 [0.6.0 说明](docs/RELEASE_0_6.md)、[0.5.0 说明](docs/RELEASE_0_5.md)。
 
-**本机真实只读核对已确认专业资料、IC 房间与日期占用、交换项目及图片；空教室旧目录接口仍返回空响应，尚未恢复。** 打印、预约、BB 提交与充值写操作仍待逐项真机验收。未签名 IPA 需本地签名安装；模拟器截图不代表真实业务或实测 120 fps。
+**本机真实只读核对已确认 TIS 专业与年级、IC 间隔请求、CLE 初始化、书院场地、交换项目及校园卡会话重新交换；空教室旧目录接口仍返回空响应，尚未恢复。打印使用独立平台密码，尚未验证有效打印密码登录成功。** 打印、预约、BB 提交与充值写操作仍待逐项真机验收。未签名 IPA 需本地签名安装；模拟器截图不代表真实业务或实测 120 fps。
 
 ## 当前功能
 
 | 模块 | 已实现的能力 | 使用边界 |
 | --- | --- | --- |
 | 今天 | 当前教学周、校园天气/US AQI、下一节课/考试、今日课程、BB 任务与常用入口 | 折叠课程不进入截止日期汇总；不自动扫描全部 BB 历史 |
-| 学校登录 | 原生 CAS 表单、App 内网页共享会话、Keychain 保留 Cookie、按需交换业务会话 | 默认不保存密码，可自选本机钥匙串记住并自动登录；有效期由学校决定，验证码与独立 OAuth 仍需本人操作 |
+| 学校登录 | 原生 CAS 表单、App 内网页共享会话、Keychain 保留 Cookie、失效自动交换业务会话，查询最多重读一次 | 默认不保存密码，可自选本机钥匙串记住并自动登录；有效期由学校决定，验证码与独立 OAuth 仍需本人操作 |
 | 课表与考试 | 网格/列表周课表、本学期课程汇总、教学日历、放假与补课、考试和离线缓存 | 全学期失败时当前周回退；未知周次和临时调整需核对 |
 | 成绩 | 分页读取、学期筛选、成绩与学分、GPA 记录试算 | 不代表学校官方总 GPA 或毕业审核结论 |
 | Blackboard | 课程、任务、提交状态、公告、课件、折叠/恢复，Original 个人单文件提交 | 不支持测验/Ultra/小组/已有草稿；预检、本人确认、一次 POST、服务器新记录回读；结果未知不重发 |
@@ -48,14 +48,14 @@
 | 校园卡 | 余额、近期账单、本地范围筛选、按日消费曲线 | 原生充值渠道页（支付宝 / 微信入口）；金额与付款在平台完成；消费统计仅覆盖已返回记录 |
 | 空教室 | 教学周/星期/节次筛选及占用查询界面 | **旧目录接口返回空体，当前查询尚不可用**；缺失数据不显示为空闲 |
 | 校车 | 最近方向站台与到站、车辆/站台浮卡、可拖动时刻表、定位与曲线路线 | CRA 公共数据，前台轮询与下拉刷新；预测不等于实际到站 |
-| 校园打印 | PDF 导入、纸张/颜色/单双面/份数/页码、上传、队列与删除 | 50 MB 以内有效 PDF；需签名安装后在校园环境验证；不自动重传 |
+| 校园打印 | 独立打印账号与可选自动续接，PDF 导入、纸张/颜色/单双面/份数/页码、上传、队列与删除 | 50 MB 以内有效 PDF；需签名安装后在校园环境验证；不自动重传 |
 | 预约中心 | IC 房间×时间网格、CLE 辅导、书院场地日程、本人记录及既有预约/取消 | 缺失占用不可选；体育入口已移除；写入仍需设备验证，没有抢场 |
 | 日程与提醒 | 课程、考试、BB、预约与个人事项；日历添加/更新、本地提醒 | 课程日期需核对校历锚点；基于已同步信息，不承诺实时后台更新 |
 | 课程评价 | NCES 蓝白卡片、10 分总评、四维指标、真实分页、收藏 | 社区来源，不代表学校正式评价 |
-| 修读进度 | 学校总要求、完成情况、学分类别、模块要求 | 学校数据部分失败独立显示，不合计重叠类别为毕业结论 |
+| 修读进度 | 学校总要求、按真实年级和专业展示官方培养方案、缩略图与 PDF 阅读 | 已删其余损坏进度接口；未分流展示整本，2024–2026 文件按需加载 |
 | 打印增强 | PDF 课件直接打印、站点、扫描任务列表/确认删除、用量查询 | 扫描下载路径未验证；系统分享扩展单独签名验证 |
 | 校园码 | 原生校园码与身份码、30/60 秒前台刷新、过期/后台隐藏、低余额设置 | 真实消费机/核验终端仍待验证，不等于 Apple Wallet 卡片 |
-| 教师目录 | 994 条公开资料搜索，原生详情中的邮箱/办公室、复制/分享和邮件入口 | 名录快照 2026-10-02；联系方式按需读取、缓存 7 天，可能未公开或无法识别 |
+| 教师目录 | 994 条公开资料搜索、院系筛选，原生详情中的邮箱/办公室、复制/分享和邮件入口 | 名录快照 2026-10-02；联系方式按需读取、缓存 7 天，可能未公开或无法识别 |
 | 交换项目 | 原生分页列表与详情、实体文字清洗、临时内存封面、可申请筛选 | 真实只读查询已核对；申请在官方临时网页会话完成 |
 | 校车地图 | 原生 Apple 地图、线路轨迹、站点到站、车辆位置、线路筛选 | 10 秒前台轮询；超过 2 分钟或未知上报时间标灰，不等同连续 GPS；底图需联网 |
 | 小组件 | 可配课程/BB/天气/校车信息，四宫格快捷入口与 App 路由 | 独立扩展包；共享课程与 BB 需主动开启，App Groups 签名未实测 |
@@ -72,6 +72,27 @@
 本轮操作路径和验收步骤见 [0.3.0 说明](docs/RELEASE_0_3.md)，上一版记录见 [0.2.0 说明](docs/RELEASE_0_2.md)。
 
 ## 界面截图
+
+**0.10.0 当前界面**：iPhone/iPad 模拟器实际截图，展示资料为 DEBUG 虚构样例或公开资料。12 个场景来自 [运行 40737122488](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40737122488)，培养方案、打印登录、设置由 [运行 40741950431](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40741950431) 补查。后续会话修正经最终构建验证；每图精确来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。真实后台只读核对另见验证记录，截图不替代真机业务验收。
+
+| 页面 | iPhone | iPad |
+| --- | --- | --- |
+| 今天 | <img src="docs/screenshots/v010-iPhone-today.png" width="230" alt="iPhone 今天"> | <img src="docs/screenshots/v010-iPad-today.png" width="420" alt="iPad 今天"> |
+| 完整天气 | <img src="docs/screenshots/v010-iPhone-today-weather.png" width="230" alt="iPhone 完整天气"> | <img src="docs/screenshots/v010-iPad-today-weather.png" width="420" alt="iPad 完整天气"> |
+| 教学日历 | <img src="docs/screenshots/v010-iPhone-calendar.png" width="230" alt="iPhone 教学日历"> | <img src="docs/screenshots/v010-iPad-calendar.png" width="420" alt="iPad 教学日历"> |
+| 修读与培养方案 | <img src="docs/screenshots/v010-iPhone-degree.png" width="230" alt="iPhone 修读与培养方案"> | <img src="docs/screenshots/v010-iPad-degree.png" width="420" alt="iPad 修读与培养方案"> |
+| 教师院系筛选 | <img src="docs/screenshots/v010-iPhone-faculty-filtered.png" width="230" alt="iPhone 教师院系筛选"> | <img src="docs/screenshots/v010-iPad-faculty-filtered.png" width="420" alt="iPad 教师院系筛选"> |
+| 课程评价 | <img src="docs/screenshots/v010-iPhone-reviews.png" width="230" alt="iPhone 课程评价"> | <img src="docs/screenshots/v010-iPad-reviews.png" width="420" alt="iPad 课程评价"> |
+| 校园卡 | <img src="docs/screenshots/v010-iPhone-card.png" width="230" alt="iPhone 校园卡"> | <img src="docs/screenshots/v010-iPad-card.png" width="420" alt="iPad 校园卡"> |
+| IC 讨论间 | <img src="docs/screenshots/v010-iPhone-ic.png" width="230" alt="iPhone IC 讨论间"> | <img src="docs/screenshots/v010-iPad-ic.png" width="420" alt="iPad IC 讨论间"> |
+| CLE 辅导 | <img src="docs/screenshots/v010-iPhone-cle.png" width="230" alt="iPhone CLE 辅导"> | <img src="docs/screenshots/v010-iPad-cle.png" width="420" alt="iPad CLE 辅导"> |
+| 交换项目 | <img src="docs/screenshots/v010-iPhone-exchange.png" width="230" alt="iPhone 交换项目"> | <img src="docs/screenshots/v010-iPad-exchange.png" width="420" alt="iPad 交换项目"> |
+| 个人资料 | <img src="docs/screenshots/v010-iPhone-account.png" width="230" alt="iPhone 个人资料"> | <img src="docs/screenshots/v010-iPad-account.png" width="420" alt="iPad 个人资料"> |
+| 设置 | <img src="docs/screenshots/v010-iPhone-settings.png" width="230" alt="iPhone 设置"> | <img src="docs/screenshots/v010-iPad-settings.png" width="420" alt="iPad 设置"> |
+| 打印独立登录 | <img src="docs/screenshots/v010-iPhone-printing-login.png" width="230" alt="iPhone 打印独立登录"> | <img src="docs/screenshots/v010-iPad-printing-login.png" width="420" alt="iPad 打印独立登录"> |
+
+<details>
+<summary>0.9.0 历史界面</summary>
 
 **0.9.0 业务页改版**：以下 38 张页面截图来自 [运行 40684347344](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40684347344)，源码 `588e49c`。均使用 DEBUG 示例资料；不含真实账号。IC、NCES、交换项目六张图已由最终源码 `162c4e0` 的 [运行 40717121442](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40717121442) 更新；最终包另精简说明并修正过期登录提示。构建来源见 [发布说明](docs/RELEASE_0_9.md)。截图不替代真实校园业务验收。
 
@@ -96,6 +117,8 @@
 | 教师详情 | <img src="docs/screenshots/v09-iPhone-faculty-detail.png" width="230" alt="iPhone 教师详情"> | <img src="docs/screenshots/v09-iPad-faculty-detail.png" width="420" alt="iPad 教师详情"> |
 | 原生玻璃底栏 | <img src="docs/screenshots/v09-iPhone-navigation-glass.png" width="230" alt="iPhone 原生玻璃底栏"> | <img src="docs/screenshots/v09-iPad-navigation-glass.png" width="420" alt="iPad 原生玻璃底栏"> |
 | 半透明回退底栏 | <img src="docs/screenshots/v09-iPhone-navigation-material.png" width="230" alt="iPhone 半透明回退底栏"> | <img src="docs/screenshots/v09-iPad-navigation-material.png" width="420" alt="iPad 半透明回退底栏"> |
+
+</details>
 
 <details>
 <summary>0.8.0 历史界面（含已移除功能）</summary>

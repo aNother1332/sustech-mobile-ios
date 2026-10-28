@@ -20,4 +20,14 @@
 
 官方资料：[学校校历](https://www.sustech.edu.cn/zh/academic-calendar.html)、[培养方案目录](https://tao.sustech.edu.cn/xueshengfuwu/pyfa/)。
 
-最终测试、截图和安装包核验在发布前补充。
+验证记录见 [真实接口核对](BUSINESS_VERIFICATION_0_10.md)。
+
+最终源码：`a6ec2a2782d63b66d3fb54b3067d25c65f59d2d6`。构建运行：https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40745162422。
+
+- 114 项 Swift 测试、8 项 IPA 打包测试通过；iPhone/iPad 模拟器及 arm64 真机 Release 编译成功。
+- iPhone 17 Pro 与 iPad Pro 13 英寸（M5），iOS 26.2；12 个页面场景及额外打印登录/培养方案/设置复核。截图为示例资料，每图来源见 `screenshots/SOURCES.json`。
+- 普通包 2,657,984 字节；扩展包 2,744,317 字节。ZIP、SHA-256、arm64 设备二进制、0.10.0/14、iOS 17 最低版本、iPhone/iPad 支持及高刷新率配置核验通过。
+- 普通包 SHA-256：`519931d75cc48030aaeba36436cbae9d7b3f83891875e1ef6157c200109162ab`。
+- 扩展包 SHA-256：`e61f3e774f433dace207f3d5dd3afe542774621f703add685ee58d79d241066a`。
+
+推荐安装普通 `SUSTechMobile-unsigned.ipa`；扩展包继续用于独立签名验证。
