@@ -29,7 +29,7 @@
 
 ## 当前状态
 
-当前功能版本为 **0.10.1 试用版**。修正自动续接时重建页面的问题、教务登录误判、培养方案点击与天气单位；空教室旧目录异常时改用全校课表查询课程占用，临时借用仍未知。详见 [0.10.1 说明](docs/RELEASE_0_10_1.md)。为教务、BB、校园卡、IC、CLE、书院和交换项目补齐 Cookie 失效自动续接；修复 IC 限流、CLE 初始化和书院独立令牌兑换。课程评价正确解析四维小分，总分固定两位小数；校历补原版考试周与活动，教师支持院系筛选，修读进度增加官方培养方案缩略图与原生 PDF 阅读。首页完整天气与温度跳转同步更新。详见 [0.10.0 说明](docs/RELEASE_0_10.md) 与 [真实接口核对](docs/BUSINESS_VERIFICATION_0_10.md)。
+当前功能版本为 **0.11.0 试用版**。“办事”顶部新增请假和学生活动：原生读取本人请假记录、详情及活动分页，申请请假使用已登录的学校完整表单。修复打印诊断误导与空列表解析、培养方案圆角裁切和重复打开，以及 IC 全天可约时段点击和已结束记录显示。详见 [0.11.0 说明](docs/RELEASE_0_11.md)。
 
 界面根据 Apple 设计原则重新整理，采用[学校官方标识页](https://www.sustech.edu.cn/zh/school_logo.html)公布的 **南科大橙 `#ED6C00`、墨绿 `#003F43`、天青 `#2BBCB3`**，以深色重点摘要、彩色服务入口与紧凑课程块建立层级；支持深色模式和系统大字号。使用文字和图标共同表达状态，临近截止时间单独强调。完整功能与验证边界见 [0.6.0 说明](docs/RELEASE_0_6.md)、[0.5.0 说明](docs/RELEASE_0_5.md)。
 
@@ -49,7 +49,9 @@
 | 空教室 | 教学周/星期/节次筛选及占用查询界面 | 旧目录异常时查询完整全校课表，显示有课／无课；**替代来源不覆盖临时借用** |
 | 校车 | 最近方向站台与到站、车辆/站台浮卡、可拖动时刻表、定位与曲线路线 | CRA 公共数据，前台轮询与下拉刷新；预测不等于实际到站 |
 | 校园打印 | 独立打印账号与可选自动续接，PDF 导入、纸张/颜色/单双面/份数/页码、上传、队列与删除 | 50 MB 以内有效 PDF；需签名安装后在校园环境验证；不自动重传 |
-| 预约中心 | IC 房间×时间网格、CLE 辅导、书院场地日程、本人记录及既有预约/取消 | 缺失占用不可选；体育入口已移除；写入仍需设备验证，没有抢场 |
+| 预约中心 | IC 全天可约时段与已读历史、房间×时间网格、CLE 辅导、书院场地日程、本人记录及既有预约/取消 | 缺失占用不可选；学校不返回的历史无法补全；体育入口已移除；写入仍需设备验证，没有抢场 |
+| 请假 | 原生本人记录与详情、学校完整申请表、CAS 自动续接、分页与下拉刷新 | 申请沿用学校对课程、累计天数、附件和审批的校验；未提交真实申请测试 |
+| 学生活动 | 原生活动分页、标题/时间/地点/类型/举办单位与详情 | 使用真实学校列表；本版仅浏览，不报名 |
 | 日程与提醒 | 课程、考试、BB、预约与个人事项；日历添加/更新、本地提醒 | 课程日期需核对校历锚点；基于已同步信息，不承诺实时后台更新 |
 | 课程评价 | NCES 蓝白卡片、10 分总评、四维指标、真实分页、收藏 | 社区来源，不代表学校正式评价 |
 | 修读进度 | 学校总要求、按真实年级和专业展示官方培养方案、缩略图与 PDF 阅读 | 已删其余损坏进度接口；未分流展示整本，2024–2026 文件按需加载 |
@@ -73,7 +75,18 @@
 
 ## 界面截图
 
-**0.10.1 修正页面**：以下为[本版构建](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40854245874)的示例布局截图，真实后台核对见发布说明。空教室截图为虚构布局样例。
+**0.11.0 当前界面**：以下 12 张页面图来自[本版模拟器运行](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40899790564)，使用虚构示例资料。另有 2 项实际点击测试验证 PDF 阅读选择和 IC 可约时段进入表单；真实后台只读结果与边界见发布说明。
+
+| 页面 | iPhone | iPad |
+| --- | --- | --- |
+| 办事入口 | <img src="docs/screenshots/v011-iPhone-services.png" width="230" alt="iPhone 办事入口"> | <img src="docs/screenshots/v011-iPad-services.png" width="420" alt="iPad 办事入口"> |
+| 请假记录 | <img src="docs/screenshots/v011-iPhone-leave.png" width="230" alt="iPhone 请假记录"> | <img src="docs/screenshots/v011-iPad-leave.png" width="420" alt="iPad 请假记录"> |
+| 学生活动 | <img src="docs/screenshots/v011-iPhone-activities.png" width="230" alt="iPhone 学生活动"> | <img src="docs/screenshots/v011-iPad-activities.png" width="420" alt="iPad 学生活动"> |
+| 培养方案 | <img src="docs/screenshots/v011-iPhone-degree.png" width="230" alt="iPhone 培养方案"> | <img src="docs/screenshots/v011-iPad-degree.png" width="420" alt="iPad 培养方案"> |
+| IC 讨论间 | <img src="docs/screenshots/v011-iPhone-ic.png" width="230" alt="iPhone IC 讨论间"> | <img src="docs/screenshots/v011-iPad-ic.png" width="420" alt="iPad IC 讨论间"> |
+| 打印站点 | <img src="docs/screenshots/v011-iPhone-print-stations.png" width="230" alt="iPhone 打印站点"> | <img src="docs/screenshots/v011-iPad-print-stations.png" width="420" alt="iPad 打印站点"> |
+
+**0.10.1 历史页面**：以下为[本版构建](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40854245874)的示例布局截图，真实后台核对见发布说明。空教室截图为虚构布局样例。
 
 | 页面 | iPhone | iPad |
 | --- | --- | --- |
