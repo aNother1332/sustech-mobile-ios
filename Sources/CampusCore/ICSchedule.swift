@@ -11,6 +11,9 @@ public struct ICRoomSchedule: Sendable {
     public let complete: Bool
     public var minLeadMinutes: Int? = nil
     public var maxAdvanceMinutes: Int? = nil
+    public func pastSnapshot(now: Date = .now) -> ICRoomSchedule {
+        ICRoomSchedule(roomID: roomID, day: day, windows: [], occupied: occupied.filter { $0.end <= now }, complete: false)
+    }
     public func retainingPast(from previous: ICRoomSchedule?, now: Date = .now) -> ICRoomSchedule {
         guard let previous, previous.roomID == roomID, CampusClock.format(previous.day) == CampusClock.format(day) else { return self }
         let retained = previous.occupied.filter { old in old.end <= now && !occupied.contains { $0.start == old.start && $0.end == old.end } }

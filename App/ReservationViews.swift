@@ -123,7 +123,11 @@ struct ICReservationView: View {
             let api = try await client(); let list = try await api.rooms(); let availability = try await api.schedules(rooms: list, day: date); let mine = try await api.mine()
             guard revision == store.sessionRevision, CampusClock.format(date) == CampusClock.format(day) else { return }
             let key = CampusClock.format(date)
-            let merged = availability.mapValues { $0.retainingPast(from: observedSchedules[key]?[$0.roomID]) }
+            var merged = availability.mapValues { $0.retainingPast(from: observedSchedules[key]?[$0.roomID]) }
+            for (id, old) in observedSchedules[key] ?? [:] where merged[id] == nil {
+                let history = old.pastSnapshot()
+                if !history.occupied.isEmpty { merged[id] = history }
+            }
             observedSchedules[key] = merged
             rooms = list; schedules = merged; orders = mine; connected = true; needsLogin = false; message = nil
         } catch { guard revision == store.sessionRevision, !Task.isCancelled else { return }; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }

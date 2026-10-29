@@ -39,6 +39,8 @@ import Testing
     let now = try #require(CampusClock.date("2026-11-02 12:00", "yyyy-MM-dd HH:mm"))
     #expect(empty.retainingPast(from: schedule, now: now).occupied.count == 1)
     #expect(empty.retainingPast(from: schedule, now: day).occupied.isEmpty)
+    #expect(schedule.pastSnapshot(now: now).occupied.count == 1)
+    #expect(!schedule.pastSnapshot(now: now).complete)
 }
 
 @Test func icExplicitUnlimitedWindowsDoNotBecomeUnselectable() throws {
