@@ -202,7 +202,7 @@ struct ClassroomView: View {
             }.padding(16).frame(maxWidth: 1000).frame(maxWidth: .infinity)
         }.background(Color(uiColor: .systemGroupedBackground)).navigationTitle("空教室").navigationBarTitleDisplayMode(.inline)
             .task { week = store.teaching?.week ?? store.academicTerm?.week(.now) ?? 1; weekday = (AcademicTerm.calendar.component(.weekday, from: .now) + 5) % 7 + 1; await load(); await check() }
-            .refreshable { if rooms.isEmpty { await load() }; await check() }
+            .refreshable { await load(); await check() }
             .task(id: selectionKey) { do { try await Task.sleep(for: .milliseconds(350)) } catch { return }; await check() }
             .onChange(of: selectionKey) { _, _ in results = [:] }.onChange(of: first) { _, value in last = max(last, value) }
     }
