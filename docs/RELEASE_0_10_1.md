@@ -9,4 +9,12 @@
 
 真实账号只在本机内存中做只读核对；凭据、Cookie、身份数据不进入仓库、云端构建或截图。自动化测试使用虚构样例，截图仅用于布局核对。
 
-构建与安装包核验在发布时补充。
+最终源码：`a9fe0fce12d9360f235647402ead8bae55ed73c7`；[构建与测试](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40856424792)。
+
+- 118 项 Swift 测试、8 项打包测试通过；模拟器与 arm64 真机 Release 编译成功。
+- iPhone/iPad 模拟器复查首页、培养方案、空教室页面；截图为虚构示例资料，不替代设备交互验收。
+- 普通包 2,678,342 字节，SHA-256：`bbad3df2d4d5d2298cb332dba04609782510a9e388a2e951b99753912330fce1`。
+- 扩展包 2,764,671 字节，SHA-256：`8a8ceeae874b566145f95aeee3d605e6f23176f3a9a9b4a145614e677a97dc28`。
+- 已核验 ZIP、设备 Mach-O、版本 0.10.1/build 15、iOS 17 最低版本与 iPhone/iPad 支持。
+
+推荐安装普通 `SUSTechMobile-unsigned.ipa`，扩展包继续用于独立签名验证。
