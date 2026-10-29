@@ -86,7 +86,7 @@ def generate() -> None:
         "TARGETED_DEVICE_FAMILY": "1,2", "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
         "SUPPORTS_MACCATALYST": "NO", "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD": "NO",
         "SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD": "NO", "CODE_SIGN_STYLE": "Automatic",
-        "MARKETING_VERSION": "0.10.0", "CURRENT_PROJECT_VERSION": "14",
+        "MARKETING_VERSION": "0.10.1", "CURRENT_PROJECT_VERSION": "15",
         "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
         "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
@@ -122,7 +122,7 @@ def generate() -> None:
             "INFOPLIST_FILE": "Config/Share-Info.plist", "GENERATE_INFOPLIST_FILE": "NO", "SKIP_INSTALL": "YES",
             "APPLICATION_EXTENSION_API_ONLY": "YES", "TARGETED_DEVICE_FAMILY": "1,2",
             "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
-            "MARKETING_VERSION": "0.10.0", "CURRENT_PROJECT_VERSION": "14", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
+            "MARKETING_VERSION": "0.10.1", "CURRENT_PROJECT_VERSION": "15", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         }))
     share_config_list = add("share-config-list", "XCConfigurationList", buildConfigurations=share_configs, defaultConfigurationIsVisible="0", defaultConfigurationName="Release")
     share_target = add("share-target", "PBXNativeTarget", buildConfigurationList=share_config_list, buildPhases=[share_sources], buildRules=[], dependencies=[], name="CampusPrintShare", productName="CampusPrintShare", productReference=share_product, productType="com.apple.product-type.app-extension")
@@ -145,7 +145,7 @@ def generate() -> None:
             "INFOPLIST_FILE": "Config/Widget-Info.plist", "GENERATE_INFOPLIST_FILE": "NO", "SKIP_INSTALL": "YES",
             "APPLICATION_EXTENSION_API_ONLY": "YES", "TARGETED_DEVICE_FAMILY": "1,2",
             "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
-            "MARKETING_VERSION": "0.10.0", "CURRENT_PROJECT_VERSION": "14", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
+            "MARKETING_VERSION": "0.10.1", "CURRENT_PROJECT_VERSION": "15", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         }))
     widget_config_list = add("widget-config-list", "XCConfigurationList", buildConfigurations=widget_configs, defaultConfigurationIsVisible="0", defaultConfigurationName="Release")
     widget_target = add("widget-target", "PBXNativeTarget", buildConfigurationList=widget_config_list, buildPhases=[widget_phase], buildRules=[], dependencies=[], name="CampusWidgets", productName="CampusWidgets", productReference=widget_product, productType="com.apple.product-type.app-extension")

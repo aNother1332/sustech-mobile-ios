@@ -78,6 +78,7 @@ jobs:
           cp docs/RELEASE_0_8.md dist/RELEASE_0_8.md
           cp docs/RELEASE_0_9.md dist/RELEASE_0_9.md
           cp docs/RELEASE_0_10.md dist/RELEASE_0_10.md
+          cp docs/RELEASE_0_10_1.md dist/RELEASE_0_10_1.md
       - name: Upload downloadable device package
         uses: actions/upload-artifact@v4
         with:

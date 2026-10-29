@@ -57,7 +57,7 @@ import Security
 
 @Test func topWeatherTemperatureUsesCurrentValueInsteadOfRangeOrFeelsLike() {
     let weather = CampusWeather(summary: "南科大天气：24℃-30℃。气温24.7℃，体感26.2℃，近两个小时内无降雨。", aqi: nil)
-    #expect(weather.temperature == "24.7°")
+    #expect(weather.temperature == "24.7℃")
 }
 
 @Test func printingSPKIKeyEncryptsNoncePasswordWithServerCompatiblePadding() throws {

@@ -163,6 +163,7 @@ struct BusStopView: View {
 struct ClassroomView: View {
     @Environment(CampusStore.self) private var store
     @State private var rooms: [Classroom] = []
+    @State private var courseDirectory: ClassroomCourseDirectory?
     @State private var results: [String: String] = [:]
     @State private var query = ""
     @State private var week = 1
@@ -188,6 +189,7 @@ struct ClassroomView: View {
                 }
                 NativeLoginButton()
                 ServiceMessage(message: message, hideLogin: true)
+                if courseDirectory != nil { Text("课程占用 · 临时借用未知").font(.caption).foregroundStyle(.secondary) }
                 if busy { ProgressView().frame(maxWidth: .infinity) }
                 ForEach(filtered) { room in
                     HStack(spacing: 13) {
@@ -204,7 +206,7 @@ struct ClassroomView: View {
             .task(id: selectionKey) { do { try await Task.sleep(for: .milliseconds(350)) } catch { return }; await check() }
             .onChange(of: selectionKey) { _, _ in results = [:] }.onChange(of: first) { _, value in last = max(last, value) }
     }
-    private func resultColor(_ id: String) -> Color { results[id] == "系统未见占用" ? .campusGreen : results[id] == "已有安排" ? .orange : .secondary }
+    private func resultColor(_ id: String) -> Color { ["系统未见占用", "无课"].contains(results[id] ?? "") ? .campusGreen : ["已有安排", "有课"].contains(results[id] ?? "") ? .orange : .secondary }
     private func semester(_ http: ServiceHTTP) async throws -> Semester {
         do { return try TISParser.semester(await http.data("/component/querydangqianxnxq", form: [:], headers: ["RoleCode": "00"])) }
         catch let error as CampusError where error != .signInRequired && error != .accessDenied {
@@ -218,7 +220,19 @@ struct ClassroomView: View {
         #endif
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.teaching)
-        do { let sem = try await semester(http); let value = try await ClassroomClient(http: http).catalog(semester: sem); guard version == store.sessionRevision else { return }; rooms = value; results = [:]; message = nil }
+        do {
+            let sem = try await semester(http); let api = ClassroomClient(http: http)
+            do {
+                let value = try await api.catalog(semester: sem)
+                guard version == store.sessionRevision else { return }
+                rooms = value; courseDirectory = nil
+            } catch let failure as ServiceFailure where failure.message == "教室目录暂不可用" {
+                let value = try await api.courseDirectory(semester: sem)
+                guard version == store.sessionRevision else { return }
+                courseDirectory = value; rooms = value.rooms
+            }
+            results = [:]; message = nil
+        }
         catch { guard version == store.sessionRevision, !Task.isCancelled else { return }; message = error.localizedDescription; store.recordSession(.teaching, error: error) }
         await store.absorb(http, revision: version)
     }
@@ -228,6 +242,10 @@ struct ClassroomView: View {
         busy = true; defer { busy = false }
         let version = store.sessionRevision; let key = selectionKey; let w = week, d = weekday, a = first, b = last
         let selected = Array(filtered.prefix(20)); let http = await store.serviceHTTP(.teaching)
+        if let courseDirectory {
+            for room in filtered { results[room.id] = (courseDirectory.entries[room.id] ?? []).contains { $0.overlaps(week: w, weekday: d, first: a, last: b) } ? "有课" : "无课" }
+            return
+        }
         do {
             let sem = try await semester(http); let client = ClassroomClient(http: http)
             for room in selected {

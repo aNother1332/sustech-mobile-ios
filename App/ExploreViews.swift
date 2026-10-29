@@ -136,7 +136,7 @@ struct DegreeProgressView: View {
     var body: some View {
         List {
             Section { BusinessHeader(title: "修读进度", symbol: "graduationcap", color: .blue) }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
-            Section { CurriculumCard() }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+            Section { CurriculumCard() }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
             Section { SessionBadge()
                 if busy { ProgressView() }; ServiceMessage(message: message, hideLogin: true)
                 EmptyView()

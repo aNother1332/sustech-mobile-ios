@@ -17,7 +17,7 @@ public enum SessionReadPolicy {
         if ["GET", "HEAD"].contains(method.uppercased()) { return true }
         guard method.uppercased() == "POST" else { return false }
         return ["/component/query", "/xszykb/query", "/usermanager/queryxsxx", "/cjgl/grcjcx/grcjcx",
-                "/cjgl/cjzhtjcx/cjcx/getxss", "/cjgl/cjzhtjcx/cjcx/querybyyq",
+                "/cjgl/cjzhtjcx/cjcx/getxss", "/cjgl/cjzhtjcx/cjcx/querybyyq", "/xsxktz/queryrwxxcxlist",
                 "/api/systemapi/getmeeting", "/api/systemapi/getuserinfo", "/api/client/account/query", "/api/client/report/detailpage", "/cdkb/querycdkblist", "/epay/vcard/getqrcode"].contains(where: path.hasPrefix)
     }
     public static func expired(status: Int, data: Data) -> Bool {

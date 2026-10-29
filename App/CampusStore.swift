@@ -51,6 +51,7 @@ final class CampusStore {
     var automaticLoginMessage: String?
     var resumingConnections = false
     var lastAutomaticLogin: Date?
+    var casRenewal: Task<Void, Error>?
     private(set) var authenticationMessage: String?
     private(set) var challengeService: SchoolService?
     private(set) var cacheMessage: String?
@@ -140,6 +141,7 @@ final class CampusStore {
 
     func signIn(username: String, password: String, remember: Bool = false, automatic: Bool = false) async {
         guard !authenticating, !clearing, !writing, mode == .live else { return }
+        casRenewal?.cancel(); casRenewal = nil
         if !automatic, let previous = rememberedUsername, previous != username { forgetSchoolAccount() }
         authenticating = true
         defer { authenticating = false; if Task.isCancelled { authenticationMessage = "登录已取消。" } }
@@ -451,7 +453,7 @@ final class CampusStore {
         if let root = CampusWidgetBridge.root { try? FileManager.default.removeItem(at: root.appendingPathComponent("CampusWidget.json")) }; WidgetCenter.shared.reloadAllTimelines()
         guard !clearing, !writing else { return }
         let forgotCredentials = forgetSchoolAccount()
-        clearing = true; generation += 1
+        clearing = true; generation += 1; casRenewal?.cancel(); casRenewal = nil
         let requests = await UNUserNotificationCenter.current().pendingNotificationRequests()
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: requests.filter { $0.identifier.hasPrefix("campus-") }.map(\.identifier))
         resetDisplayedData(); owner = nil; mode = .live

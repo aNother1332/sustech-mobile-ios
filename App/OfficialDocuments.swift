@@ -87,7 +87,14 @@ struct CurriculumCard: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack { Text("培养方案").font(.headline); Spacer(); Picker("入学年级", selection: Binding(get: { year }, set: { chosenYear = $0 })) { ForEach(CurriculumDocument.all) { Text(String($0.year) + "级").tag($0.year) } }.labelsHidden() }
+            HStack {
+                Text("培养方案").font(.headline); Spacer()
+                Menu {
+                    ForEach(CurriculumDocument.all) { item in Button(String(item.year) + "级") { chosenYear = item.year } }
+                } label: {
+                    Label(String(year) + "级", systemImage: "chevron.down").font(.subheadline).foregroundStyle(.orange)
+                }.buttonStyle(.borderless).accessibilityIdentifier("curriculum-year")
+            }
             if file.loading { ProgressView().frame(maxWidth: .infinity) }
             if let error = file.error { InlineFailure(message: error) }
             if let selection {
@@ -97,8 +104,8 @@ struct CurriculumCard: View {
                         VStack(alignment: .leading, spacing: 9) { Text(selection.title).font(.headline); Text(String(year) + "级 · " + String(selection.document.pageCount) + " 页").font(.caption).foregroundStyle(.secondary); Label("打开阅读", systemImage: "doc.text.magnifyingglass").font(.caption).foregroundStyle(.blue) }
                         Spacer(minLength: 0)
                     }.padding(16).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 16))
-                }.buttonStyle(.plain)
-                if let document = file.document, selection.document !== document { NavigationLink("完整培养方案") { OfficialDocumentPage(title: "\(year)级培养方案", document: document) }.font(.caption) }
+                }.buttonStyle(.borderless).accessibilityIdentifier("curriculum-read")
+                if let document = file.document, selection.document !== document { NavigationLink("完整培养方案") { OfficialDocumentPage(title: "\(year)级培养方案", document: document) }.font(.caption).buttonStyle(.borderless) }
             }
             if source == nil { Link("学校培养方案目录", destination: URL(string: "https://tao.sustech.edu.cn/xueshengfuwu/pyfa/")!).font(.subheadline) }
         }.task(id: source?.url) { if let source { await file.load(source.url) } }

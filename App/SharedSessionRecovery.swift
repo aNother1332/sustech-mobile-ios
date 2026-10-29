@@ -48,8 +48,7 @@ extension CampusStore {
         do { try await exchangeSession(for: origin) }
         catch {
             guard origin.host != SchoolService.printing.portalURL.host, LoginRequirement.confirmed(error), remembersSchoolAccount else { throw error }
-            serviceSessions[.teaching] = ServiceSessionState(status: .expired)
-            await resumeSchoolConnections(confirmedCASExpiry: true)
+            try await renewRememberedCAS()
             guard version == sessionRevision else { throw CancellationError() }
             try await exchangeSession(for: origin)
         }

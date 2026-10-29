@@ -31,7 +31,10 @@ private final class SessionPrintFixture: URLProtocol, @unchecked Sendable {
         let path = request.url!.path
         let valid: Bool
         let body: String
-        if path == "/component/querydangqianxnxq" {
+        if path == "/user/me" {
+            valid = request.httpMethod == "GET"
+            body = request.url?.host == "signedout.sustech.edu.cn" ? "{}" : #"{"username":"fixture-user","enabled":true}"#
+        } else if path == "/component/querydangqianxnxq" {
             valid = request.httpMethod == "POST"
             body = #"{"XN":"2026-2027","XQ":"1","XNXQ":"2026秋"}"#
         } else if path == "/api/client/Station/GetList" {
@@ -50,8 +53,11 @@ private func regressionHTTP(_ origin: String) -> ServiceHTTP {
     let configuration = URLSessionConfiguration.ephemeral; configuration.protocolClasses = [SessionPrintFixture.self]
     return ServiceHTTP(origin: URL(string: origin)!, configuration: configuration)
 }
-@Test func teachingProbeUsesSupportedProtectedPOSTInsteadOfUserNameField() async throws {
+@Test func teachingProbeRequiresAuthenticatedIdentity() async throws {
     try await SchoolSessionProbe.teaching(regressionHTTP("https://tis.sustech.edu.cn"))
+}
+@Test func publicSemesterResponseCannotProveLogin() async {
+    await #expect(throws: CampusError.signInRequired) { try await SchoolSessionProbe.teaching(regressionHTTP("https://signedout.sustech.edu.cn")) }
 }
 @Test func stationsLoadWithoutSchoolCookieOrCASExchange() async throws {
     let rows = try await PrintingClient(http: regressionHTTP("https://pms.sustech.edu.cn")).stations()
