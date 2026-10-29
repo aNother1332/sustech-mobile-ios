@@ -9,4 +9,13 @@
 
 没有新增学校接口、真实账号测试或学校写操作；测试仅使用界面样例。原有打印、预约、请假等功能的使用范围及验证边界沿用 0.11.0。
 
-构建、测试和安装包核验在发布时补充。
+最终源码：`9f281a5c9005d2aa0f116eaad1694436eb3f70b4`；[构建与测试](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40909851019)。
+
+- 124 项 Swift 核心测试、8 项打包测试通过；课表相关源文件与 0.11.0 完全一致。
+- 3 项模拟器点击测试通过：新增首页余额／待办跳转，既有 PDF 选择和 IC 可约时段进入表单检查继续通过。
+- iPhone/iPad 模拟器与 arm64 真机 Release 编译成功；首页、办事共 4 张页面截图为虚构示例资料。
+- 普通 IPA 2,783,716 字节，SHA-256：`6ac66c404392e4ff8a9a89819778fe24df3ffc9d81d62b0469ed37aaf84e4eef`。
+- 扩展 IPA 2,870,043 字节，SHA-256：`33c702f739ddbf359750a1069b538be3b742e00e7eb0b30abc182992c898f060`。
+- ZIP、设备二进制、1.0.0/build 17、iOS 17 最低版本及 iPhone/iPad 支持均已核验。
+
+推荐使用普通 `SUSTechMobile-unsigned.ipa`，继续通过现有 iLoader 重签安装。

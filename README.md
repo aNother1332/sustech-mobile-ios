@@ -29,7 +29,7 @@
 
 ## 当前状态
 
-当前功能版本为 **0.11.0 试用版**。“办事”顶部新增请假和学生活动：原生读取本人请假记录、详情及活动分页，申请请假使用已登录的学校完整表单。修复打印诊断误导与空列表解析、培养方案圆角裁切和重复打开，以及 IC 全天可约时段点击和已结束记录显示。详见 [0.11.0 说明](docs/RELEASE_0_11.md)。
+当前功能版本为 **1.0.0**。调整“办事”入口顺序，首页余额和待办卡片支持整卡跳转；课表沿用原有逻辑。详见 [1.0.0 说明](docs/RELEASE_1_0.md)。此前请假、学生活动、IC 和打印修正见 [0.11.0 说明](docs/RELEASE_0_11.md)。
 
 界面根据 Apple 设计原则重新整理，采用[学校官方标识页](https://www.sustech.edu.cn/zh/school_logo.html)公布的 **南科大橙 `#ED6C00`、墨绿 `#003F43`、天青 `#2BBCB3`**，以深色重点摘要、彩色服务入口与紧凑课程块建立层级；支持深色模式和系统大字号。使用文字和图标共同表达状态，临近截止时间单独强调。完整功能与验证边界见 [0.6.0 说明](docs/RELEASE_0_6.md)、[0.5.0 说明](docs/RELEASE_0_5.md)。
 
@@ -75,7 +75,14 @@
 
 ## 界面截图
 
-**0.11.0 当前界面**：以下 12 张页面图来自[本版模拟器运行](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40899790564)，使用虚构示例资料。另有 2 项实际点击测试验证 PDF 阅读选择和 IC 可约时段进入表单；真实后台只读结果与边界见发布说明。
+**1.0.0 当前界面**：以下为[本版模拟器运行](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40909851019)的示例截图。另有自动点击测试验证首页卡片进入校园卡与我的日程，截图使用虚构样例，不包含真实学生资料。
+
+| 页面 | iPhone | iPad |
+| --- | --- | --- |
+| 首页卡片跳转 | <img src="docs/screenshots/v100-iPhone-today.png" width="230" alt="iPhone 首页卡片跳转"> | <img src="docs/screenshots/v100-iPad-today.png" width="420" alt="iPad 首页卡片跳转"> |
+| 办事顺序 | <img src="docs/screenshots/v100-iPhone-services.png" width="230" alt="iPhone 办事顺序"> | <img src="docs/screenshots/v100-iPad-services.png" width="420" alt="iPad 办事顺序"> |
+
+**0.11.0 业务界面**：以下 12 张页面图来自[本版模拟器运行](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40899790564)，使用虚构示例资料。另有 2 项实际点击测试验证 PDF 阅读选择和 IC 可约时段进入表单；真实后台只读结果与边界见发布说明。
 
 | 页面 | iPhone | iPad |
 | --- | --- | --- |
