@@ -28,6 +28,8 @@ extension CampusStore {
                     guard version == self.sessionRevision, !self.clearing else { throw CancellationError() }
                     await self.websiteDataStore.httpCookieStore.setCookie(cookie)
                 }
+                guard version == self.sessionRevision, !self.clearing else { throw CancellationError() }
+                self.recordSession(.teaching)
             } catch {
                 if version == self.sessionRevision, let failure = error as? CASFailure, [.rejected, .challenge, .missingForm].contains(failure) {
                     UserDefaults.standard.set(true, forKey: "school-auto-login-paused")
