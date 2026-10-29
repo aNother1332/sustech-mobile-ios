@@ -32,7 +32,7 @@ def main():
         try:
             run("install", uid, APP)
             if family == "iPhone":
-                subprocess.run(["xcodebuild", "-project", "SUSTech.xcodeproj", "-scheme", "SUSTech", "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={uid}", "-derivedDataPath", "DerivedData", "-parallel-testing-enabled", "NO", "CODE_SIGNING_ALLOWED=NO", "test", "-only-testing:SUSTechUITests"], check=True, timeout=360)
+                subprocess.run(["xcodebuild", "-project", "SUSTech.xcodeproj", "-scheme", "SUSTech", "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={uid}", "-derivedDataPath", "DerivedData", "-parallel-testing-enabled", "NO", "ARCHS=arm64", "ONLY_ACTIVE_ARCH=YES", "CODE_SIGNING_ALLOWED=NO", "test", "-only-testing:SUSTechUITests"], check=True, timeout=360)
             scenes = (
                 ("today", ["--smoke-demo"]),
                 ("today-agenda", ["--smoke-demo", "--smoke-home-agenda"]),
