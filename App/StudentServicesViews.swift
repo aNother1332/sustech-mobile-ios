@@ -85,7 +85,7 @@ private struct StudentServiceDetail: View {
                 Divider()
                 if !value.start.isEmpty { Label(value.start + (value.end.isEmpty ? "" : " — " + value.end), systemImage: "calendar") }
                 if !value.location.isEmpty { Label(value.location, systemImage: "mappin.and.ellipse") }
-                if !value.status.isEmpty { Text(value.status).foregroundStyle(.campusGreen) }
+                if !value.status.isEmpty { Text(value.status).foregroundStyle(Color.campusGreen) }
                 Text(value.text).font(.body).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
                 ServiceMessage(message: message)
             }.padding(20).frame(maxWidth: 900).frame(maxWidth: .infinity)
