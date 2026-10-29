@@ -14,6 +14,18 @@ final class OfficialPDF {
         let request = UUID(); requestID = request; loading = true
         defer { if requestID == request { loading = false } }
         document = nil; thumbnail = nil; error = nil
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--smoke-pdf-interaction") {
+            let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 300, height: 400))
+            let data = renderer.pdfData { context in for index in 1...4 { context.beginPage(); ("Sample page \(index)" as NSString).draw(at: CGPoint(x: 30, y: 30), withAttributes: [.font: UIFont.systemFont(ofSize: 18)]) } }
+            let pdf = PDFDocument(data: data)!
+            let root = PDFOutline()
+            for (index, title) in [(0, "示例专业培养方案"), (2, "其他专业培养方案")] {
+                let child = PDFOutline(); child.label = title; child.destination = PDFDestination(page: pdf.page(at: index)!, at: .zero); root.insertChild(child, at: root.numberOfChildren)
+            }
+            pdf.outlineRoot = root; document = pdf; thumbnail = pdf.page(at: 0)?.thumbnail(of: CGSize(width: 190, height: 250), for: .mediaBox); return
+        }
+        #endif
         guard url.scheme == "https", ["tao.sustech.edu.cn", "www.sustech.edu.cn"].contains(url.host ?? "") else { error = "文件地址不可用"; return }
         let config = URLSessionConfiguration.ephemeral; config.urlCache = nil; config.timeoutIntervalForRequest = 40
         let session = URLSession(configuration: config); defer { session.finishTasksAndInvalidate() }
@@ -60,6 +72,7 @@ struct CurriculumCard: View {
     @Environment(CampusStore.self) private var store
     @State private var file = OfficialPDF()
     @State private var chosenYear: Int?
+    @State private var reading: CurriculumReading?
     private var year: Int { chosenYear ?? store.profile?.admissionYear ?? 2026 }
     private var source: CurriculumDocument? { CurriculumDocument.all.first { $0.year == year } }
     private var selection: (title: String, document: PDFDocument)? {
@@ -98,16 +111,27 @@ struct CurriculumCard: View {
             if file.loading { ProgressView().frame(maxWidth: .infinity) }
             if let error = file.error { InlineFailure(message: error) }
             if let selection {
-                NavigationLink { OfficialDocumentPage(title: selection.title, document: selection.document).toolbar(.visible, for: .navigationBar) } label: {
+                Button { reading = CurriculumReading(title: selection.title, document: selection.document) } label: {
                     HStack(spacing: 18) {
                         if let image = file.thumbnail { Image(uiImage: image).resizable().scaledToFit().frame(width: 86, height: 116).clipShape(RoundedRectangle(cornerRadius: 5)).shadow(color: .black.opacity(0.08), radius: 5) }
                         VStack(alignment: .leading, spacing: 9) { Text(selection.title).font(.headline); Text(String(year) + "级 · " + String(selection.document.pageCount) + " 页").font(.caption).foregroundStyle(.secondary); Label("打开阅读", systemImage: "doc.text.magnifyingglass").font(.caption).foregroundStyle(.blue) }
                         Spacer(minLength: 0)
                     }.padding(16).background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.borderless).accessibilityIdentifier("curriculum-read")
-                if let document = file.document, selection.document !== document { NavigationLink("完整培养方案") { OfficialDocumentPage(title: "\(year)级培养方案", document: document) }.font(.caption).buttonStyle(.borderless) }
+                if let document = file.document, selection.document !== document { Button("查看全校培养方案") { reading = CurriculumReading(title: "\(year)级全校培养方案", document: document) }.font(.caption).buttonStyle(.borderless) }
             }
             if source == nil { Link("学校培养方案目录", destination: URL(string: "https://tao.sustech.edu.cn/xueshengfuwu/pyfa/")!).font(.subheadline) }
-        }.task(id: source?.url) { if let source { await file.load(source.url) } }
+        }.padding(16).task(id: source?.url) { if let source { await file.load(source.url) } }
+            .sheet(item: $reading) { item in
+                NavigationStack {
+                    OfficialDocumentPage(title: item.title, document: item.document)
+                        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { reading = nil } } }
+                }
+            }
     }
+}
+private struct CurriculumReading: Identifiable {
+    let id = UUID()
+    let title: String
+    let document: PDFDocument
 }

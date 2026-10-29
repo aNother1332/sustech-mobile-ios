@@ -178,6 +178,13 @@ final class SchoolSessions: NSObject, WKHTTPCookieStoreObserver {
             self.setCLEIdentity(id: identity.id, name: identity.name, epoch: self.revision)
         }
     }
+    func connectStudentService(_ app: StudentServiceApp, force: Bool = false) async throws {
+        try await ensureBusiness(app.rawValue, force: force) {
+            _ = try await self.exchange(app.entry, host: "ehall.sustech.edu.cn")
+            let bootstrap = SchoolWebBootstrap()
+            _ = try await bootstrap.establish(in: self.websiteDataStore, app: app)
+        }
+    }
     func connectExchange(force: Bool = false) async throws {
         try await ensureBusiness("exchange", force: force) {
             var parts = URLComponents(url: CASPolicy.login, resolvingAgainstBaseURL: false)!

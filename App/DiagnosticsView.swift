@@ -14,11 +14,15 @@ struct DiagnosticsView: View {
     }
     private func load() async {
         guard !busy else { return }; busy = true; defer { busy = false }; values = []
-        for (name, address) in [("学校认证", "https://cas.sustech.edu.cn/cas/login"), ("校园打印", "https://pms.sustech.edu.cn/client/new/cprintPc/"), ("校车公开服务", "https://buseta.sustcra.com/stops")] {
+        for (name, address) in [("学校认证", "https://cas.sustech.edu.cn/cas/login"), ("校园打印", "https://pms.sustech.edu.cn/api/client/Auth/PublicKey"), ("校车公开服务", "https://buseta.sustcra.com/stops")] {
             do {
                 let configuration = URLSessionConfiguration.ephemeral; configuration.timeoutIntervalForRequest = 8
-                let (_, response) = try await URLSession(configuration: configuration).data(from: URL(string: address)!)
+                let session = URLSession(configuration: configuration); defer { session.invalidateAndCancel() }
+                let (data, response) = try await session.data(from: URL(string: address)!)
                 let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                if name == "校园打印" {
+                    values.append((name, PrintingClient.probeMessage(status: status, data: data))); continue
+                }
                 values.append((name, status == 403 ? "服务拒绝访问（403）" : (200..<400).contains(status) ? "可达" : "已响应（\(status)）"))
             } catch { values.append((name, "不可达／超时")) }
         }

@@ -6,6 +6,7 @@ struct SchoolBrowser: View {
     let service: SchoolService
     var initialURL: URL? = nil
     var ephemeral = false
+    var openLeaveForm = false
     @State private var transientStore = WKWebsiteDataStore.nonPersistent()
     private var entryURL: URL { initialURL ?? service.portalURL }
     @Environment(CampusStore.self) private var store
@@ -23,7 +24,7 @@ struct SchoolBrowser: View {
                     Text(failure).font(.callout).foregroundStyle(.orange).padding()
                 }
                 if ready {
-                    BrowserWebView(url: entryURL, dataStore: ephemeral ? transientStore : store.websiteDataStore, state: browserState, sessions: store.sessions, renew: renewBrowser)
+                    BrowserWebView(url: entryURL, dataStore: ephemeral ? transientStore : store.websiteDataStore, state: browserState, sessions: store.sessions, renew: renewBrowser, openLeaveForm: openLeaveForm)
                 } else if preparing { ProgressView("正在准备学校页面…").frame(maxWidth: .infinity, maxHeight: .infinity) }
                 else { ContentUnavailableView("暂时无法打开登录页面", systemImage: "lock", description: Text("请解锁设备，关闭页面后重新打开。")) }
             }
@@ -91,8 +92,9 @@ struct BrowserWebView: UIViewRepresentable {
     let state: BrowserState
     let sessions: SchoolSessions
     let renew: @MainActor () async -> Bool
+    let openLeaveForm: Bool
 
-    func makeCoordinator() -> Coordinator { Coordinator(state: state, sessions: sessions, entry: url, renew: renew) }
+    func makeCoordinator() -> Coordinator { Coordinator(state: state, sessions: sessions, entry: url, renew: renew, openLeaveForm: openLeaveForm) }
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
@@ -105,7 +107,10 @@ struct BrowserWebView: UIViewRepresentable {
         view.allowsBackForwardNavigationGestures = true
         view.scrollView.isScrollEnabled = true
         view.pageZoom = state.zoom
-        view.load(URLRequest(url: url))
+        Task { @MainActor [weak view] in
+            if let rules = await SchoolResourceRules.shared() { view?.configuration.userContentController.add(rules) }
+            view?.load(URLRequest(url: url))
+        }
         return view
     }
 
@@ -124,10 +129,26 @@ struct BrowserWebView: UIViewRepresentable {
         private let entry: URL
         private let renew: @MainActor () async -> Bool
         private var attemptedRenewal = false
-        init(state: BrowserState, sessions: SchoolSessions, entry: URL, renew: @escaping @MainActor () async -> Bool) { self.state = state; self.sessions = sessions; self.entry = entry; self.renew = renew }
+        private let openLeaveForm: Bool
+        private var openedForm = false
+        init(state: BrowserState, sessions: SchoolSessions, entry: URL, renew: @escaping @MainActor () async -> Bool, openLeaveForm: Bool) { self.state = state; self.sessions = sessions; self.entry = entry; self.renew = renew; self.openLeaveForm = openLeaveForm }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             captureIdentity(webView, attempts: 20, epoch: sessions.epoch)
+            if openLeaveForm, !openedForm, webView.url?.path.hasPrefix(StudentServiceApp.leave.root) == true {
+                openedForm = true
+                Task { @MainActor [weak webView] in
+                    // Open the school's blank form only. Never click save/submit.
+                    _ = try? await webView?.callAsyncJavaScript("""
+                    for (let i=0;i<40;i++) {
+                      const add=document.querySelector('[data-action="add"]');
+                      if(add){add.click();return true;}
+                      await new Promise(r=>setTimeout(r,500));
+                    }
+                    return false;
+                    """, arguments: [:], in: nil, contentWorld: .page)
+                }
+            }
             if webView.url?.host == CASPolicy.login.host, webView.url?.path == CASPolicy.login.path, !attemptedRenewal {
                 attemptedRenewal = true
                 Task { @MainActor [weak self, weak webView] in
@@ -140,7 +161,7 @@ struct BrowserWebView: UIViewRepresentable {
             }
         }
         private func captureIdentity(_ webView: WKWebView, attempts: Int, epoch: Int) {
-            guard webView.url?.host == "ehall.sustech.edu.cn" else { return }
+            guard webView.url?.host == "ehall.sustech.edu.cn", webView.url?.path.hasPrefix("/dxggyw/sys/yyzxyy/") == true else { return }
             guard sessions.epoch == epoch else { return }
             webView.evaluateJavaScript("JSON.stringify({id: String(window.userId || ''), name: String(window.userName || '')})") { [weak self, weak webView] value, _ in
                 if let text = value as? String, let data = text.data(using: .utf8),

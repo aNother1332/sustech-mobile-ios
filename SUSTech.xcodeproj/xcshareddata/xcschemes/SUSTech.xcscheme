@@ -7,6 +7,13 @@
       </BuildActionEntry>
     </BuildActionEntries>
   </BuildAction>
+  <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES">
+    <Testables>
+      <TestableReference skipped="NO">
+        <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C972F427C0D501B6444DFE03" BuildableName="SUSTechUITests.xctest" BlueprintName="SUSTechUITests" ReferencedContainer="container:SUSTech.xcodeproj" />
+      </TestableReference>
+    </Testables>
+  </TestAction>
   <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" allowLocationSimulation="YES">
     <BuildableProductRunnable runnableDebuggingMode="0">
       <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C1E9827DB735CA9BAA54A540" BuildableName="SUSTech.app" BlueprintName="SUSTech" ReferencedContainer="container:SUSTech.xcodeproj" />

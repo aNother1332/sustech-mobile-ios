@@ -31,6 +31,7 @@ struct ICReservationView: View {
     @State private var rooms: [ReservationItem] = []
     @State private var orders: [ReservationItem] = []
     @State private var schedules: [String: ICRoomSchedule] = [:]
+    @State private var observedSchedules: [String: [String: ICRoomSchedule]] = [:]
     @State private var day = Date.now
     @State private var busy = false
     @State private var connected = false
@@ -46,7 +47,7 @@ struct ICReservationView: View {
             VStack(alignment: .leading, spacing: 16) {
                 BusinessHeader(title: "IC 讨论间", symbol: "person.2.crop.square.stack", color: Color(red: 0.18, green: 0.47, blue: 0.72))
                 HStack {
-                    DatePicker("日期", selection: $day, in: Date.now...Date.now.addingTimeInterval(7 * 86400), displayedComponents: .date).labelsHidden()
+                    DatePicker("日期", selection: $day, in: Date.now.addingTimeInterval(-30 * 86400)...Date.now.addingTimeInterval(7 * 86400), displayedComponents: .date).labelsHidden()
                     Spacer(); if busy { ProgressView() }
                 }
                 IndependentConnectionStatus(connected: connected, requiresLogin: needsLogin) { portal = true }
@@ -56,12 +57,15 @@ struct ICReservationView: View {
                         Text("讨论间").font(.caption).frame(width: 104, height: 34)
                         ForEach(bookableRooms) { room in Text(room.title).font(.caption.weight(.medium)).lineLimit(2).frame(width: 104, height: 58).background(Color.blue.opacity(0.035)).overlay(alignment: .bottom) { Divider() } }
                     }
-                    ScrollView(.horizontal) {
+                    ScrollViewReader { scroll in ScrollView(.horizontal) {
                         VStack(spacing: 0) {
-                            HStack(spacing: 0) { ForEach(0..<28, id: \.self) { slot in Text(String(format: "%02d:%02d", 8 + slot / 2, slot % 2 * 30)).font(.caption2.monospacedDigit()).foregroundStyle(.secondary).frame(width: slotWidth, height: 34) } }
+                            HStack(spacing: 0) { ForEach(0..<48, id: \.self) { slot in Text(String(format: "%02d:%02d", slot / 2, slot % 2 * 30)).font(.caption2.monospacedDigit()).foregroundStyle(.secondary).frame(width: slotWidth, height: 34).id(slot) } }
                             ForEach(bookableRooms) { room in timeline(room) }
                         }
-                    }.scrollIndicators(.hidden)
+                    }.scrollIndicators(.hidden).task(id: CampusClock.format(day)) {
+                        await Task.yield()
+                        scroll.scrollTo(AcademicTerm.calendar.isDateInToday(day) ? max(16, min(44, AcademicTerm.calendar.component(.hour, from: .now) * 2)) : 16, anchor: .leading)
+                    } }
                 }.background(Color.campusPaper, in: RoundedRectangle(cornerRadius: 14)).clipShape(RoundedRectangle(cornerRadius: 14))
                 if !orders.isEmpty { CampusSectionTitle(title: "我的预约") }
                 ForEach(orders) { order in
@@ -84,23 +88,26 @@ struct ICReservationView: View {
     }
     private func timeline(_ room: ReservationItem) -> some View {
         let schedule = schedules[room.id]
-        let base = CampusClock.date(CampusClock.format(day) + " 08:00", "yyyy-MM-dd HH:mm") ?? day
+        let base = AcademicTerm.calendar.startOfDay(for: day)
         return ZStack(alignment: .leading) {
-            HStack(spacing: 0) { ForEach(0..<28, id: \.self) { index in
+            HStack(spacing: 0) { ForEach(0..<48, id: \.self) { index in
                 let start = base.addingTimeInterval(Double(index) * 1800)
-                let end = min(start.addingTimeInterval(1800), schedule?.windows.last?.end ?? start.addingTimeInterval(1800))
-                let allowed = schedule?.canSelect(start: start, end: end) == true && start > .now
+                let window = schedule?.windows.first { $0.start <= start && $0.end > start }
+                let end = min(start.addingTimeInterval(1800), window?.end ?? start.addingTimeInterval(1800))
+                let allowed = schedule?.canSelect(start: start, end: end, now: .now) == true
                 Button { selected = ICSlotSelection(room: room, start: start, end: end) } label: {
-                    Rectangle().fill(schedule == nil ? Color.gray.opacity(0.15) : allowed ? Color.blue.opacity(0.035) : Color.gray.opacity(0.07)).frame(width: slotWidth, height: 58).overlay(alignment: .trailing) { Rectangle().fill(Color.gray.opacity(0.14)).frame(width: 0.5) }
-                }.buttonStyle(.plain).disabled(!allowed || busy).accessibilityLabel("\(room.title) \(String(format: "%02d:%02d", 8 + index / 2, index % 2 * 30))")
+                    Rectangle().fill(schedule == nil ? Color.gray.opacity(0.15) : allowed ? Color.campusGreen.opacity(0.13) : Color.gray.opacity(0.07)).frame(width: slotWidth, height: 58)
+                        .overlay { if allowed { Image(systemName: "plus").font(.caption.weight(.medium)).foregroundStyle(Color.campusGreen) } }
+                        .overlay(alignment: .trailing) { Rectangle().fill(Color.gray.opacity(0.14)).frame(width: 0.5) }
+                }.buttonStyle(.plain).disabled(!allowed || busy).accessibilityIdentifier("ic-slot-\(room.id)-\(index)").accessibilityLabel("\(room.title) \(String(format: "%02d:%02d", index / 2, index % 2 * 30)) \(allowed ? "可预约" : "不可预约")")
             } }
             if let schedule {
                 ForEach(schedule.occupied) { occupied in
-                    let a = max(0, occupied.start.timeIntervalSince(base) / 1800); let b = min(28, occupied.end.timeIntervalSince(base) / 1800)
+                    let a = max(0, occupied.start.timeIntervalSince(base) / 1800); let b = min(48, occupied.end.timeIntervalSince(base) / 1800)
                     if b > a { Text(CampusClock.format(occupied.start, "HH:mm") + "–" + CampusClock.format(occupied.end, "HH:mm")).font(.system(size: 10, weight: .medium)).lineLimit(1).foregroundStyle(Color(red: 0.45, green: 0.31, blue: 0.06)).frame(width: CGFloat(b-a) * slotWidth - 2, height: 34).background(Color.yellow.opacity(0.38), in: RoundedRectangle(cornerRadius: 5)).offset(x: CGFloat(a) * slotWidth + 1).allowsHitTesting(false) }
                 }
             }
-        }.frame(width: slotWidth * 28, height: 58).overlay(alignment: .bottom) { Divider() }
+        }.frame(width: slotWidth * 48, height: 58).overlay(alignment: .bottom) { Divider() }
     }
     private func client() async throws -> ICClient {
         try await store.prepareBusiness(.rooms); return ICClient(http: await store.serviceHTTP(origin: SchoolService.rooms.portalURL))
@@ -115,7 +122,10 @@ struct ICReservationView: View {
         do {
             let api = try await client(); let list = try await api.rooms(); let availability = try await api.schedules(rooms: list, day: date); let mine = try await api.mine()
             guard revision == store.sessionRevision, CampusClock.format(date) == CampusClock.format(day) else { return }
-            rooms = list; schedules = availability; orders = mine; connected = true; needsLogin = false; message = nil
+            let key = CampusClock.format(date)
+            let merged = availability.mapValues { $0.retainingPast(from: observedSchedules[key]?[$0.roomID]) }
+            observedSchedules[key] = merged
+            rooms = list; schedules = merged; orders = mine; connected = true; needsLogin = false; message = nil
         } catch { guard revision == store.sessionRevision, !Task.isCancelled else { return }; needsLogin = LoginRequirement.confirmed(error); message = needsLogin ? nil : error.localizedDescription }
     }
     private func cancel(_ order: ReservationItem) async {
@@ -125,8 +135,9 @@ struct ICReservationView: View {
     }
     private func demo() {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--smoke-ic-interaction"), AcademicTerm.calendar.isDateInToday(day) { day = AcademicTerm.calendar.date(byAdding: .day, value: 1, to: day)! }
         let date = CampusClock.format(day)
-        let raw: WireValue = .object(["devId": .string("demo-room"), "devName": .string("示例讨论间"), "resvInfo": .array([.object(["startTime": .string(date + " 10:00:00"), "endTime": .string(date + " 12:00:00"), "resvStatus": .integer(4)])]), "openTimes": .array([.object(["openStartTime": .string("08:00"), "openEndTime": .string("21:59")])])])
+        let raw: WireValue = .object(["devId": .string("demo-room"), "devName": .string("示例讨论间"), "resvInfo": .array([.object(["startTime": .string(date + " 10:00:00"), "endTime": .string(date + " 12:00:00"), "resvStatus": .integer(4)])]), "openTimes": .array([.object(["openStartTime": .string("00:00"), "openEndTime": .string("24:00")])])])
         rooms = [ReservationItem(id: "demo-room", title: "示例讨论间", detail: "", raw: raw)]
         if let value = try? ICRoomSchedule.parse(raw, day: day) { schedules = ["demo-room": value] }
         #endif

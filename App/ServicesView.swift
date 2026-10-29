@@ -21,6 +21,8 @@ struct ServicesView: View {
                 }.padding(12).background(Color.primary.opacity(0.04), in: Capsule())
                 CampusSectionTitle(title: "校园服务")
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    if matches("请假 申请 记录") { ServiceTile(title: "请假", detail: "申请 · 我的记录", symbol: "doc.text", color: .campusGreen) { StudentServicesView(app: .leave).id(store.sessionRevision) } }
+                    if matches("学生活动 校园活动") { ServiceTile(title: "学生活动", detail: "浏览 · 活动详情", symbol: "sparkles", color: .campusOrange) { StudentServicesView(app: .activities).id(store.sessionRevision) } }
                     if matches("校园码 身份码 扫码") { ServiceTile(title: "校园码", detail: "动态码 / 身份核验", symbol: "qrcode", color: .campusOrange) { CampusCodeView().id(store.sessionRevision) } }
                     if matches("校园卡 余额 账单 消费") { ServiceTile(title: "校园卡", detail: "余额 · 账单 · 消费曲线", symbol: "creditcard.fill", color: .campusOrange) { CardView().id(store.sessionRevision) } }
                     if matches("校车 站点 线路") { ServiceTile(title: "校车", detail: "附近站点 · 预计到站", symbol: "bus.fill", color: .campusGreen) { BusView() } }

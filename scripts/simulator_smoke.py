@@ -31,6 +31,8 @@ def main():
         run("bootstatus", uid, "-b")
         try:
             run("install", uid, APP)
+            if family == "iPhone":
+                subprocess.run(["xcodebuild", "-project", "SUSTech.xcodeproj", "-scheme", "SUSTech", "-configuration", "Debug", "-destination", f"platform=iOS Simulator,id={uid}", "-derivedDataPath", "DerivedData", "-parallel-testing-enabled", "NO", "CODE_SIGNING_ALLOWED=NO", "test", "-only-testing:SUSTechUITests"], check=True, timeout=360)
             scenes = (
                 ("today", ["--smoke-demo"]),
                 ("today-agenda", ["--smoke-demo", "--smoke-home-agenda"]),
@@ -63,6 +65,8 @@ def main():
                 ("my-reservations", ["--smoke-demo", "--smoke-my-reservations"]),
                 ("native-login", ["--smoke-login"]),
                 ("printing-login", ["--smoke-demo", "--smoke-printing-login"]),
+                ("leave", ["--smoke-demo", "--smoke-leave"]),
+                ("activities", ["--smoke-demo", "--smoke-activities"]),
                 ("card", ["--smoke-demo", "--smoke-card"]),
                 ("recharge", ["--smoke-demo", "--smoke-recharge"]),
                 ("agenda", ["--smoke-demo", "--smoke-agenda"]),

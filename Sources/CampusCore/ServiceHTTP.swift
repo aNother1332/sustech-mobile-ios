@@ -75,6 +75,10 @@ public struct ServiceHTTP: Sendable {
         request.setValue(CASPolicy.userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("XMLHttpRequest", forHTTPHeaderField: "X-Requested-With")
         request.setValue(origin.absoluteString, forHTTPHeaderField: "Referer")
+        if origin.host == "pms.sustech.edu.cn" {
+            request.setValue("application/json, text/javascript, */*; q=0.01", forHTTPHeaderField: "Accept")
+            request.setValue("https://pms.sustech.edu.cn/client/new/cprintPc/", forHTTPHeaderField: "Referer")
+        }
         for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
         if let form { request.httpBody = CampusHTTPClient.formBody(form); request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type") }
         if let json { request.httpBody = try JSONEncoder().encode(json); request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
@@ -82,6 +86,7 @@ public struct ServiceHTTP: Sendable {
         for attempt in 0...1 {
         let (data, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw CampusError.invalidResponse("校园服务") }
+        if origin.host == "pms.sustech.edu.cn", response.statusCode == 403 || String(decoding: data.prefix(300), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("Access forbidden") { throw ServiceFailure("打印服务不可访问，请连接校园网") }
         let expired = SessionReadPolicy.expired(status: response.statusCode, data: data)
         let bootstrapNeeded = response.statusCode == 403 && origin.host == "ehall.sustech.edu.cn"
         if attempt == 0, expired || bootstrapNeeded, SessionReadPolicy.canReplay(method: request.httpMethod ?? "GET", path: url.path + (url.query.map { "?" + $0 } ?? "")), let recovery {
@@ -106,6 +111,7 @@ public struct ServiceHTTP: Sendable {
         guard let result = try? JSONDecoder().decode(WireValue.self, from: data) else {
             let html = String(decoding: data.prefix(8192), as: UTF8.self)
             if html.contains("execution") || html.contains("cas/login") { throw CampusError.signInRequired }
+            if origin.host == "pms.sustech.edu.cn" { throw ServiceFailure("打印接口未返回业务数据，请检查校园网连接") }
             throw CampusError.invalidResponse("校园服务")
         }
         return result

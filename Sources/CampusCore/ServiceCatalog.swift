@@ -1,7 +1,7 @@
 import Foundation
 
 public enum SchoolService: String, CaseIterable, Identifiable, Sendable {
-    case teaching, blackboard, card, printing, library, rooms, booking, cle, exchange, faculty
+    case teaching, blackboard, card, printing, library, rooms, booking, cle, exchange, faculty, leave, activities
 
     public var id: String { rawValue }
 
@@ -17,6 +17,8 @@ public enum SchoolService: String, CaseIterable, Identifiable, Sendable {
         case .cle: "语言辅导"
         case .exchange: "国际交流"
         case .faculty: "教师名录"
+        case .leave: "请假"
+        case .activities: "学生活动"
         }
     }
 
@@ -32,6 +34,8 @@ public enum SchoolService: String, CaseIterable, Identifiable, Sendable {
         case .cle: "bubble.left.and.bubble.right"
         case .exchange: "globe.asia.australia"
         case .faculty: "person.crop.rectangle"
+        case .leave: "doc.text"
+        case .activities: "sparkles"
         }
     }
 
@@ -47,6 +51,8 @@ public enum SchoolService: String, CaseIterable, Identifiable, Sendable {
         case .cle: "语言指导与预约服务"
         case .exchange: "交流项目与申请信息"
         case .faculty: "学校公开教师资料"
+        case .leave: "请假申请与记录"
+        case .activities: "校园活动与详情"
         }
     }
 
@@ -63,6 +69,8 @@ public enum SchoolService: String, CaseIterable, Identifiable, Sendable {
         case .cle: "https://ehall.sustech.edu.cn/dxggyw/sys/yyzxyy/*default/index.do"
         case .exchange: "https://ws.sustech.edu.cn/"
         case .faculty: "https://www.sustech.edu.cn/zh/faculty/"
+        case .leave: StudentServiceApp.leave.entry.absoluteString
+        case .activities: StudentServiceApp.activities.entry.absoluteString
         }
         return URL(string: address)!
     }

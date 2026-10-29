@@ -16,6 +16,8 @@ public enum SessionReadPolicy {
         if ["cancel", "delete", "/del", "remove", "submit", "logout", "paymoney", "/book", "renew", "newattempt", "_save.do"].contains(where: path.contains) { return false }
         if ["GET", "HEAD"].contains(method.uppercased()) { return true }
         guard method.uppercased() == "POST" else { return false }
+        if StudentServiceApp.allCases.contains(where: { $0.queryPath.lowercased() == path }) { return true }
+        if path == "/xgxsfw/sys/qjgl/modules/wdqj/xsqjjlxq.do" { return true }
         return ["/component/query", "/xszykb/query", "/usermanager/queryxsxx", "/cjgl/grcjcx/grcjcx",
                 "/cjgl/cjzhtjcx/cjcx/getxss", "/cjgl/cjzhtjcx/cjcx/querybyyq", "/xsxktz/queryrwxxcxlist",
                 "/api/systemapi/getmeeting", "/api/systemapi/getuserinfo", "/api/client/account/query", "/api/client/report/detailpage", "/cdkb/querycdkblist", "/epay/vcard/getqrcode"].contains(where: path.hasPrefix)

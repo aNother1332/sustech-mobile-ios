@@ -86,7 +86,7 @@ def generate() -> None:
         "TARGETED_DEVICE_FAMILY": "1,2", "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
         "SUPPORTS_MACCATALYST": "NO", "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD": "NO",
         "SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD": "NO", "CODE_SIGN_STYLE": "Automatic",
-        "MARKETING_VERSION": "0.10.1", "CURRENT_PROJECT_VERSION": "15",
+        "MARKETING_VERSION": "0.11.0", "CURRENT_PROJECT_VERSION": "16",
         "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
         "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
@@ -122,7 +122,7 @@ def generate() -> None:
             "INFOPLIST_FILE": "Config/Share-Info.plist", "GENERATE_INFOPLIST_FILE": "NO", "SKIP_INSTALL": "YES",
             "APPLICATION_EXTENSION_API_ONLY": "YES", "TARGETED_DEVICE_FAMILY": "1,2",
             "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
-            "MARKETING_VERSION": "0.10.1", "CURRENT_PROJECT_VERSION": "15", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
+            "MARKETING_VERSION": "0.11.0", "CURRENT_PROJECT_VERSION": "16", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         }))
     share_config_list = add("share-config-list", "XCConfigurationList", buildConfigurations=share_configs, defaultConfigurationIsVisible="0", defaultConfigurationName="Release")
     share_target = add("share-target", "PBXNativeTarget", buildConfigurationList=share_config_list, buildPhases=[share_sources], buildRules=[], dependencies=[], name="CampusPrintShare", productName="CampusPrintShare", productReference=share_product, productType="com.apple.product-type.app-extension")
@@ -145,7 +145,7 @@ def generate() -> None:
             "INFOPLIST_FILE": "Config/Widget-Info.plist", "GENERATE_INFOPLIST_FILE": "NO", "SKIP_INSTALL": "YES",
             "APPLICATION_EXTENSION_API_ONLY": "YES", "TARGETED_DEVICE_FAMILY": "1,2",
             "SWIFT_STRICT_CONCURRENCY": "complete", "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
-            "MARKETING_VERSION": "0.10.1", "CURRENT_PROJECT_VERSION": "15", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
+            "MARKETING_VERSION": "0.11.0", "CURRENT_PROJECT_VERSION": "16", "CODE_SIGN_ENTITLEMENTS": "Config/AppGroups.entitlements",
         }))
     widget_config_list = add("widget-config-list", "XCConfigurationList", buildConfigurations=widget_configs, defaultConfigurationIsVisible="0", defaultConfigurationName="Release")
     widget_target = add("widget-target", "PBXNativeTarget", buildConfigurationList=widget_config_list, buildPhases=[widget_phase], buildRules=[], dependencies=[], name="CampusWidgets", productName="CampusWidgets", productReference=widget_product, productType="com.apple.product-type.app-extension")
@@ -154,10 +154,21 @@ def generate() -> None:
     objects[target]["dependencies"].append(widget_dependency)
     widget_embed = add("widget-embed-build", "PBXBuildFile", fileRef=widget_product, settings={"ATTRIBUTES": ["RemoveHeadersOnCopy"]})
     objects[embed_phase]["files"].append(widget_embed)
-    project = add("project", "PBXProject", attributes={"LastUpgradeCheck": "2600", "LastSwiftUpdateCheck": "2600"},
+    ui_ref = add("ui-test-source", "PBXFileReference", lastKnownFileType="sourcecode.swift", path="Tests/InteractionUITests/InteractionTests.swift", sourceTree="SOURCE_ROOT")
+    objects[group]["children"].append(ui_ref)
+    ui_build = add("ui-test-build", "PBXBuildFile", fileRef=ui_ref)
+    ui_phase = add("ui-test-sources", "PBXSourcesBuildPhase", buildActionMask="2147483647", files=[ui_build], runOnlyForDeploymentPostprocessing="0")
+    ui_product = add("ui-test-product", "PBXFileReference", explicitFileType="wrapper.cfbundle", path="SUSTechUITests.xctest", sourceTree="BUILT_PRODUCTS_DIR")
+    objects[products]["children"].append(ui_product)
+    ui_configs = [add("ui-test:"+name, "XCBuildConfiguration", name=name, buildSettings={**common, "PRODUCT_NAME":"SUSTechUITests", "PRODUCT_BUNDLE_IDENTIFIER":"cn.sustech.community.daily.uitests", "GENERATE_INFOPLIST_FILE":"YES", "TEST_TARGET_NAME":"SUSTech", "TARGETED_DEVICE_FAMILY":"1,2", "SKIP_INSTALL":"YES"}) for name in ("Debug","Release")]
+    ui_config_list = add("ui-test-configs", "XCConfigurationList", buildConfigurations=ui_configs, defaultConfigurationIsVisible="0", defaultConfigurationName="Debug")
+    ui_proxy = add("ui-test-proxy", "PBXContainerItemProxy", containerPortal=object_id("project"), proxyType="1", remoteGlobalIDString=target, remoteInfo="SUSTech")
+    ui_dependency = add("ui-test-dependency", "PBXTargetDependency", target=target, targetProxy=ui_proxy)
+    ui_target = add("ui-test-target", "PBXNativeTarget", buildConfigurationList=ui_config_list, buildPhases=[ui_phase], buildRules=[], dependencies=[ui_dependency], name="SUSTechUITests", productName="SUSTechUITests", productReference=ui_product, productType="com.apple.product-type.bundle.ui-testing")
+    project = add("project", "PBXProject", attributes={"LastUpgradeCheck": "2600", "LastSwiftUpdateCheck": "2600", "TargetAttributes":{ui_target:{"TestTargetID":target}}},
                   buildConfigurationList=project_list, compatibilityVersion="Xcode 14.0", developmentRegion="zh_CN",
                   hasScannedForEncodings="0", knownRegions=["zh_CN", "en", "Base"], mainGroup=group,
-                  productRefGroup=products, projectDirPath="", projectRoot="", targets=[target, share_target, widget_target], packageReferences=[package])
+                  productRefGroup=products, projectDirPath="", projectRoot="", targets=[target, share_target, widget_target, ui_target], packageReferences=[package])
     output = ROOT / "SUSTech.xcodeproj"
     output.mkdir(exist_ok=True)
     document = {"archiveVersion": "1", "classes": {}, "objectVersion": "56", "objects": objects, "rootObject": project}
@@ -173,6 +184,10 @@ def generate() -> None:
     ref_attrs = dict(BuildableIdentifier="primary", BlueprintIdentifier=target, BuildableName="SUSTech.app",
                      BlueprintName="SUSTech", ReferencedContainer="container:SUSTech.xcodeproj")
     ET.SubElement(entry, "BuildableReference", **ref_attrs)
+    test_action = ET.SubElement(scheme, "TestAction", buildConfiguration="Debug", selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB", selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB", shouldUseLaunchSchemeArgsEnv="YES")
+    testables = ET.SubElement(test_action,"Testables")
+    testable = ET.SubElement(testables,"TestableReference",skipped="NO")
+    ET.SubElement(testable,"BuildableReference", BuildableIdentifier="primary", BlueprintIdentifier=ui_target, BuildableName="SUSTechUITests.xctest", BlueprintName="SUSTechUITests", ReferencedContainer="container:SUSTech.xcodeproj")
     launch = ET.SubElement(scheme, "LaunchAction", buildConfiguration="Debug", selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB",
                            selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB", launchStyle="0", useCustomWorkingDirectory="NO", ignoresPersistentStateOnLaunch="NO", debugDocumentVersioning="YES", allowLocationSimulation="YES")
     runnable = ET.SubElement(launch, "BuildableProductRunnable", runnableDebuggingMode="0")

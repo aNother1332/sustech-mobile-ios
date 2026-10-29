@@ -27,7 +27,7 @@ struct PrintExtrasView: View {
                 EmptyView()
                 if busy { ProgressView() }; ServiceMessage(message: message, hideLogin: tab != 0)
             }
-            if rows.isEmpty && !busy { Text(tab == 0 ? "暂无站点数据，请下拉刷新。" : "暂无记录").foregroundStyle(.secondary) }
+            if rows.isEmpty && !busy && message == nil { Text(tab == 0 ? "暂无站点数据" : "暂无记录").foregroundStyle(.secondary) }
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 VStack(alignment: .leading, spacing: 3) {
                     if tab == 0 {
@@ -78,7 +78,7 @@ struct PrintExtrasView: View {
             do {
                 let stations = try await PrintingClient.publicStations()
                 guard version == store.sessionRevision, selected == tab else { return }
-                rows = stations; message = "共 \(stations.count) 个站点 · " + Date.now.formatted(date: .omitted, time: .shortened)
+                rows = stations; message = nil
             } catch { if version == store.sessionRevision, selected == tab { message = error.localizedDescription } }
             return
         }
@@ -88,9 +88,8 @@ struct PrintExtrasView: View {
             if selected == 2 {
                 response = try await http.json("/api/client/Report/DetailPage", payload: .object(["dwBeginDate": .string(CampusClock.format(begin, "yyyyMMdd")), "dwEndDate": .string(CampusClock.format(end, "yyyyMMdd")), "dwType": .integer(Int64(type)), "dwPageNo": .integer(Int64(page)), "dwRowCount": .integer(50)]))
             } else { response = try await http.json(selected == 0 ? "/api/client/Station/GetList" : "/api/client/Scan/Get", query: ["timestamp": "0"]) }
-            let value = try PrintingClient.unwrap(response)
-            guard case .array = value else { throw CampusError.invalidResponse("打印扩展查询") }
-            guard version == store.sessionRevision, selected == tab else { return }; rows = value.rows; pages = response["dwTotalPage"].int ?? 1; message = "更新于 " + Date.now.formatted(date: .omitted, time: .shortened); store.recordSession(.printing)
+            let items = try PrintingClient.list(response, kind: selected == 2 ? .usage : .scans)
+            guard version == store.sessionRevision, selected == tab else { return }; rows = items; pages = max(1, response["dwTotalPage"].int ?? 1); message = nil; store.recordSession(.printing)
         } catch { guard version == store.sessionRevision, selected == tab else { return }; message = error.localizedDescription; store.recordSession(.printing, error: error) }
         await store.absorb(http, revision: version)
     }

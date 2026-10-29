@@ -9,7 +9,13 @@ final class SchoolWebBootstrap: NSObject, WKNavigationDelegate {
     private var continuation: CheckedContinuation<CLEIdentity, Error>?
     private var deadline: Task<Void, Never>?
     private var sampling = false
-    func establish(in store: WKWebsiteDataStore) async throws -> CLEIdentity {
+    private var entry = CLEClient.index
+    private var probePath = "/dxggyw/sys/yyzxyy/modules/fwyy/T_NKD_YYZX_FWPZ_QUERY.do"
+    private var probeFields = ["pageSize": "1", "pageNumber": "1", "SFZZSY": "1"]
+    func establish(in store: WKWebsiteDataStore, app: StudentServiceApp? = nil) async throws -> CLEIdentity {
+        entry = app?.entry ?? CLEClient.index
+        probePath = app?.queryPath ?? "/dxggyw/sys/yyzxyy/modules/fwyy/T_NKD_YYZX_FWPZ_QUERY.do"
+        probeFields = (app?.queryFields ?? ["SFZZSY": "1"]).merging(["pageSize": "1", "pageNumber": "1"]) { _, new in new }
         sampling = false
         let config = WKWebViewConfiguration(); config.websiteDataStore = store
         let view = WKWebView(frame: CGRect(x: 0, y: 0, width: 390, height: 700), configuration: config)
@@ -21,7 +27,11 @@ final class SchoolWebBootstrap: NSObject, WKNavigationDelegate {
                     do { try await Task.sleep(for: .seconds(25)) } catch { return }
                     self?.finish(.failure(ServiceFailure("CLE 连接超时")))
                 }
-                view.load(URLRequest(url: CLEClient.index))
+                Task { @MainActor in
+                    if let rules = await SchoolResourceRules.shared() { config.userContentController.add(rules) }
+                    guard self.continuation != nil else { return }
+                    view.load(URLRequest(url: self.entry))
+                }
             }
         } onCancel: { Task { @MainActor [weak self] in self?.finish(.failure(CancellationError())) } }
     }
@@ -44,7 +54,7 @@ final class SchoolWebBootstrap: NSObject, WKNavigationDelegate {
             do {
                 let script = """
                 for (let attempt = 0; attempt < 8; attempt++) {
-                  const response = await fetch('/dxggyw/sys/yyzxyy/modules/fwyy/T_NKD_YYZX_FWPZ_QUERY.do?pageSize=1&pageNumber=1&SFZZSY=1', {credentials:'include', headers:{'X-Requested-With':'XMLHttpRequest'}});
+                  const response = await fetch(probePath, {method:'POST', body:new URLSearchParams(probeFields), credentials:'include', headers:{'X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded'}});
                   if (response.ok) {
                     const value = await response.json();
                     if (String(value.code) === '0') return JSON.stringify({id:String(window.userId || ''),name:String(window.userName || '')});
@@ -53,7 +63,7 @@ final class SchoolWebBootstrap: NSObject, WKNavigationDelegate {
                 }
                 throw new Error('CLE bootstrap unavailable');
                 """
-                let result = try await webView.callAsyncJavaScript(script, arguments: [:], in: nil, contentWorld: .page)
+                let result = try await webView.callAsyncJavaScript(script, arguments: ["probePath": probePath, "probeFields": probeFields], in: nil, contentWorld: .page)
                 guard let string = result as? String, let data = string.data(using: .utf8),
                       let value = try? JSONDecoder().decode(WireValue.self, from: data), !value["id"].text.isEmpty else { throw ServiceFailure("CLE 连接暂不可用") }
                 self.finish(.success(CLEIdentity(id: value["id"].text, name: value["name"].text)))

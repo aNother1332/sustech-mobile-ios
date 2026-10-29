@@ -9,6 +9,8 @@ extension CampusStore {
             case .cle: try await sessions.connectCLE()
             case .booking: try await sessions.connectCollege()
             case .exchange: try await sessions.connectExchange()
+            case .leave: try await sessions.connectStudentService(.leave)
+            case .activities: try await sessions.connectStudentService(.activities)
             default: return
             }
         } catch {
@@ -36,6 +38,7 @@ extension CampusStore {
                 await self.absorb(http, revision: version)
             }
         }
+        else if let app = StudentServiceApp.matching(origin) { try await sessions.connectStudentService(app, force: true) }
         else if let service = CASService.allCases.first(where: { $0.entry.host == origin.host }) { try await sessions.connectCAS(service) }
         else if origin.host == SchoolService.rooms.portalURL.host { try await sessions.renewIC() }
         else if origin.host == SchoolService.cle.portalURL.host { try await sessions.connectCLE(force: true) }

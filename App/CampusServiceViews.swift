@@ -336,7 +336,7 @@ struct PrintingWorkspaceView: View {
     private func refresh() async {
         guard !busy, store.mode == .live else { return }; busy = true; defer { busy = false }
         let version = store.sessionRevision; let http = await store.serviceHTTP(.printing)
-        do { let value = try await PrintingClient(http: http).jobs(); guard version == store.sessionRevision else { return }; jobs = value; store.recordSession(.printing); message = "队列读取于 \(Date.now.formatted())" }
+        do { let value = try await PrintingClient(http: http).jobs(); guard version == store.sessionRevision else { return }; jobs = value; store.recordSession(.printing); message = nil }
         catch { if version == store.sessionRevision { store.recordSession(.printing, error: error); message = error.localizedDescription } }; await store.absorb(http, revision: version)
     }
     private func upload() async {
