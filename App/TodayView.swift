@@ -32,15 +32,15 @@ struct TodayView: View {
                     quick("预约", "calendar") { ReservationCenterView().id(store.sessionRevision) }
                 }.padding(.vertical, 7)
                 HStack(spacing: 12) {
-                    CampusCard {
+                    NavigationLink { CardView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) } label: { CampusCard {
                         HStack { Text("校园卡余额").font(.caption).foregroundStyle(.secondary); if store.cardBalanceLoading { ProgressView().controlSize(.mini) } }
                         Text(store.mode == .demo ? "¥126.80" : store.cardBalance ?? "—").font(.title2.bold()).monospacedDigit()
-                        if let message = store.cardBalanceMessage { NavigationLink(message) { CardView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) }.font(.caption2) }
-                    }
-                    CampusCard {
+                        if let message = store.cardBalanceMessage { Text(message).font(.caption2).foregroundStyle(.secondary) }
+                    } }.buttonStyle(CampusPressStyle()).foregroundStyle(.primary).accessibilityIdentifier("home-card-balance")
+                    NavigationLink { AgendaView().id(store.sessionRevision).toolbar(.visible, for: .navigationBar) } label: { CampusCard {
                         Text("待办").font(.caption).foregroundStyle(.secondary)
                         Text(pendingCount).font(.title2.bold()).monospacedDigit()
-                    }
+                    } }.buttonStyle(CampusPressStyle()).foregroundStyle(.primary).accessibilityIdentifier("home-card-agenda")
                 }
                 if store.mode == .demo { ModeNotice() }
                 NativeLoginButton()

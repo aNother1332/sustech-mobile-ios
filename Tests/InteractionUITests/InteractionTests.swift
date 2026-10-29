@@ -2,6 +2,22 @@ import XCTest
 
 @MainActor
 final class InteractionTests: XCTestCase {
+    func testHomeSummaryCardsOpenTheirDestinations() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--smoke-demo"]
+        app.launch()
+        let balance = app.buttons["home-card-balance"].firstMatch
+        XCTAssertTrue(balance.waitForExistence(timeout: 10))
+        balance.tap()
+        XCTAssertTrue(app.navigationBars["校园卡"].waitForExistence(timeout: 5))
+        app.terminate()
+        app.launch()
+        let agenda = app.buttons["home-card-agenda"].firstMatch
+        XCTAssertTrue(agenda.waitForExistence(timeout: 10))
+        agenda.tap()
+        XCTAssertTrue(app.navigationBars["我的日程"].waitForExistence(timeout: 5))
+        app.terminate()
+    }
     func testCurriculumOpensExactlyTheChosenDocument() {
         let app = XCUIApplication()
         app.launchArguments = ["--smoke-demo", "--smoke-degree", "--smoke-pdf-interaction"]

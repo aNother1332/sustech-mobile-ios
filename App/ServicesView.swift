@@ -21,14 +21,14 @@ struct ServicesView: View {
                 }.padding(12).background(Color.primary.opacity(0.04), in: Capsule())
                 CampusSectionTitle(title: "校园服务")
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    if matches("请假 申请 记录") { ServiceTile(title: "请假", detail: "申请 · 我的记录", symbol: "doc.text", color: .campusGreen) { StudentServicesView(app: .leave).id(store.sessionRevision) } }
-                    if matches("学生活动 校园活动") { ServiceTile(title: "学生活动", detail: "浏览 · 活动详情", symbol: "sparkles", color: .campusOrange) { StudentServicesView(app: .activities).id(store.sessionRevision) } }
                     if matches("校园码 身份码 扫码") { ServiceTile(title: "校园码", detail: "动态码 / 身份核验", symbol: "qrcode", color: .campusOrange) { CampusCodeView().id(store.sessionRevision) } }
                     if matches("校园卡 余额 账单 消费") { ServiceTile(title: "校园卡", detail: "余额 · 账单 · 消费曲线", symbol: "creditcard.fill", color: .campusOrange) { CardView().id(store.sessionRevision) } }
                     if matches("校车 站点 线路") { ServiceTile(title: "校车", detail: "附近站点 · 预计到站", symbol: "bus.fill", color: .campusGreen) { BusView() } }
                     if matches("空教室 自习") { ServiceTile(title: "空教室", detail: "找教室 · 查占用", symbol: "building.2.fill", color: .blue) { ClassroomView().id(store.sessionRevision) } }
                     if matches("打印 PDF 扫描") { ServiceTile(title: "校园打印", detail: "上传 · 队列 · 扫描", symbol: "printer.fill", color: .campusGreen) { PrintingView().id(store.sessionRevision) } }
                     if matches("预约 IC CLE 体育") { ServiceTile(title: "预约中心", detail: "IC · CLE · 体育场馆", symbol: "calendar.badge.plus", color: .purple) { ReservationCenterView().id(store.sessionRevision) } }
+                    if matches("请假 申请 记录") { ServiceTile(title: "请假", detail: "申请 · 我的记录", symbol: "doc.text", color: .campusGreen) { StudentServicesView(app: .leave).id(store.sessionRevision) } }
+                    if matches("学生活动 校园活动") { ServiceTile(title: "学生活动", detail: "浏览 · 活动详情", symbol: "sparkles", color: .campusOrange) { StudentServicesView(app: .activities).id(store.sessionRevision) } }
                     if matches("日程 提醒") { ServiceTile(title: "我的日程", detail: "课程 · 考试 · 截止日期", symbol: "calendar", color: .campusOrange) { AgendaView().id(store.sessionRevision) } }
                     if matches("校历 调休 放假") { ServiceTile(title: "教学日历", detail: "教学周 · 放假 · 补课", symbol: "calendar.circle.fill", color: .campusCyan) { AcademicCalendarView() } }
                     if matches("教师 目录 院系") { ServiceTile(title: "教师目录", detail: "姓名 · 院系 · 官方主页", symbol: "person.2.fill", color: .blue) { FacultyDirectoryView() } }

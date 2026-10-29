@@ -108,6 +108,12 @@ public struct TeachingSnapshot: Codable, Sendable {
     public let meetings: [CourseMeeting]
     public let exams: [CampusExam]
     public let warnings: [String]
+    /// A timetable is the school's explicit weekly schedule. Public holiday
+    /// rules are used separately for calendar features, not to erase TIS rows.
+    public func meetings(inWeek selectedWeek: Int) -> [CourseMeeting] {
+        if !fullSemester { return week == nil || week == selectedWeek ? meetings : [] }
+        return meetings.filter { $0.weeks?.contains(selectedWeek) == true }
+    }
 
     public init(semester: Semester, week: Int?, meetings: [CourseMeeting],
                 exams: [CampusExam], warnings: [String] = [],
