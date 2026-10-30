@@ -16,601 +16,182 @@
 ---
 
 <p align="center">
-  <img src="App/Assets.xcassets/AppIcon.appiconset/Icon-iphone-60-3x.png" width="100" alt="SUSTechMobile 中央火炬图标">
+  <img src="App/Assets.xcassets/AppIcon.appiconset/Icon-iphone-60-3x.png" width="88" alt="SUSTechMobile 火炬应用图标">
 </p>
 
-# SUSTechMobile · iPhone / iPad
+<h1 align="center">SUSTechMobile</h1>
+<p align="center"><strong>把南科大的日常，装进 iPhone 和 iPad。</strong></p>
+<p align="center">课程与截止日期 · 校园卡与校车 · 打印与预约 · 校园活动</p>
 
-用 Swift 与 SwiftUI 编写的南方科技大学校园事务聚合应用。把课表、考试、成绩和 Blackboard 学习信息放到 iPhone 与 iPad 上，并集中提供常用校园服务入口。
+<p align="center">
+  <a href="https://github.com/aNother1332/sustech-mobile-ios/releases/latest"><img alt="最新版本" src="docs/media/version.svg"></a>
+  <img alt="支持 iOS 17 及以上" src="docs/media/platform.svg">
+  <img alt="使用 SwiftUI 构建" src="docs/media/swiftui.svg">
+  <a href="LICENSE"><img alt="PolyForm 非商业许可" src="docs/media/license.svg"></a>
+</p>
 
-**非学校官方产品，按非商业用途开发。** 仓库名称为 `sustech-mobile-ios`，安装后的软件名称为 **SUSTechMobile**。最低支持 **iOS / iPadOS 17**。
+<p align="center">
+  <a href="https://github.com/aNother1332/sustech-mobile-ios/releases/latest"><strong>下载体验</strong></a> ·
+  <a href="#校园日常一处查看">功能亮点</a> ·
+  <a href="#看看实际界面">界面预览</a> ·
+  <a href="#开始使用">安装指南</a> ·
+  <a href="https://github.com/aNother1332/sustech-mobile-ios/issues">反馈建议</a>
+</p>
 
-[下载最新版本](https://github.com/aNother1332/sustech-mobile-ios/releases/latest) · [历史版本](https://github.com/aNother1332/sustech-mobile-ios/releases) · [界面截图](#界面截图) · [当前功能](#当前功能) · [构建与安装](#构建与安装) · [功能规划](docs/FEATURE_ROADMAP.md) · [接口来源](docs/FEATURE_EVIDENCE.md)
+![SUSTechMobile 橙白主题产品介绍横幅](docs/media/overview.svg)
 
-## 当前状态
+**SUSTechMobile** 是面向南方科技大学同学的非官方校园事务聚合应用，以 Swift / SwiftUI 为 iPhone 和 iPad 编写。打开首页看今天的课、近期考试和作业截止日期；出门前查校车，办事时找打印、预约与请假入口，让分散的校园信息更容易找到。
 
-当前功能版本为 **1.0.0**。调整“办事”入口顺序，首页余额和待办卡片支持整卡跳转；课表沿用原有逻辑。详见 [1.0.0 说明](docs/RELEASE_1_0.md)。此前请假、学生活动、IC 和打印修正见 [0.11.0 说明](docs/RELEASE_0_11.md)。
+当前版本 **1.0.0 · build 17**，最低支持 **iOS / iPadOS 17**。采用非商业许可开源，学校服务与规则以官方系统为准。
 
-界面根据 Apple 设计原则重新整理，采用[学校官方标识页](https://www.sustech.edu.cn/zh/school_logo.html)公布的 **南科大橙 `#ED6C00`、墨绿 `#003F43`、天青 `#2BBCB3`**，以深色重点摘要、彩色服务入口与紧凑课程块建立层级；支持深色模式和系统大字号。使用文字和图标共同表达状态，临近截止时间单独强调。完整功能与验证边界见 [0.6.0 说明](docs/RELEASE_0_6.md)、[0.5.0 说明](docs/RELEASE_0_5.md)。
+## 校园日常，一处查看
 
-**本机真实只读核对已确认 TIS 专业与年级、IC 间隔请求、CLE 初始化、书院场地、交换项目及校园卡会话重新交换；空教室旧目录仍返回空响应，现提供全校课表课程占用替代查询，临时借用未知。打印使用独立平台密码，尚未验证有效打印密码登录成功。** 打印、预约、BB 提交与充值写操作仍待逐项真机验收。未签名 IPA 需本地签名安装；模拟器截图不代表真实业务或实测 120 fps。
+<table>
+  <tr>
+    <td width="50%"><h3>☀️ 今天，先看重要的</h3><p>教学周、今日课程、最近考试和待交作业汇在首页。余额卡片直达校园卡，待办卡片直达日程，校园天气完整展示在页面底部。</p></td>
+    <td width="50%"><h3>📚 学习，按自己的节奏</h3><p>周课表、考试、成绩和 Blackboard 集中查看。下载课件随时阅读，折叠已结束课程，让它们的作业截止日期退出首页提醒。</p></td>
+  </tr>
+  <tr>
+    <td><h3>🚌 出门前，看看车到哪了</h3><p>Apple 地图展示校园线路、站台与车辆位置，同时查看内外环最近站台的到站预测；点车辆或站台看浮卡，向上拉起当天时刻表。</p></td>
+    <td><h3>💳 校园卡，收支看得清</h3><p>原生查看余额、近期账单和按日消费曲线，支持本地范围筛选。充值提供支付宝、微信渠道入口，付款在对应平台完成。</p></td>
+  </tr>
+  <tr>
+    <td><h3>🗓️ 办事，从这里出发</h3><p>IC 房间与时间网格、CLE 辅导、书院场地集中在预约中心；请假记录原生查看，申请进入学校完整表单。还有校园活动、日程和教学日历。</p></td>
+    <td><h3>🔎 校园信息，随手查</h3><p>空教室课程占用、教师院系与联系方式、交换项目、培养方案和 NCES 课程评价。查资料、找老师、了解课程，都有对应入口。</p></td>
+  </tr>
+</table>
 
-## 当前功能
+## 看看实际界面
 
-| 模块 | 已实现的能力 | 使用边界 |
-| --- | --- | --- |
-| 今天 | 当前教学周、校园天气/US AQI、下一节课/考试、今日课程、BB 任务与常用入口 | 折叠课程不进入截止日期汇总；不自动扫描全部 BB 历史 |
-| 学校登录 | 原生 CAS 表单、App 内网页共享会话、Keychain 保留 Cookie、失效自动交换业务会话，查询最多重读一次 | 默认不保存密码，可自选本机钥匙串记住并自动登录；有效期由学校决定，验证码与独立 OAuth 仍需本人操作 |
-| 课表与考试 | 网格/列表周课表、本学期课程汇总、教学日历、放假与补课、考试和离线缓存 | 全学期失败时当前周回退；未知周次和临时调整需核对 |
-| 成绩 | 分页读取、学期筛选、成绩与学分、GPA 记录试算 | 不代表学校官方总 GPA 或毕业审核结论 |
-| Blackboard | 课程、任务、提交状态、公告、课件、折叠/恢复，Original 个人单文件提交 | 不支持测验/Ultra/小组/已有草稿；预检、本人确认、一次 POST、服务器新记录回读；结果未知不重发 |
-| 课件与离线 | 下载、Quick Look 预览、系统分享、删除 | 外部链接和特殊内容交学校页面 |
-| 校园卡 | 余额、近期账单、本地范围筛选、按日消费曲线 | 原生充值渠道页（支付宝 / 微信入口）；金额与付款在平台完成；消费统计仅覆盖已返回记录 |
-| 空教室 | 教学周/星期/节次筛选及占用查询界面 | 旧目录异常时查询完整全校课表，显示有课／无课；**替代来源不覆盖临时借用** |
-| 校车 | 最近方向站台与到站、车辆/站台浮卡、可拖动时刻表、定位与曲线路线 | CRA 公共数据，前台轮询与下拉刷新；预测不等于实际到站 |
-| 校园打印 | 独立打印账号与可选自动续接，PDF 导入、纸张/颜色/单双面/份数/页码、上传、队列与删除 | 50 MB 以内有效 PDF；需签名安装后在校园环境验证；不自动重传 |
-| 预约中心 | IC 全天可约时段与已读历史、房间×时间网格、CLE 辅导、书院场地日程、本人记录及既有预约/取消 | 缺失占用不可选；学校不返回的历史无法补全；体育入口已移除；写入仍需设备验证，没有抢场 |
-| 请假 | 原生本人记录与详情、学校完整申请表、CAS 自动续接、分页与下拉刷新 | 申请沿用学校对课程、累计天数、附件和审批的校验；未提交真实申请测试 |
-| 学生活动 | 原生活动分页、标题/时间/地点/类型/举办单位与详情 | 使用真实学校列表；本版仅浏览，不报名 |
-| 日程与提醒 | 课程、考试、BB、预约与个人事项；日历添加/更新、本地提醒 | 课程日期需核对校历锚点；基于已同步信息，不承诺实时后台更新 |
-| 课程评价 | NCES 蓝白卡片、10 分总评、四维指标、真实分页、收藏 | 社区来源，不代表学校正式评价 |
-| 修读进度 | 学校总要求、按真实年级和专业展示官方培养方案、缩略图与 PDF 阅读 | 已删其余损坏进度接口；未分流展示整本，2024–2026 文件按需加载 |
-| 打印增强 | PDF 课件直接打印、站点、扫描任务列表/确认删除、用量查询 | 扫描下载路径未验证；系统分享扩展单独签名验证 |
-| 校园码 | 原生校园码与身份码、30/60 秒前台刷新、过期/后台隐藏、低余额设置 | 真实消费机/核验终端仍待验证，不等于 Apple Wallet 卡片 |
-| 教师目录 | 994 条公开资料搜索、院系筛选，原生详情中的邮箱/办公室、复制/分享和邮件入口 | 名录快照 2026-10-02；联系方式按需读取、缓存 7 天，可能未公开或无法识别 |
-| 交换项目 | 原生分页列表与详情、实体文字清洗、临时内存封面、可申请筛选 | 真实只读查询已核对；申请在官方临时网页会话完成 |
-| 校车地图 | 原生 Apple 地图、线路轨迹、站点到站、车辆位置、线路筛选 | 10 秒前台轮询；超过 2 分钟或未知上报时间标灰，不等同连续 GPS；底图需联网 |
-| 小组件 | 可配课程/BB/天气/校车信息，四宫格快捷入口与 App 路由 | 独立扩展包；共享课程与 BB 需主动开启，App Groups 签名未实测 |
-| 维护工具 | 网络与服务可达性诊断、GitHub 发布版本检查 | 可达性不代表已登录；侧载更新仍需本地签名 |
-| 我的与设置 | 姓名、学号、真实专业及院系；我的预约、下载、日程；分区设置 | 仅展示学校实际提供的字段；成功登录静默，确认失效才提示 |
-| iPad 与开发验证 | 宽屏布局，DEBUG 虚构样例供界面测试 | 正式安装版没有演示模式入口 |
+以下为项目运行中的 iPhone／iPad 模拟器截图，展示资料使用虚构样例或公开信息。首页与办事来自 **1.0.0**；其余选用较早版本的对应业务页面，标注在各组下方。截图展示界面，不代表所有业务已经完成真机验收。点击图片可查看大图；[完整图库与历史设计](docs/SCREENSHOTS.md) · [逐图构建来源](docs/screenshots/SOURCES.json)。
 
-0.5.0 提供普通包和包含系统分享打印、WidgetKit 扩展的独立验证包；扩展需要有效 App Groups 签名，免费账号/iLoader 兼容性未通过真机验收。普通包保留主 App 内 PDF 导入。
+### 从今天开始
 
-**完整原生充值下单仍未完成。** 已具备原生授权/身份只读验证及金额准备页，但外部企业微信授权交接、当前下单分支响应和权威单笔到账查询未验证，正式下单保持关闭。现有外部充值入口继续可用。详见 [写入协议审计](docs/WRITE_PROTOCOL_AUDIT_0_4.md)。
+<table>
+  <tr><th width="33%">今天 · 1.0.0</th><th width="33%">学习 · 0.9.0</th><th width="33%">办事 · 1.0.0</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/v100-iPhone-today.png" width="260" alt="今天：首页教学周、天气、校园卡余额与课程摘要"></td>
+    <td><img src="docs/screenshots/v09-iPhone-learning-home.png" width="260" alt="学习：今日课程、近期考试与待交作业"></td>
+    <td><img src="docs/screenshots/v100-iPhone-services.png" width="260" alt="办事：校园卡、校车、打印、预约、请假和学生活动入口"></td>
+  </tr>
+</table>
 
-上一版使用与限制见 [0.4.0 说明](docs/RELEASE_0_4.md)，审查修正见 [代码审查](docs/REVIEW_0_4.md)。
+### 上课、赶车、安排校园生活
 
-本轮操作路径和验收步骤见 [0.3.0 说明](docs/RELEASE_0_3.md)，上一版记录见 [0.2.0 说明](docs/RELEASE_0_2.md)。
+<table>
+  <tr><th width="33%">周课表 · 0.9.0</th><th width="33%">校园巴士 · 0.7.0</th><th width="33%">IC 讨论间 · 0.11.0</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/v09-iPhone-timetable.png" width="260" alt="周课表：按星期与节次排列课程"></td>
+    <td><img src="docs/screenshots/v07-iPhone-bus-map.png" width="260" alt="校园巴士：地图线路、方向站台预测与时刻表抽屉"></td>
+    <td><img src="docs/screenshots/v011-iPhone-ic.png" width="260" alt="IC 讨论间：房间与时间网格展示占用和可约时段"></td>
+  </tr>
+</table>
 
-## 界面截图
+### 不止查课表
 
-**1.0.0 当前界面**：以下为[本版模拟器运行](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40909851019)的示例截图。另有自动点击测试验证首页卡片进入校园卡与我的日程，截图使用虚构样例，不包含真实学生资料。
+<table>
+  <tr><th width="33%">校园卡 · 0.10.0</th><th width="33%">请假记录 · 0.11.0</th><th width="33%">学生活动 · 0.11.0</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/v010-iPhone-card.png" width="260" alt="校园卡：余额、账单、充值入口和消费曲线入口"></td>
+    <td><img src="docs/screenshots/v011-iPhone-leave.png" width="260" alt="请假：本人记录与学校申请表入口"></td>
+    <td><img src="docs/screenshots/v011-iPhone-activities.png" width="260" alt="学生活动：分页浏览活动与查看详情"></td>
+  </tr>
+</table>
 
-| 页面 | iPhone | iPad |
-| --- | --- | --- |
-| 首页卡片跳转 | <img src="docs/screenshots/v100-iPhone-today.png" width="230" alt="iPhone 首页卡片跳转"> | <img src="docs/screenshots/v100-iPad-today.png" width="420" alt="iPad 首页卡片跳转"> |
-| 办事顺序 | <img src="docs/screenshots/v100-iPhone-services.png" width="230" alt="iPhone 办事顺序"> | <img src="docs/screenshots/v100-iPad-services.png" width="420" alt="iPad 办事顺序"> |
+### 找到信息，再做决定
 
-**0.11.0 业务界面**：以下 12 张页面图来自[本版模拟器运行](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40899790564)，使用虚构示例资料。另有 2 项实际点击测试验证 PDF 阅读选择和 IC 可约时段进入表单；真实后台只读结果与边界见发布说明。
+<table>
+  <tr><th width="33%">课程评价 · 0.10.0</th><th width="33%">培养方案 · 0.11.0</th><th width="33%">交换项目 · 0.10.0</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/v010-iPhone-reviews.png" width="260" alt="NCES 课程评价：总评分与四维指标"></td>
+    <td><img src="docs/screenshots/v011-iPhone-degree.png" width="260" alt="培养方案：按专业和年级查看官方 PDF"></td>
+    <td><img src="docs/screenshots/v010-iPhone-exchange.png" width="260" alt="交换项目：项目封面与原生列表"></td>
+  </tr>
+</table>
 
-| 页面 | iPhone | iPad |
-| --- | --- | --- |
-| 办事入口 | <img src="docs/screenshots/v011-iPhone-services.png" width="230" alt="iPhone 办事入口"> | <img src="docs/screenshots/v011-iPad-services.png" width="420" alt="iPad 办事入口"> |
-| 请假记录 | <img src="docs/screenshots/v011-iPhone-leave.png" width="230" alt="iPhone 请假记录"> | <img src="docs/screenshots/v011-iPad-leave.png" width="420" alt="iPad 请假记录"> |
-| 学生活动 | <img src="docs/screenshots/v011-iPhone-activities.png" width="230" alt="iPhone 学生活动"> | <img src="docs/screenshots/v011-iPad-activities.png" width="420" alt="iPad 学生活动"> |
-| 培养方案 | <img src="docs/screenshots/v011-iPhone-degree.png" width="230" alt="iPhone 培养方案"> | <img src="docs/screenshots/v011-iPad-degree.png" width="420" alt="iPad 培养方案"> |
-| IC 讨论间 | <img src="docs/screenshots/v011-iPhone-ic.png" width="230" alt="iPhone IC 讨论间"> | <img src="docs/screenshots/v011-iPad-ic.png" width="420" alt="iPad IC 讨论间"> |
-| 打印站点 | <img src="docs/screenshots/v011-iPhone-print-stations.png" width="230" alt="iPhone 打印站点"> | <img src="docs/screenshots/v011-iPad-print-stations.png" width="420" alt="iPad 打印站点"> |
+## 熟悉的校园，也有熟悉的手感
 
-**0.10.1 历史页面**：以下为[本版构建](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40854245874)的示例布局截图，真实后台核对见发布说明。空教室截图为虚构布局样例。
+**南科大橙 `#ED6C00` · 墨绿 `#003F43` · 天青 `#2BBCB3`**。配色参考[学校官方标识](https://www.sustech.edu.cn/zh/school_logo.html)，橙白页头与轻量卡片贯穿首页和服务目录，各业务内容页再参考对应学校网页布局。应用图标保留校徽中央火炬，页头融入学校标识元素。
 
-| 页面 | iPhone | iPad |
-| --- | --- | --- |
-| 首页 ℃ | <img src="docs/screenshots/v0101-iPhone-today.png" width="230" alt="iPhone 首页 ℃"> | <img src="docs/screenshots/v0101-iPad-today.png" width="420" alt="iPad 首页 ℃"> |
-| 培养方案入口 | <img src="docs/screenshots/v0101-iPhone-degree.png" width="230" alt="iPhone 培养方案入口"> | <img src="docs/screenshots/v0101-iPad-degree.png" width="420" alt="iPad 培养方案入口"> |
-| 空教室查询 | <img src="docs/screenshots/v0101-iPhone-classrooms.png" width="230" alt="iPhone 空教室查询"> | <img src="docs/screenshots/v0101-iPad-classrooms.png" width="420" alt="iPad 空教室查询"> |
+- **苹果系统字体与原生界面**：SwiftUI 构建，支持深色模式与系统大字号。
+- **地图成为校车页的主体**：浮卡查看车辆与站台，手势抽屉承载时刻表。
+- **iPad 也有自己的空间**：支持宽屏布局，课程、入口与摘要在大屏上展开。
+- **尽量少打断**：复用有效会话，支持下拉刷新；确认登录失效时再提示。
 
-**0.10.0 其他界面**：iPhone/iPad 模拟器实际截图，展示资料为 DEBUG 虚构样例或公开资料。12 个场景来自 [运行 40737122488](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40737122488)，培养方案、打印登录、设置由 [运行 40741950431](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40741950431) 补查。后续会话修正经最终构建验证；每图精确来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。真实后台只读核对另见验证记录，截图不替代真机业务验收。
+<table>
+  <tr><th>iPad · 今天 · 1.0.0</th><th>iPad · 办事 · 1.0.0</th></tr>
+  <tr>
+    <td><img src="docs/screenshots/v100-iPad-today.png" width="450" alt="iPad 今天：宽屏展示课程、考试、任务和天气"></td>
+    <td><img src="docs/screenshots/v100-iPad-services.png" width="450" alt="iPad 办事：分组展示校园服务入口"></td>
+  </tr>
+</table>
 
-| 页面 | iPhone | iPad |
-| --- | --- | --- |
-| 今天 | <img src="docs/screenshots/v010-iPhone-today.png" width="230" alt="iPhone 今天"> | <img src="docs/screenshots/v010-iPad-today.png" width="420" alt="iPad 今天"> |
-| 完整天气 | <img src="docs/screenshots/v010-iPhone-today-weather.png" width="230" alt="iPhone 完整天气"> | <img src="docs/screenshots/v010-iPad-today-weather.png" width="420" alt="iPad 完整天气"> |
-| 教学日历 | <img src="docs/screenshots/v010-iPhone-calendar.png" width="230" alt="iPhone 教学日历"> | <img src="docs/screenshots/v010-iPad-calendar.png" width="420" alt="iPad 教学日历"> |
-| 修读与培养方案 | <img src="docs/screenshots/v010-iPhone-degree.png" width="230" alt="iPhone 修读与培养方案"> | <img src="docs/screenshots/v010-iPad-degree.png" width="420" alt="iPad 修读与培养方案"> |
-| 教师院系筛选 | <img src="docs/screenshots/v010-iPhone-faculty-filtered.png" width="230" alt="iPhone 教师院系筛选"> | <img src="docs/screenshots/v010-iPad-faculty-filtered.png" width="420" alt="iPad 教师院系筛选"> |
-| 课程评价 | <img src="docs/screenshots/v010-iPhone-reviews.png" width="230" alt="iPhone 课程评价"> | <img src="docs/screenshots/v010-iPad-reviews.png" width="420" alt="iPad 课程评价"> |
-| 校园卡 | <img src="docs/screenshots/v010-iPhone-card.png" width="230" alt="iPhone 校园卡"> | <img src="docs/screenshots/v010-iPad-card.png" width="420" alt="iPad 校园卡"> |
-| IC 讨论间 | <img src="docs/screenshots/v010-iPhone-ic.png" width="230" alt="iPhone IC 讨论间"> | <img src="docs/screenshots/v010-iPad-ic.png" width="420" alt="iPad IC 讨论间"> |
-| CLE 辅导 | <img src="docs/screenshots/v010-iPhone-cle.png" width="230" alt="iPhone CLE 辅导"> | <img src="docs/screenshots/v010-iPad-cle.png" width="420" alt="iPad CLE 辅导"> |
-| 交换项目 | <img src="docs/screenshots/v010-iPhone-exchange.png" width="230" alt="iPhone 交换项目"> | <img src="docs/screenshots/v010-iPad-exchange.png" width="420" alt="iPad 交换项目"> |
-| 个人资料 | <img src="docs/screenshots/v010-iPhone-account.png" width="230" alt="iPhone 个人资料"> | <img src="docs/screenshots/v010-iPad-account.png" width="420" alt="iPad 个人资料"> |
-| 设置 | <img src="docs/screenshots/v010-iPhone-settings.png" width="230" alt="iPhone 设置"> | <img src="docs/screenshots/v010-iPad-settings.png" width="420" alt="iPad 设置"> |
-| 打印独立登录 | <img src="docs/screenshots/v010-iPhone-printing-login.png" width="230" alt="iPhone 打印独立登录"> | <img src="docs/screenshots/v010-iPad-printing-login.png" width="420" alt="iPad 打印独立登录"> |
+## 功能一览
 
-<details>
-<summary>0.9.0 历史界面</summary>
-
-**0.9.0 业务页改版**：以下 38 张页面截图来自 [运行 40684347344](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40684347344)，源码 `588e49c`。均使用 DEBUG 示例资料；不含真实账号。IC、NCES、交换项目六张图已由最终源码 `162c4e0` 的 [运行 40717121442](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40717121442) 更新；最终包另精简说明并修正过期登录提示。构建来源见 [发布说明](docs/RELEASE_0_9.md)。截图不替代真实校园业务验收。
-
-| 页面 | iPhone | iPad |
-| --- | --- | --- |
-| 今天 | <img src="docs/screenshots/v09-iPhone-today.png" width="230" alt="iPhone 今天"> | <img src="docs/screenshots/v09-iPad-today.png" width="420" alt="iPad 今天"> |
-| 学习摘要 | <img src="docs/screenshots/v09-iPhone-learning-home.png" width="230" alt="iPhone 学习摘要"> | <img src="docs/screenshots/v09-iPad-learning-home.png" width="420" alt="iPad 学习摘要"> |
-| 课表 | <img src="docs/screenshots/v09-iPhone-timetable.png" width="230" alt="iPhone 课表"> | <img src="docs/screenshots/v09-iPad-timetable.png" width="420" alt="iPad 课表"> |
-| 考试 | <img src="docs/screenshots/v09-iPhone-exams.png" width="230" alt="iPhone 考试"> | <img src="docs/screenshots/v09-iPad-exams.png" width="420" alt="iPad 考试"> |
-| 成绩 | <img src="docs/screenshots/v09-iPhone-grades.png" width="230" alt="iPhone 成绩"> | <img src="docs/screenshots/v09-iPad-grades.png" width="420" alt="iPad 成绩"> |
-| Blackboard | <img src="docs/screenshots/v09-iPhone-blackboard.png" width="230" alt="iPhone Blackboard"> | <img src="docs/screenshots/v09-iPad-blackboard.png" width="420" alt="iPad Blackboard"> |
-| 个人资料 | <img src="docs/screenshots/v09-iPhone-account.png" width="230" alt="iPhone 个人资料"> | <img src="docs/screenshots/v09-iPad-account.png" width="420" alt="iPad 个人资料"> |
-| 设置 | <img src="docs/screenshots/v09-iPhone-settings.png" width="230" alt="iPhone 设置"> | <img src="docs/screenshots/v09-iPad-settings.png" width="420" alt="iPad 设置"> |
-| 我的预约 | <img src="docs/screenshots/v09-iPhone-my-reservations.png" width="230" alt="iPhone 我的预约"> | <img src="docs/screenshots/v09-iPad-my-reservations.png" width="420" alt="iPad 我的预约"> |
-| 预约中心 | <img src="docs/screenshots/v09-iPhone-reservations.png" width="230" alt="iPhone 预约中心"> | <img src="docs/screenshots/v09-iPad-reservations.png" width="420" alt="iPad 预约中心"> |
-| IC房间时间网格 | <img src="docs/screenshots/v09-iPhone-ic.png" width="230" alt="iPhone IC房间时间网格"> | <img src="docs/screenshots/v09-iPad-ic.png" width="420" alt="iPad IC房间时间网格"> |
-| 空教室查询界面 | <img src="docs/screenshots/v09-iPhone-classrooms.png" width="230" alt="iPhone 空教室查询界面"> | <img src="docs/screenshots/v09-iPad-classrooms.png" width="420" alt="iPad 空教室查询界面"> |
-| NCES课程评价 | <img src="docs/screenshots/v09-iPhone-reviews.png" width="230" alt="iPhone NCES课程评价"> | <img src="docs/screenshots/v09-iPad-reviews.png" width="420" alt="iPad NCES课程评价"> |
-| 交换项目 | <img src="docs/screenshots/v09-iPhone-exchange.png" width="230" alt="iPhone 交换项目"> | <img src="docs/screenshots/v09-iPad-exchange.png" width="420" alt="iPad 交换项目"> |
-| 打印 | <img src="docs/screenshots/v09-iPhone-printing.png" width="230" alt="iPhone 打印"> | <img src="docs/screenshots/v09-iPad-printing.png" width="420" alt="iPad 打印"> |
-| 校园卡 | <img src="docs/screenshots/v09-iPhone-card.png" width="230" alt="iPhone 校园卡"> | <img src="docs/screenshots/v09-iPad-card.png" width="420" alt="iPad 校园卡"> |
-| 教师详情 | <img src="docs/screenshots/v09-iPhone-faculty-detail.png" width="230" alt="iPhone 教师详情"> | <img src="docs/screenshots/v09-iPad-faculty-detail.png" width="420" alt="iPad 教师详情"> |
-| 原生玻璃底栏 | <img src="docs/screenshots/v09-iPhone-navigation-glass.png" width="230" alt="iPhone 原生玻璃底栏"> | <img src="docs/screenshots/v09-iPad-navigation-glass.png" width="420" alt="iPad 原生玻璃底栏"> |
-| 半透明回退底栏 | <img src="docs/screenshots/v09-iPhone-navigation-material.png" width="230" alt="iPhone 半透明回退底栏"> | <img src="docs/screenshots/v09-iPad-navigation-material.png" width="420" alt="iPad 半透明回退底栏"> |
-
-</details>
-
-<details>
-<summary>0.8.0 历史界面（含已移除功能）</summary>
-
-**0.8.0 当前界面**：截图来自 [iOS 26.2 模拟器运行 40527017735](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40527017735)，界面源码 `e03fead`，共 20 张。原生玻璃与强制半透明两条路径均验证四次切换后底栏实例保持一个。最终包 `fd0a668` 另补上学校预约正常目录和自动登录结束后的余额重读，并通过完整测试及编译。图片为演示资料，真实余额、企业微信及充值仍需设备核对。
-
-| 页面 | iPhone | iPad |
-| --- | --- | --- |
-| 校徽页头与首页 | <img src="docs/screenshots/v08-iPhone-today.png" width="230" alt="iPhone 校徽页头与首页"> | <img src="docs/screenshots/v08-iPad-today.png" width="420" alt="iPad 校徽页头与首页"> |
-| 直接展示待办 | <img src="docs/screenshots/v08-iPhone-today-agenda.png" width="230" alt="iPhone 直接展示待办"> | <img src="docs/screenshots/v08-iPad-today-agenda.png" width="420" alt="iPad 直接展示待办"> |
-| 学习 | <img src="docs/screenshots/v08-iPhone-learning-home.png" width="230" alt="iPhone 学习"> | <img src="docs/screenshots/v08-iPad-learning-home.png" width="420" alt="iPad 学习"> |
-| 个人资料与材质状态 | <img src="docs/screenshots/v08-iPhone-account.png" width="230" alt="iPhone 个人资料与材质状态"> | <img src="docs/screenshots/v08-iPad-account.png" width="420" alt="iPad 个人资料与材质状态"> |
-| 精简后的办事 | <img src="docs/screenshots/v08-iPhone-services.png" width="230" alt="iPhone 精简后的办事"> | <img src="docs/screenshots/v08-iPad-services.png" width="420" alt="iPad 精简后的办事"> |
-| 体育授权 | <img src="docs/screenshots/v08-iPhone-court.png" width="230" alt="iPhone 体育授权"> | <img src="docs/screenshots/v08-iPad-court.png" width="420" alt="iPad 体育授权"> |
-| 充值渠道 | <img src="docs/screenshots/v08-iPhone-recharge.png" width="230" alt="iPhone 充值渠道"> | <img src="docs/screenshots/v08-iPad-recharge.png" width="420" alt="iPad 充值渠道"> |
-| 原生玻璃底栏 | <img src="docs/screenshots/v08-iPhone-navigation-glass.png" width="230" alt="iPhone 原生玻璃底栏"> | <img src="docs/screenshots/v08-iPad-navigation-glass.png" width="420" alt="iPad 原生玻璃底栏"> |
-| 半透明回退底栏 | <img src="docs/screenshots/v08-iPhone-navigation-material.png" width="230" alt="iPhone 半透明回退底栏"> | <img src="docs/screenshots/v08-iPad-navigation-material.png" width="420" alt="iPad 半透明回退底栏"> |
-
-</details>
-
-<details>
-<summary>0.7.0 与更早版本的历史截图（含已移除功能）</summary>
-
-**0.7.0 橙白新版实际界面**：以下截图来自相同源码 `d395164` 的 [iPhone/iPad 模拟器运行 40210109524](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40210109524)，共 26 张（12 组页面及两张桌面）。个人资料、课程、余额、车辆与到站均为演示数据；路线与站点来自公开快照。该轮截图实际为旧系统半透明回退材质；0.8.0 已改为优先使用最新运行时并断言原生材质分支。截图仅验证界面，不代替校园业务实测。
-
-| 页面 | iPhone | iPad |
-| --- | --- | --- |
-| 今天 | <img src="docs/screenshots/v07-iPhone-today.png" width="230" alt="iPhone 今天"> | <img src="docs/screenshots/v07-iPad-today.png" width="420" alt="iPad 今天"> |
-| 学习摘要与折叠模块 | <img src="docs/screenshots/v07-iPhone-learning-home.png" width="230" alt="iPhone 学习摘要与折叠模块"> | <img src="docs/screenshots/v07-iPad-learning-home.png" width="420" alt="iPad 学习摘要与折叠模块"> |
-| 个人资料 | <img src="docs/screenshots/v07-iPhone-account.png" width="230" alt="iPhone 个人资料"> | <img src="docs/screenshots/v07-iPad-account.png" width="420" alt="iPad 个人资料"> |
-| 办事 | <img src="docs/screenshots/v07-iPhone-services.png" width="230" alt="iPhone 办事"> | <img src="docs/screenshots/v07-iPad-services.png" width="420" alt="iPad 办事"> |
-| 预约中心 | <img src="docs/screenshots/v07-iPhone-reservations.png" width="230" alt="iPhone 预约中心"> | <img src="docs/screenshots/v07-iPad-reservations.png" width="420" alt="iPad 预约中心"> |
-| 校园巴士 | <img src="docs/screenshots/v07-iPhone-bus-map.png" width="230" alt="iPhone 校园巴士"> | <img src="docs/screenshots/v07-iPad-bus-map.png" width="420" alt="iPad 校园巴士"> |
-| 时刻表抽屉 | <img src="docs/screenshots/v07-iPhone-bus-timetable.png" width="230" alt="iPhone 时刻表抽屉"> | <img src="docs/screenshots/v07-iPad-bus-timetable.png" width="420" alt="iPad 时刻表抽屉"> |
-| 站台浮卡 | <img src="docs/screenshots/v07-iPhone-bus-stop.png" width="230" alt="iPhone 站台浮卡"> | <img src="docs/screenshots/v07-iPad-bus-stop.png" width="420" alt="iPad 站台浮卡"> |
-| 车辆浮卡 | <img src="docs/screenshots/v07-iPhone-bus-vehicle.png" width="230" alt="iPhone 车辆浮卡"> | <img src="docs/screenshots/v07-iPad-bus-vehicle.png" width="420" alt="iPad 车辆浮卡"> |
-| 校园卡目录 | <img src="docs/screenshots/v07-iPhone-card.png" width="230" alt="iPhone 校园卡目录"> | <img src="docs/screenshots/v07-iPad-card.png" width="420" alt="iPad 校园卡目录"> |
-| 打印目录 | <img src="docs/screenshots/v07-iPhone-printing.png" width="230" alt="iPhone 打印目录"> | <img src="docs/screenshots/v07-iPad-printing.png" width="420" alt="iPad 打印目录"> |
-| 图书馆目录 | <img src="docs/screenshots/v07-iPhone-library.png" width="230" alt="iPhone 图书馆目录"> | <img src="docs/screenshots/v07-iPad-library.png" width="420" alt="iPad 图书馆目录"> |
-
-<details>
-<summary>此前版本界面与具体业务页面</summary>
-
-以下为云端 iOS 模拟器实际运行的 **0.5／0.6／0.6.1 版本界面截图（74 张）**，包含 iPhone/iPad、深色外观及大字号。课程、任务、余额等为虚构示例或未连接状态；教师目录为学校已公开资料快照；不含真实学生账号或认证凭据。0.5 基础界面运行 [40172533665](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40172533665)，界面提交 `6f752ef`。最后的校历/小组件过期逻辑、官方项目详情控件与说明修正经[最终构建 40173815553](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40173815553)验证，78 项 Swift 测试与 8 项打包测试通过，重点场景另复查 12 张。每张图的来源见 [SOURCES.json](docs/screenshots/SOURCES.json)。截图不作为真实校园业务验收。
-
-### 0.6 校园巴士地图与教师联系方式
-
-地图采用原生 Apple 地图，车辆为虚构示例；路线与站点来自 CRA 公开数据快照。浅色、深色和 iPad 地图均已实际运行，自动检查确认加载 4 条线路、351 个轨迹点、33 个站点与 2 辆示例车。
-
-| iPhone | iPad |
+| 场景 | 可以做什么 |
 | --- | --- |
-| ![校园巴士地图（示例车辆）](docs/screenshots/iPhone-bus-map.png) | ![校园巴士地图（示例车辆）](docs/screenshots/iPad-bus-map.png) |
-| ![深色巴士地图](docs/screenshots/iPhone-bus-map-dark.png) | ![深色巴士地图](docs/screenshots/iPad-bus-map-dark.png) |
-| ![教师联系方式（虚构示例）](docs/screenshots/iPhone-faculty-detail.png) | ![教师联系方式（虚构示例）](docs/screenshots/iPad-faculty-detail.png) |
+| 每日总览 | 教学周、课程、考试、待交作业、余额、日程、天气与空气质量 |
+| 学习管理 | 周课表、考试、成绩与 GPA 记录试算、Blackboard 课程／公告／任务／课件、课程折叠 |
+| 学习资料 | 课件下载、Quick Look 预览、系统分享、官方培养方案 PDF |
+| 校园出行 | 校车位置、线路轨迹、分方向站台预测、车辆与站台浮卡、当天时刻表 |
+| 校园卡 | 余额、近期账单、范围筛选、按日消费曲线、外部充值渠道入口 |
+| 校园打印 | PDF 导入、纸张／颜色／单双面／份数／页码设置、上传、任务队列、站点信息 |
+| 预约与请假 | IC 房间时间网格、CLE、书院场地、我的预约；本人请假记录与学校申请表 |
+| 信息查询 | 教学日历、课程占用查询、教师院系筛选与联系方式、NCES 评价、交换项目、学生活动 |
+| 个人与提醒 | 学校真实个人资料、我的预约、下载文件、日程提醒、分区设置 |
+| 登录与缓存 | 原生 CAS、可选记住密码、业务会话自动续接、本机缓存 |
 
-新增地图截图运行 [40177111042](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40177111042)，教师详情运行 [40175903374](https://github.com/aNother1332/sustech-mobile-ios/actions/runs/40175903374)。教师详情中的邮箱与办公室为虚构样例，真实使用按需读取官方页面。名录与既有页面保留各版本截图，70 个文件的来源记录于 SOURCES.json。
+### 当前使用范围
 
-### 学校标识色与深色外观
+日常查询与界面已实现，部分业务仍需要实际校园环境与设备验证。为方便选择，这里集中列出主要边界；[完整功能与验证清单](docs/CAPABILITIES.md)记录每个模块的情况。
 
-| 首页 · 深色 | 办事 · 深色 |
+| 功能 | 当前范围 |
 | --- | --- |
-| ![深色首页](docs/screenshots/iPhone-today-dark.png) | ![深色办事](docs/screenshots/iPhone-services-dark.png) |
+| 充值 | 支付宝／微信入口可用；付款与金额由外部平台处理，**完整原生充值下单尚未开放**。 |
+| 打印 | 使用独立打印平台密码，受校园网络限制；有效账号打印流程仍待真机验收。 |
+| 预约与 BB 提交 | 已有对应实现，真实写入仍待逐项设备验收；不包含体育场馆或自动抢场。BB 提交仅覆盖 Original 个人单文件等限定场景。 |
+| 空教室 | 旧目录异常时使用全校课表判断课程占用，不覆盖临时借用。 |
+| 请假与活动 | 请假记录、活动浏览为原生；请假申请沿用学校表单，活动暂不提供报名。 |
+| 扩展与预测 | 小组件和分享打印为可选实验扩展，需要适用签名；校车 ETA 为预测信息。 |
 
-### 校园码、校历与教师目录
+## 开始使用
 
-| iPhone | iPad |
+### 下载到 iPhone 或 iPad
+
+1. 前往 **[最新 Release](https://github.com/aNother1332/sustech-mobile-ios/releases/latest)**，下载普通包 `SUSTechMobile-unsigned.ipa`。
+2. 使用 iLoader 等适用工具，以自己的 Apple 账号在本地签名并安装。**Windows 也可以安装，无需自己拥有 Mac。**
+3. 在应用中登录校园账号，按需开启“记住账号密码并自动登录”，开始同步课程与校园信息。
+
+IPA 是未签名真机包，需要侧载签名；当前没有 App Store 或 TestFlight 下载。免费 Apple 账号的签名有效期与设备限制仍适用。实验扩展包需另行验证签名兼容性，日常使用建议选择普通包。
+
+[下载 1.0.0 普通 IPA](https://github.com/aNother1332/sustech-mobile-ios/releases/download/v1.0.0/SUSTechMobile-unsigned.ipa) · [本版更新说明](docs/RELEASE_1_0.md) · [历史版本](https://github.com/aNother1332/sustech-mobile-ios/releases) · [Windows 安装说明](docs/WINDOWS_SIDELOAD.md)
+
+### 账号留在自己的设备上
+
+校园认证由客户端直接连接学校 HTTPS 服务。应用没有代收校园密码的聚合服务器；原生登录默认不保存密码，主动开启记住功能后，凭据保存在本机 iOS 钥匙串，不跨设备同步。
+
+优先复用现有会话，确认失效后尝试续接；学校要求验证码、拒绝密码或触发限流时暂停自动尝试。学校系统间的独立授权仍受各平台规则限制。账号管理在“我的 → 设置”中；课表、成绩与下载文件可缓存在本机。
+
+## 一起把校园工具做好
+
+本项目持续完善校园服务的原生体验。欢迎提交 [Issue](https://github.com/aNother1332/sustech-mobile-ios/issues) 或 Pull Request：描述系统版本、应用版本、操作步骤和预期结果，附上脱敏截图即可。请不要上传密码、验证码、Cookie、真实学号或成绩。
+
+| 想了解什么 | 从这里开始 |
 | --- | --- |
-| ![校园码未连接示例](docs/screenshots/iPhone-code.png) | ![校园码未连接示例](docs/screenshots/iPad-code.png) |
-| ![教学日历](docs/screenshots/iPhone-calendar.png) | ![教学日历](docs/screenshots/iPad-calendar.png) |
-| ![公开教师目录](docs/screenshots/iPhone-faculty.png) | ![公开教师目录](docs/screenshots/iPad-faculty.png) |
+| 具体功能是否完成、如何验证 | [功能与验证范围](docs/CAPABILITIES.md) · [设备验收清单](docs/DEVICE_TESTING.md) |
+| 更多截图与过去的设计 | [完整界面图库](docs/SCREENSHOTS.md) · [截图来源](docs/screenshots/SOURCES.json) |
+| 在 Mac 或 Windows 上构建 | [开发与构建指南](docs/DEVELOPMENT.md) |
+| 学校接口与实现依据 | [接口来源记录](docs/FEATURE_EVIDENCE.md) · [接口说明](docs/INTERFACES.md) |
+| 后续规划与版本记录 | [功能路线图](docs/FEATURE_ROADMAP.md) · [1.0.0 发布说明](docs/RELEASE_1_0.md) |
 
-### 交换项目与小组件设置
+使用 Xcode 26.0+ 构建；无第三方 iOS 包依赖。核心协议与解析位于 `Sources/CampusCore`，SwiftUI 界面位于 `App`，测试与打包脚本随源码提供。没有本地 Mac 时，可使用仓库的手动 GitHub Actions 工作流构建，再在 Windows 上签名安装。
 
-| iPhone | iPad |
-| --- | --- |
-| ![交换项目示例界面](docs/screenshots/iPhone-exchange.png) | ![交换项目示例界面](docs/screenshots/iPad-exchange.png) |
-| ![小组件共享设置](docs/screenshots/iPhone-widgets.png) | ![小组件共享设置](docs/screenshots/iPad-widgets.png) |
+## 来源与许可
 
-小组件设置截图不等于桌面组件签名成功，实际扩展安装与 App Groups 仍需真机核对。
+本项目学习 **[sustech-mobile](https://github.com/dumixthestpd/sustech-mobile)** 与 **[sustech_survival](https://github.com/dumixthestpd/sustech_survival)** 的校园服务研究和实现经验，以 Swift / SwiftUI 编写 iOS 移植；协议、字段含义和业务行为保留上游依据。也感谢 [sustech-cli](https://github.com/wormforce/sustech-cli)、[SUSTech CRA / sustech-online-ng](https://github.com/sustech-cra/sustech-online-ng) 等公开项目及数据来源。
 
-### 系统大字号
+采用 **[PolyForm Noncommercial License 1.0.0](LICENSE)**，完整署名、数据来源及相关声明见 [NOTICE](NOTICE)。学校校徽、校名与相关标识权利归南方科技大学，[图标来源](Design/Branding/README.md)另有记录。本项目为非官方校园工具，不代表学校或获得学校背书。
 
-| iPhone | iPad |
-| --- | --- |
-| ![大字号列表课表](docs/screenshots/iPhone-study-large.png) | ![大字号列表课表](docs/screenshots/iPad-study-large.png) |
+---
 
-### 图书馆
-
-| iPhone | iPad |
-| --- | --- |
-| ![iPhone 图书馆](docs/screenshots/iPhone-library.png) | ![iPad 图书馆](docs/screenshots/iPad-library.png) |
-
-### 统一日程
-
-| iPhone | iPad |
-| --- | --- |
-| ![iPhone 日程](docs/screenshots/iPhone-agenda.png) | ![iPad 日程](docs/screenshots/iPad-agenda.png) |
-
-### 课程评价
-
-| iPhone | iPad |
-| --- | --- |
-| ![iPhone 课程评价](docs/screenshots/iPhone-reviews.png) | ![iPad 课程评价](docs/screenshots/iPad-reviews.png) |
-
-### 排课工作台
-
-| iPhone | iPad |
-| --- | --- |
-| ![iPhone 排课](docs/screenshots/iPhone-planner.png) | ![iPad 排课](docs/screenshots/iPad-planner.png) |
-
-### 修读进度 · 未连接状态
-
-| iPhone | iPad |
-| --- | --- |
-| ![iPhone 修读进度](docs/screenshots/iPhone-degree.png) | ![iPad 修读进度](docs/screenshots/iPad-degree.png) |
-
-### 校园卡充值
-
-原生渠道选择与到账查询；截图为演示模式，支付入口禁用。金额和支付在外部平台完成，尚未验证真实充值到账。
-
-| iPhone | iPad |
-| --- | --- |
-| ![iPhone 充值渠道](docs/screenshots/iPhone-recharge.png) | ![iPad 充值渠道](docs/screenshots/iPad-recharge.png) |
-
-### 今天
-
-课程与学习任务汇总。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-today.png" width="260" alt="iPhone 今天"></td>
-    <td><img src="docs/screenshots/iPad-today.png" width="520" alt="iPad 今天"></td>
-  </tr>
-</table>
-
-### 课表
-
-演示课表与课程安排。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-timetable.png" width="260" alt="iPhone 课表"></td>
-    <td><img src="docs/screenshots/iPad-timetable.png" width="520" alt="iPad 课表"></td>
-  </tr>
-</table>
-
-### 考试
-
-示例考试的时间、地点与座位信息。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-exams.png" width="260" alt="iPhone 考试"></td>
-    <td><img src="docs/screenshots/iPad-exams.png" width="520" alt="iPad 考试"></td>
-  </tr>
-</table>
-
-### 成绩
-
-演示模式尚无成绩样例，截图展示同步前空状态；真实成绩需登录后读取。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-grades.png" width="260" alt="iPhone 成绩"></td>
-    <td><img src="docs/screenshots/iPad-grades.png" width="520" alt="iPad 成绩"></td>
-  </tr>
-</table>
-
-### Blackboard
-
-演示课程列表及离线文件入口；具体课程任务、公告与课件需读取后查看。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-blackboard.png" width="260" alt="iPhone Blackboard"></td>
-    <td><img src="docs/screenshots/iPad-blackboard.png" width="520" alt="iPad Blackboard"></td>
-  </tr>
-</table>
-
-### 办事
-
-常用学校服务入口，页面明确标注尚未完成的原生能力。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-services.png" width="260" alt="iPhone 办事"></td>
-    <td><img src="docs/screenshots/iPad-services.png" width="520" alt="iPad 办事"></td>
-  </tr>
-</table>
-
-### 我的
-
-数据模式、登录与连接管理。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-account.png" width="260" alt="iPhone 我的"></td>
-    <td><img src="docs/screenshots/iPad-account.png" width="520" alt="iPad 我的"></td>
-  </tr>
-</table>
-
-### 原生登录
-
-空白 CAS 登录表单及默认关闭的“记住账号密码并自动登录”选项；不在截图中输入真实凭据。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-native-login.png" width="260" alt="iPhone 原生登录"></td>
-    <td><img src="docs/screenshots/iPad-native-login.png" width="520" alt="iPad 原生登录"></td>
-  </tr>
-</table>
-
-### 桌面图标
-
-中央火炬图案与 SUSTechMobile 软件名称。
-
-<table>
-  <tr>
-    <th>iPhone</th><th>iPad</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-home.png" width="260" alt="iPhone 桌面图标"></td>
-    <td><img src="docs/screenshots/iPad-home.png" width="520" alt="iPad 桌面图标"></td>
-  </tr>
-</table>
-
-### 校园卡与消费曲线
-
-虚构余额与四笔样例账单；三笔支出合计 25.80 元，一笔退款不计入消费曲线。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-card.png" width="260" alt="iPhone 校园卡与消费曲线"></td>
-    <td><img src="docs/screenshots/iPad-card.png" width="520" alt="iPad 校园卡与消费曲线"></td>
-  </tr>
-</table>
-
-### 空教室查询
-
-教学周、星期与节次筛选。演示模式不请求私人教务数据，目录为空。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-classrooms.png" width="260" alt="iPhone 空教室查询"></td>
-    <td><img src="docs/screenshots/iPad-classrooms.png" width="520" alt="iPad 空教室查询"></td>
-  </tr>
-</table>
-
-### 原生 PDF 打印
-
-文件导入、纸张、颜色、单双面、份数和页码参数。演示模式不能提交真实打印。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-printing.png" width="260" alt="iPhone 原生 PDF 打印"></td>
-    <td><img src="docs/screenshots/iPad-printing.png" width="520" alt="iPad 原生 PDF 打印"></td>
-  </tr>
-</table>
-
-### 统一预约中心
-
-IC、CLE、体育场馆与书院场地入口；书院目录与日程为原生，最终预定仍使用官方页面。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-reservations.png" width="260" alt="iPhone 统一预约中心"></td>
-    <td><img src="docs/screenshots/iPad-reservations.png" width="520" alt="iPad 统一预约中心"></td>
-  </tr>
-</table>
-
-### IC 研讨间
-
-未连接状态：房间与本人预约需登录后读取，不用虚构列表冒充学校可约资源。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-ic.png" width="260" alt="iPhone IC 研讨间"></td>
-    <td><img src="docs/screenshots/iPad-ic.png" width="520" alt="iPad IC 研讨间"></td>
-  </tr>
-</table>
-
-### CLE 语言辅导
-
-官方连接、日期与预约说明，以及原生时段和本人预约区域。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-cle.png" width="260" alt="iPhone CLE 语言辅导"></td>
-    <td><img src="docs/screenshots/iPad-cle.png" width="520" alt="iPad CLE 语言辅导"></td>
-  </tr>
-</table>
-
-### 体育场馆
-
-企业微信授权入口、场馆列表和本人订单区域；未连接状态不显示虚构场地。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-court.png" width="260" alt="iPhone 体育场馆"></td>
-    <td><img src="docs/screenshots/iPad-court.png" width="520" alt="iPad 体育场馆"></td>
-  </tr>
-</table>
-
-### 0.6.1 打印站点与书院场地
-
-打印站点独立于登录查询；书院场地原生查看目录与当日安排，最终提交在学校页面完成。截图均为明确标注的虚构演示数据，公开打印接口另行实测返回 26 个真实站点。
-
-<table>
-  <tr><th>iPhone 打印站点</th><th>iPad 打印站点</th></tr>
-  <tr><td><img src="docs/screenshots/iPhone-print-stations.png" width="260" alt="iPhone 演示打印站点"></td><td><img src="docs/screenshots/iPad-print-stations.png" width="520" alt="iPad 演示打印站点"></td></tr>
-  <tr><th>iPhone 书院场地</th><th>iPad 书院场地</th></tr>
-  <tr><td><img src="docs/screenshots/iPhone-college.png" width="260" alt="iPhone 演示书院场地"></td><td><img src="docs/screenshots/iPad-college.png" width="520" alt="iPad 演示书院场地"></td></tr>
-</table>
-
-### BB 课程折叠
-
-将示例线性代数课程移入“已折叠课程”，主列表仅保留程序设计基础。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-blackboard-folded.png" width="260" alt="iPhone BB 课程折叠"></td>
-    <td><img src="docs/screenshots/iPad-blackboard-folded.png" width="520" alt="iPad BB 课程折叠"></td>
-  </tr>
-</table>
-
-### 折叠后的首页截止日期
-
-线性代数的示例任务已从首页排除，仅保留未折叠课程的截止日期。
-
-<table>
-  <tr><th>iPhone</th><th>iPad</th></tr>
-  <tr>
-    <td><img src="docs/screenshots/iPhone-today-folded.png" width="260" alt="iPhone 折叠后的首页截止日期"></td>
-    <td><img src="docs/screenshots/iPad-today-folded.png" width="520" alt="iPad 折叠后的首页截止日期"></td>
-  </tr>
-</table>
-
-
-</details>
-</details>
-
-## 构建与安装
-
-### 下载已构建安装包
-
-前往 [GitHub Releases 最新版本](https://github.com/aNother1332/sustech-mobile-ios/releases/latest)，展开 **Assets**，下载 `SUSTechMobile-unsigned.ipa` 和对应 `.sha256` 校验文件，使用 Windows iLoader 等侧载工具以本人 Apple 账号签名安装。无需自己编译或拥有 Mac。
-
-[全部历史版本](https://github.com/aNother1332/sustech-mobile-ios/releases)保留各版本的交付包、构建元数据和版本说明。早期同为 0.2.0 的 build 2 独立标记为 `v0.2.0-build.2`，`v0.2.0` 为后续 build 4。`with-share` / `with-extensions` 为可选实验扩展包，签名与 App Groups 需单独验证。
-
-### 自行编译
-
-需要 Xcode 26.0+ 编译，应用运行最低要求 iOS / iPadOS 17。没有第三方 iOS 包依赖，不需要 XcodeGen。
-
-### 使用 Mac 构建
-
-```sh
-swift test
-xcodebuild -project SUSTech.xcodeproj -scheme SUSTech \
-  -configuration Debug -destination 'generic/platform=iOS Simulator' \
-  -derivedDataPath DerivedData CODE_SIGNING_ALLOWED=NO build
-```
-
-真机运行需要使用自己的 Apple 开发签名配置。仓库不包含个人证书、私钥、Team ID 或描述文件。
-
-### 使用 Windows 与云端构建
-
-无需拥有本地 Mac：可使用 GitHub Actions 的 macOS runner 编译，再由 Windows 侧载工具在本地签名安装。
-
-1. Fork 本仓库，在自己的仓库中启用 Actions。
-2. 手动运行 **Build iPhone and iPad IPA** 工作流。
-3. 等待成功，下载 `SUSTech-iPhone-iPad-数字` 构建产物。
-4. 解压后找到 `SUSTechMobile-unsigned.ipa`，核对同目录的 SHA-256 校验文件。
-5. 使用适用的侧载工具，以自己的 Apple 账号在本地重新签名并安装。
-
-IPA 是 **arm64 真机未签名包**，不能直接从文件管理器点击安装。GitHub Actions 产物默认保留 7 天，下载通常需要登录 GitHub。工作流手动触发，不使用 Apple 或校园账号凭据。免费 Apple 账号的签名有效期、设备限制与证书限制仍适用；TestFlight 需要另行配置付费开发者计划。
-
-当前不提供 App Store 或 TestFlight 下载。Windows 安装背景及历史排障记录见 [侧载说明](docs/WINDOWS_SIDELOAD.md)；其中本地修补版 iLoader 的路径属于维护者环境，不是公开下载地址或通用安装依赖。
-
-### Windows 上的源码检查
-
-```powershell
-python scripts/verify_repository.py
-python -m unittest discover -s scripts/tests -v
-```
-
-可选 Swift 语法和工程结构检查：
-
-```powershell
-uv run --with tree-sitter --with tree-sitter-swift --with openstep-parser python scripts/verify_repository.py --syntax
-```
-
-这些检查不能替代 Swift 编译或真机测试。新增源文件或资源后运行 `python scripts/generate_project.py`。
-
-## 隐私与会话
-
-- 校园认证由客户端直接连接学校 HTTPS 服务，不设置代收校园密码的聚合服务器。
-- 原生登录默认不保存密码；用户可主动开启“记住账号密码并自动登录”，凭据仅保存在本机 iOS 钥匙串（解锁后可用、不跨设备同步）。优先复用会话，确认失效后自动登录；验证码、密码拒绝和限流会暂停自动尝试，可在“我的”删除凭据。网页登录由 WebKit 管理会话。
-- 课表、成绩、课程信息和已下载文件可缓存在本机，界面标明同步状态与时间。
-- 切换账号、退出和清理流程会处理对应缓存与会话，防止混用不同账号的数据。
-- 请勿在 Issue、日志或截图中提交密码、验证码、Cookie、学号和真实成绩。
-
-## 实现与上游来源
-
-本项目是基于上游接口协议、字段含义与业务行为编写的 **Swift / SwiftUI 移植实现**，并非直接运行 Android 的 Kotlin 界面。CAS 登录、课表周次解析、BB 提交状态与 GPA 参考映射等有具体上游依据。
-
-感谢以下项目：
-
-| 项目 | 参考内容 |
-| --- | --- |
-| [dumixthestpd/sustech-mobile](https://github.com/dumixthestpd/sustech-mobile) | Android 功能范围、校园服务协议及业务流程 |
-| [wormforce/sustech-cli](https://github.com/wormforce/sustech-cli) | 校园接口访问方式与数据解释 |
-| [dumixthestpd/sustech_survival](https://github.com/dumixthestpd/sustech_survival) | 校园服务接口说明与流程研究 |
-
-具体源码版本和协议证据见 [FEATURE_EVIDENCE.md](docs/FEATURE_EVIDENCE.md)。语言重写不消除上游许可与署名义务；完整条款与声明见 [LICENSE](LICENSE)、[NOTICE](NOTICE)。
-
-图标从学校官方标识的矢量文件提取中央火炬，去除外围文字与圆环，采用深青背景。校徽及相关标识权利归南方科技大学；来源与生成方式见 [图标来源](Design/Branding/README.md)。本项目不代表学校官方。
-
-## 开发路线与反馈
-
-后续目标是逐步对齐 Android 版本，验证和完善本轮原生办事流程，继续扩展图书馆借阅、日历与本地提醒等能力。**规划不等于已实现承诺。** 参见 [功能路线图](docs/FEATURE_ROADMAP.md) 与 [设备验收清单](docs/DEVICE_TESTING.md)。
-
-欢迎通过 [Issues](https://github.com/aNother1332/sustech-mobile-ios/issues) 报告问题。请附系统版本、应用版本、操作步骤及脱敏后的错误信息。
-
-```text
-App/                       SwiftUI 界面、WebKit 会话与应用状态
-Sources/CampusCore/        独立 Swift 包：CAS、TIS、BB、模型与解析
-Tests/CampusCoreTests/     Swift Testing 与虚构接口样例
-Config/Info.plist          应用配置
-scripts/                   工程生成、检查、截图与 IPA 打包
-Design/Branding/            图标来源及生成资源
-docs/                      截图、功能规划、协议证据与验收记录
-.github/workflows/ios.yml   手动云端构建工作流
-```
-
-维护流程见 [版本交付与本地清理](docs/RELEASE_WORKFLOW.md)。部分文档保留早期开发、个人安装路径与历史构建记录，请以 README 的当前状态为准。
+<p align="center"><strong>SUSTechMobile · 让校园日常，更顺手。</strong><br>iPhone &amp; iPad · SwiftUI · Made for campus life</p>
